@@ -1,3 +1,4 @@
+import pdb
 
 def delta_hedge(delta_vec, S, r, tau, N = 1):
     """
@@ -11,8 +12,9 @@ def delta_hedge(delta_vec, S, r, tau, N = 1):
     """
 
     #@Todo: Ensure that Delta is 0 at the end, we need to unravel the position
-    if delta_vec[-1] > 0.01:
-        raise ValueError('Delta must be 0 at last')
+    delta_vec.append(0)
+    S.append(S[-1]) # Underlying stays constant while we unravel
+
 
     dt = tau / len(delta_vec)
 
@@ -31,5 +33,10 @@ def delta_hedge(delta_vec, S, r, tau, N = 1):
         cost_of_shares.append(n_shares[i]*S[i])
         cumulative_cost.append(cost_of_shares[i] + cumulative_cost[i-1] + interest_cost[i-1])
         interest_cost.append(cumulative_cost[i]*r*dt)
+
+    
+    #if delta_vec[-2] > 0.01:
+    #    pdb.set_trace()
+    #raise ValueError('Delta must be 0 at last')
 
     return n_shares, cost_of_shares, cumulative_cost, interest_cost

@@ -62,41 +62,16 @@ for instrument in calls['instrument_name'].unique():
     daily['future_position'] = daily['delta'] * daily['index_price']
 
     # Hedge PnL
-    #@Todo Check the PnL!!!
-    """
-    # This should be a more elegant method
-    # cash flow from delta hedging
-    # compute cash generated from delta re-hedging
-    delta_chgs = np.diff(deltas, axis=1)
-    delta_rehedge_cfs = -delta_chgs * pxs[:,1:] # pxs are prices
-    """
-    daily['index_change'] = daily['index_price'].pct_change()
-    #daily['future_position_change'] = daily['future_position'].diff()
-    #daily['future_pnl'] = daily['future_position_change'] * daily['index_change'] * (-1)
-    #daily['future_pnl'].sum()
-
-    # PnL in the hedge position
-    # dailies['BTC-8JAN21-28000-C']
-    # For above instrument, the initial futures position is 20164. The change in underlying
-    # on the next day is 5.71%. Therefore the hedge position has made 1152 on day 2
-    daily['hedge_pnl'] = daily['future_position'].shift(1) * daily['index_change']
-
-
-    # another try via cashflow
-    # But then you also have to unravel the cashflow of the last day, so shift and add a zero
-    # @Todo: This is missing an unraveling on the last day, where the diff is 0
-    #daily['delta_diffs'] = daily['delta'].diff()
-    #daily['hedge_cashflow'] = (-1) * daily['delta_diffs'] * daily['index_price']
     n_shares, cost_of_shares, cumulative_cost, interest_cost = delta_hedge(daily['delta'].to_list(), daily['index_price'].to_list(), 0.01, daily['tau'].iloc[0])
     delta_hedge_cost = cumulative_cost[-1]
-    pdb.set_trace()
 
     initial_instrument_price = daily.iloc[0]['instrument_price']
     final_instrument_price = daily.iloc[-1]['instrument_price']
 
     dailies[instrument] = daily
     # @Todo also have to consider the payoff of the long call here!!
-    pnl[instrument] = final_instrument_price - initial_instrument_price + delta_hedge_cost #+ daily['hedge_pnl'].sum()
+    # Delta hedge cost is negative if we made a profit in the hedge position!
+    pnl[instrument] = final_instrument_price - initial_instrument_price - delta_hedge_cost #+ daily['hedge_pnl'].sum()
 
     #counter += 1
     #if counter >= 1000:
