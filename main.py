@@ -28,7 +28,8 @@ from src.brc import BRC
 from src.helpers import decompose_instrument_name
 from src.blackscholes import Call, Put
 from scipy import stats
-from statsmodels.api import OLS
+from statsmodels import api
+#from statsmodels.api import OLS
 #from src.vola_plots import plot_atm_iv_term_structure
 
 
@@ -214,7 +215,30 @@ def rookley(df, h_m=0.01, h_t=0.01, gridsize=149, kernel='epak'):
 
     return smile, first, second, M, S, K, M_std, tau
 
-def get_iv_surface(df):
+def exogenous(T, M):
+    """
+    both variables, tau and moneyness, are pd.series
+    for construction of iv surface
+    """
+    if isinstance(T, float) & isinstance(M, float):
+        # For predictions of single instruments
+        # But should vectorize this
+        X1 = 1
+    else:
+        # Is pd.Series
+        X1 = np.ones(len(T))
+    X2 = M 
+    X3 = M**2
+    X4 = T
+    X5 = T**2
+    X6 = X2*X4
+    X = np.array([X1, X2, X3, X4, X5, X6]).T
+    #X = api.add_constant(X)
+    
+    return X
+
+
+def get_iv_surface(df, make_prediction = False):
     """
     Calculate IV surface based on 2nd order Regression
     IV ~ Intercept + Tau + Tau**2 + Moneyness + Moneyness**2 + M * T + Error
@@ -222,23 +246,19 @@ def get_iv_surface(df):
     IV = np.array(df['iv'])
     M = np.array(df['moneyness'])
     T = np.array(df['tau'])
-    N = len(M)
-
-    X1 = np.ones(N)
-    X2 = M 
-    X3 = M**2
-    X4 = T
-    X5 = T**2
-    X6 = X2*X4
-    X = np.array([X1, X2, X3, X4, X5, X6]).T
-
-    model = OLS(IV, X)
+    X = exogenous(T, M)
+    
+    model = api.OLS(IV, X)
+    
     fit = model.fit()
     summary = fit.summary()
+    print(summary)
     
-    # For Prediction
-    pred_x = np.array([1, 1.1, 1.1**2, 0.01, 0.01**2, 0.05 * 1.1])
-    model.fit().predict(pred_x)
+    if make_prediction:
+        # Prediction of individual instrument
+        exog_for_prediction = exogenous(0.05, 1.1)
+        fit.predict(exog_for_prediction)
+        pdb.set_trace()
 
 
 def filter_sub(_df):
@@ -556,7 +576,7 @@ if __name__ == '__main__':
             # @Todo: Filter around specific times of the day, possibly when the most trading activity occurs. 
             # Otherwise we have too much variation in this!
             filtered = filter_sub(out[-1])
-            rookley(filtered)
+            get_iv_surface(filtered)
 
             # @Todo: Get a 3d Plot of smoothed IV over moneyness, tau
 
@@ -568,113 +588,29 @@ if __name__ == '__main__':
             print('error in : ', e)
 
     
-    dat = pd.concat(out)
+"""
 
-    # Calculate Greeks
-    dat['delta'] = dat.apply(lambda x: Call.Delta(x['index_price'], x['strike'], 0, x['iv'], x['tau']) if x['is_call'] == 1 else Put.Delta(x['index_price'], x['strike'], 0, x['iv'], x['tau']), axis = 1)
-    dat['delta_amount'] = dat['delta'] * dat['amount']
-
-    dat['expiration_date'] = dat.apply(lambda x: datetime.datetime.strptime(x['maturity'], '%d%b%y'), axis = 1)
-    #mat = '2JAN22'
-    #datetime.datetime.strptime(mat, '%d%b%y')
-
-    #call_sub = dat.loc[dat['is_call'] == 1]
-    #put_sub = dat.loc[dat['is_call'] != 1]
-    dat['time'] = pd.to_datetime(dat['day'])
-
-    dat.to_csv('dat.csv')
-
-    # Aggregate delta amount per expiration 
-    agg = dat[['expiration_date', 'delta', 'delta_amount']].groupby('expiration_date').sum().reset_index()
-
-    # Just load expiration price history!!
-    expiration_history = pd.read_csv('data/Expiration Price History.csv')
-    expiration_history = expiration_history.rename(columns = {'Price': 'expiration_price'})
-
-    expiration_history['expiration_date'] = pd.to_datetime(expiration_history['Date'])
-    expiration_history['week_before_expiration'] = pd.to_datetime(expiration_history['expiration_date'] - datetime.timedelta(days = ndays_shift))
-    expiration_history['week_after_expiration'] = pd.to_datetime(expiration_history['expiration_date'] + datetime.timedelta(days = ndays_shift))
-
-    expiration_history['shifted_price'] = expiration_history['expiration_price'].shift(ndays_shift)
-    expiration_history['ret'] = expiration_history.apply(lambda x: pct_change(x['expiration_price'], x['shifted_price']), axis = 1)
-
-    # Find returns on Fridays
-    fridays = [d for d in expiration_history['expiration_date'] if d.isoweekday() == 5]
-    expiration_history['is_friday'] = 0
-    expiration_history.loc[expiration_history['expiration_date'].isin(fridays), 'is_friday'] = 1
-
-    # Merge with original data
-    expiration_history['day'] = pd.to_datetime(expiration_history['Date'])
-
-    #### MAYBE WE SHOULD STILL MERGE ON EXPIRATION_DATE!!!
-
-    # Look at the amount of delta outstanding at that day!!
-    dd = dat.groupby('expiration_date')[['delta_amount', 'amount']].sum().reset_index()
-    comb = dd.merge(expiration_history, how = 'outer', on = 'expiration_date')
-    #comb = dat.merge(expiration_history, how = 'left', on = 'day')
-    #comb.groupby('day').sum('delta_amount')
-
-    # @Todo:
-    # In the beginning, only weekly data has been published by Deribit!
-    # We should only look at what happened later because it doenst look like we have the 
-    # synthetic index values yet. 
-    # But could be downloaded
-
-    # Compare returns to other non-fridays
-    not_friday_df = comb.loc[comb['is_friday'] == 0]
-    friday_df = comb.loc[comb['is_friday'] == 1]
-
-    print('Returns not on Fridays:', not_friday_df['ret'].describe())
-    print('Returns on Fridays:', friday_df['ret'].describe())
-
-    if do_plot:
-        # Boxplot and Scatterplot: Returns vs NET OI?!
-        fig = plt.figure(figsize = (15,8))
-        plt.scatter(not_friday_df['delta_amount'], not_friday_df['ret'], label = 'not friday')
-        plt.scatter(friday_df['delta_amount'], friday_df['ret'], label = 'friday')
-        plt.xlabel('Net Delta Amount')
-        plt.ylabel('Return')
-        plt.legend()
-        plt.savefig('plots/net_delta_amount_vs_returns.png')
-
-        not_friday_df.boxplot(column = ['ret'])
-        friday_df.boxplot(column = ['ret'])
-
-        # Plot of Open Interest over Time
-        # @Todo: Insert Underlying Movement here
-        fig = plt.figure(figsize = (15,8))
-        plt.scatter(comb['expiration_date'], comb['delta_amount'], label = 'Net Delta Amount')
-        #plt.plot(comb['expiration_date'], comb['expiration_price'], label = 'BTC Index')
-        plt.legend()
-        plt.savefig('plots/net_delta_amount_and_btc_index_over_time.png')
-
-        plot_group(dat, 'amount', 'expiration_date')
-        plot_group(dat, 'amount', 'day')
-        plot_group(dat, 'delta_amount', 'day')
-
-        pdb.set_trace()
-        print('done')
-
-    # Regression
-    comb.to_csv('comb.csv')
-    reg_df = comb.sort_values('day')[['ret', 'delta_amount', 'is_friday']].dropna()
-    y = reg_df['ret']
-    x = reg_df[['delta_amount', 'is_friday']]
-    x = sm.api.add_constant(x)
-    reg = sm.regression.linear_model.OLS(y, x)
-    results = reg.fit()
-    results.params
-    print(results.summary())
+# Regression
+comb.to_csv('comb.csv')
+reg_df = comb.sort_values('day')[['ret', 'delta_amount', 'is_friday']].dropna()
+y = reg_df['ret']
+x = reg_df[['delta_amount', 'is_friday']]
+x = sm.api.add_constant(x)
+reg = sm.regression.linear_model.OLS(y, x)
+results = reg.fit()
+results.params
+print(results.summary())
 
 
-    ## Inspect behavior of short-dated options
-    # Do they sharply lose IV right before expiration?
-    # E.g. between 2 and 1 day to maturity OR 1 and 0 days to maturity
+## Inspect behavior of short-dated options
+# Do they sharply lose IV right before expiration?
+# E.g. between 2 and 1 day to maturity OR 1 and 0 days to maturity
 
-    #short_term = dat.loc[dat['days_to_maturity'].isin([0,1,2])]
-    #atm = short_term.loc[(short_term['delta'] <= 0.60) & (short_term['delta'] >= 0.4) & (short_term['expiration_date'] >= pd.to_datetime('2021-01-01'))]
-    #atm['delta'] = round(atm['delta'], 2)
-    #atm.groupby('days_to_maturity')['iv'].describe()
+#short_term = dat.loc[dat['days_to_maturity'].isin([0,1,2])]
+#atm = short_term.loc[(short_term['delta'] <= 0.60) & (short_term['delta'] >= 0.4) & (short_term['expiration_date'] >= pd.to_datetime('2021-01-01'))]
+#atm['delta'] = round(atm['delta'], 2)
+#atm.groupby('days_to_maturity')['iv'].describe()
 
-    # This is not tracking the same option though!!!
-    #atm.groupby(['delta','days_to_maturity'])['iv'].describe()
+# This is not tracking the same option though!!!
+#atm.groupby(['delta','days_to_maturity'])['iv'].describe()
+"""
