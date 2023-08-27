@@ -29,6 +29,8 @@ from src.helpers import decompose_instrument_name
 from src.blackscholes import Call, Put
 from scipy import stats
 from statsmodels import api
+from src.surface_plot_regression import surface_plot
+from src.plots import simple_3d_plot
 #from statsmodels.api import OLS
 #from src.vola_plots import plot_atm_iv_term_structure
 
@@ -238,10 +240,12 @@ def exogenous(T, M):
     return X
 
 
-def get_iv_surface(df, make_prediction = False):
+def calibrate_on_iv_surface(df, predict_sub, do_plot = False):
     """
     Calculate IV surface based on 2nd order Regression
     IV ~ Intercept + Tau + Tau**2 + Moneyness + Moneyness**2 + M * T + Error
+
+    #@Todo: Clip Outliers, dont regard Moneyness >= cutoff
     """
     IV = np.array(df['iv'])
     M = np.array(df['moneyness'])
@@ -254,11 +258,15 @@ def get_iv_surface(df, make_prediction = False):
     summary = fit.summary()
     print(summary)
     
-    if make_prediction:
-        # Prediction of individual instrument
-        exog_for_prediction = exogenous(0.05, 1.1)
-        fit.predict(exog_for_prediction)
-        pdb.set_trace()
+    
+    # Prediction of individual instrument
+    exog_for_prediction = exogenous(predict_sub['tau'], predict_sub['moneyness'])#exogenous(0.05, 1.1)
+    predicted_iv = fit.predict(exog_for_prediction)
+    
+    if do_plot:
+        simple_3d_plot(predict_sub['tau'], predict_sub['moneyness'], predicted_iv)
+    
+    return 
 
 
 def filter_sub(_df):
@@ -430,7 +438,7 @@ def run(curr_day):
 
             # Prepare for moneyness domain restriction (0.8 < m < 1.2)
             dat['moneyness']    = round(dat['strike'] / dat['index_price'], 2)
-            df                  = dat[['_id', 'index_price', 'amount', 'strike', 'maturity', 'is_call', 'tau', 'iv', 'date', 'moneyness', 'instrument_name', 'days_to_maturity', 'maturitydate_char', 'timestamp','instrument_price']]    
+            df                  = dat[['_id', 'index_price', 'amount', 'strike', 'maturity', 'is_call', 'tau', 'iv', 'date', 'moneyness', 'instrument_name', 'days_to_maturity', 'maturitydate_char', 'maturitydate_trading', 'timestamp','instrument_price']]    
                         
             ## Isolate vars
             df['iv'] = df['iv'] / 100
@@ -565,27 +573,110 @@ if __name__ == '__main__':
 
         run_dates.append(curr_date)
 
-    # r_bandwidth = 0.06
+    # Keep up a running list of instruments. Each one needs a daily price as resulting from the IV surface. 
+    #daily_instruments = {}
+
+    # Create a dataframe of instruments which should exist until maturity. 
+    # Then compare the current day to it and query all for that we require a price
+
+    #instrument_tracker = []
+    cont = []
     for d in run_dates:
         try:
             print(d)
             out.append(run(d))
 
-            pdb.set_trace()
-
             # @Todo: Filter around specific times of the day, possibly when the most trading activity occurs. 
             # Otherwise we have too much variation in this!
             filtered = filter_sub(out[-1])
-            get_iv_surface(filtered)
+            #daily_instruments[curr_date] = filtered['instrument_name']#, filtered['days_to_maturity']
+            
+            #instrument_tracker.append(filtered['instrument_name'])
+            #instrument_tracker.append(filtered[['date', 'day',  'maturitydate_trading', 'instrument_name', 'maturitydate_char']]) # .unique()
+            instrument_df = pd.concat(out, axis = 0, ignore_index = True)
 
-            # @Todo: Get a 3d Plot of smoothed IV over moneyness, tau
+            # 1) ENSURE THAT EACH INSTRUMENT EXISTS UNTIL MATURITY 
+            #lookup = pd.DataFrame(dict(Time=pd.to_datetime(pd.unique(instrument_df.index.date))))
+            #lookup = pd.date_range(instrument_df['date'].min())
+            required_instruments_df = instrument_df.loc[(instrument_df['maturitydate_trading'] >= d)]
+            #requried_instruments = required_instruments_df['instrument_name'].unique()
 
+            # Feed static properties of required instruments to the prediction / vola fit
+            daily_instruments = required_instruments_df[['instrument_name', 'strike', 'maturitydate_trading']].drop_duplicates()
+
+            # Instead take strike and final maturity date, calculate for days where values might be missing
+            # tau: MATURITY DATE - CURRENT DATE (D)
+            # moneyness: spot is last index price before 16:30, K/S
+
+
+
+            """
+            instrument_days = {}
+            for ins in instrument_df['instrument_name'].unique():
+                single_instrument = instrument_df.loc[instrument_df['instrument_name'] == ins]
+                instrument_days[ins] = pd.date_range(single_instrument['date'].min(), single_instrument['maturitydate_trading'].max()).date
+
+            # All arrays must be of same length...
+            daily_required_instruments = pd.DataFrame(instrument_days.values(), index = instrument_days.keys())
+            """
+            
+
+            # 2) Assign None to instrument_price if it doesn't exist
+
+            # Python Daily observation close to specific time
+            # https://stackoverflow.com/questions/42208206/find-daily-observation-closest-to-specific-time-for-irregularly-spaced-data
+            filtered.set_index('date', inplace = True)
+            sub = filtered.iloc[filtered.index.indexer_between_time("15:30:00", "16:30:00")]
+
+            # Use last price to determine moneyness for daily_instruments
+            last_spot = sub['index_price'][-1]
+            daily_instruments['moneyness'] = daily_instruments['strike'] / last_spot
+            
+            # daily_instruments['tau'] =
+            # maturitydate - current day to tau!
+            Tdiff = (daily_instruments['maturitydate_trading'] - d)
+            sec_to_date_factor   = 60*60*24
+            _Tau                = list(map(lambda x: (x.days + (x.seconds/sec_to_date_factor)) / 365, Tdiff))#Tdiff/365 #list(map(lambda x: x.days/365, Tdiff)) # else: Tdiff/365
+            
+            daily_instruments['tau'] = _Tau
+            #daily_instruments['tau_rounded'] = round(daily_instruments['tau'], 4)
+
+
+
+            # @Todo: Still need to pick latest date for this!
+            # Also @Todo: Plot fitted vola surface: fitted vola over tau and moneyness
+            pred = calibrate_on_iv_surface(sub, predict_sub = daily_instruments)
+            cont.append(pred)
+
+
+
+            # For which days do we need a price?!
+            #instrument_df.loc[(instrument_df['day'] == curr_date) & (instrument_df['instrument_price'] == None)]
+
+            #Get a 3d Plot of smoothed IV over moneyness, tau
+            #surface_plot(filtered)
+            
+            """
+            # Get Daily IV Surface. Use it to calibrate prices for instruments without observations for the date. 
+            #get_iv_surface(filtered)
+            pdb.set_trace()
+            # Find Instruments without Prices
+            #[ins for filtered['instrument_name'] if filtered['instrument_name'] not in daily_instruments.values()]
+            instruments_to_calibrate = []
+            for instrument in set(instrument_tracker):
+                if instrument not in filtered['instrument_name']:
+                    # Calibrate Price on IV Surface
+                    instruments_to_calibrate.append(instrument)
+
+            to_calibrate_sub = filtered.loc[filtered['instrument_name'].isin(instruments_to_calibrate)]
+            calibrate_on_iv_surface(filtered, predict = to_calibrate_sub)
+            """
             # Now, for some instrument find the the closest IV to the instrument's tau and moneyness
-
-
 
         except Exception as e:
             print('error in : ', e)
+    pdb.set_trace()
+    pd.DataFrame(cont).to_csv('out/fitted_data.csv')
 
     
 """
