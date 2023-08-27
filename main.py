@@ -576,54 +576,30 @@ if __name__ == '__main__':
 
         run_dates.append(curr_date)
 
-    # Keep up a running list of instruments. Each one needs a daily price as resulting from the IV surface. 
-    #daily_instruments = {}
-
     # Create a dataframe of instruments which should exist until maturity. 
     # Then compare the current day to it and query all for that we require a price
-
-    #instrument_tracker = []
-    #counter = 0
+    counter = 0
     collected_out = []
     for d in run_dates:
+        counter += 1
+        #if counter == 100:
+        #    break;
         try:
             print(d)
             out.append(run(d))
 
-            # @Todo: Filter around specific times of the day, possibly when the most trading activity occurs. 
+            # Filter around specific times of the day, possibly when the most trading activity occurs. 
             # Otherwise we have too much variation in this!
             filtered = filter_sub(out[-1])
-            #daily_instruments[curr_date] = filtered['instrument_name']#, filtered['days_to_maturity']
-            
-            #instrument_tracker.append(filtered['instrument_name'])
-            #instrument_tracker.append(filtered[['date', 'day',  'maturitydate_trading', 'instrument_name', 'maturitydate_char']]) # .unique()
             instrument_df = pd.concat(out, axis = 0, ignore_index = True)
 
             # 1) ENSURE THAT EACH INSTRUMENT EXISTS UNTIL MATURITY 
-            #lookup = pd.DataFrame(dict(Time=pd.to_datetime(pd.unique(instrument_df.index.date))))
-            #lookup = pd.date_range(instrument_df['date'].min())
             required_instruments_df = instrument_df.loc[(instrument_df['maturitydate_trading'] >= d)]
             #requried_instruments = required_instruments_df['instrument_name'].unique()
 
             # Feed static properties of required instruments to the prediction / vola fit
-            daily_instruments = required_instruments_df[['instrument_name', 'strike', 'maturitydate_trading']].drop_duplicates()
-
-            # Instead take strike and final maturity date, calculate for days where values might be missing
-            # tau: MATURITY DATE - CURRENT DATE (D)
-            # moneyness: spot is last index price before 16:30, K/S
-
-
-
-            """
-            instrument_days = {}
-            for ins in instrument_df['instrument_name'].unique():
-                single_instrument = instrument_df.loc[instrument_df['instrument_name'] == ins]
-                instrument_days[ins] = pd.date_range(single_instrument['date'].min(), single_instrument['maturitydate_trading'].max()).date
-
-            # All arrays must be of same length...
-            daily_required_instruments = pd.DataFrame(instrument_days.values(), index = instrument_days.keys())
-            """
-            
+            # Feed all variables that we need later
+            daily_instruments = required_instruments_df[['instrument_name', 'strike', 'maturitydate_trading', 'is_call', 'days_to_maturity']].drop_duplicates()
 
             # 2) Assign None to instrument_price if it doesn't exist
 
@@ -634,84 +610,25 @@ if __name__ == '__main__':
 
             # Use last price to determine moneyness for daily_instruments
             last_spot = sub['index_price'][-1]
+            daily_instruments['spot'] = last_spot # for Black Scholes Call 
             daily_instruments['moneyness'] = daily_instruments['strike'] / last_spot
             
-            # daily_instruments['tau'] =
             # maturitydate - current day to tau!
             Tdiff = (daily_instruments['maturitydate_trading'] - d)
             sec_to_date_factor   = 60*60*24
             _Tau                = list(map(lambda x: (x.days + (x.seconds/sec_to_date_factor)) / 365, Tdiff))#Tdiff/365 #list(map(lambda x: x.days/365, Tdiff)) # else: Tdiff/365
             
             daily_instruments['tau'] = _Tau
-            #daily_instruments['tau_rounded'] = round(daily_instruments['tau'], 4)
+            
 
-
-
-            # @Todo: Still need to pick latest date for this!
-            # Also @Todo: Plot fitted vola surface: fitted vola over tau and moneyness
             pred = calibrate_on_iv_surface(sub, predict_sub = daily_instruments, curr_day = d)
             pred['day'] = d
             filtered_pred = pred.loc[(pred['moneyness'] <= 1.3) & (pred['predicted_iv'] <= 2.5)]
             collected_out.append(filtered_pred)
-            #if counter == 10:
-            #    pdb.set_trace()
-            #counter += 1
 
-
-
-            # For which days do we need a price?!
-            #instrument_df.loc[(instrument_df['day'] == curr_date) & (instrument_df['instrument_price'] == None)]
-
-            #Get a 3d Plot of smoothed IV over moneyness, tau
-            #surface_plot(filtered)
-            
-            """
-            # Get Daily IV Surface. Use it to calibrate prices for instruments without observations for the date. 
-            #get_iv_surface(filtered)
-            pdb.set_trace()
-            # Find Instruments without Prices
-            #[ins for filtered['instrument_name'] if filtered['instrument_name'] not in daily_instruments.values()]
-            instruments_to_calibrate = []
-            for instrument in set(instrument_tracker):
-                if instrument not in filtered['instrument_name']:
-                    # Calibrate Price on IV Surface
-                    instruments_to_calibrate.append(instrument)
-
-            to_calibrate_sub = filtered.loc[filtered['instrument_name'].isin(instruments_to_calibrate)]
-            calibrate_on_iv_surface(filtered, predict = to_calibrate_sub)
-            """
-            # Now, for some instrument find the the closest IV to the instrument's tau and moneyness
 
         except Exception as e:
             print('error in : ', e)
     
     out_df = pd.concat(collected_out, ignore_index = True)
     pd.DataFrame(out_df).to_csv('out/fitted_data.csv')
-
-    
-"""
-
-# Regression
-comb.to_csv('comb.csv')
-reg_df = comb.sort_values('day')[['ret', 'delta_amount', 'is_friday']].dropna()
-y = reg_df['ret']
-x = reg_df[['delta_amount', 'is_friday']]
-x = sm.api.add_constant(x)
-reg = sm.regression.linear_model.OLS(y, x)
-results = reg.fit()
-results.params
-print(results.summary())
-
-
-## Inspect behavior of short-dated options
-# Do they sharply lose IV right before expiration?
-# E.g. between 2 and 1 day to maturity OR 1 and 0 days to maturity
-
-#short_term = dat.loc[dat['days_to_maturity'].isin([0,1,2])]
-#atm = short_term.loc[(short_term['delta'] <= 0.60) & (short_term['delta'] >= 0.4) & (short_term['expiration_date'] >= pd.to_datetime('2021-01-01'))]
-#atm['delta'] = round(atm['delta'], 2)
-#atm.groupby('days_to_maturity')['iv'].describe()
-
-# This is not tracking the same option though!!!
-#atm.groupby(['delta','days_to_maturity'])['iv'].describe()
-"""
