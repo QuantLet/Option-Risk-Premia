@@ -240,7 +240,7 @@ def exogenous(T, M):
     return X
 
 
-def calibrate_on_iv_surface(df, predict_sub, do_plot = False):
+def calibrate_on_iv_surface(df, predict_sub, curr_day, do_plot = True):
     """
     Calculate IV surface based on 2nd order Regression
     IV ~ Intercept + Tau + Tau**2 + Moneyness + Moneyness**2 + M * T + Error
@@ -261,12 +261,15 @@ def calibrate_on_iv_surface(df, predict_sub, do_plot = False):
     
     # Prediction of individual instrument
     exog_for_prediction = exogenous(predict_sub['tau'], predict_sub['moneyness'])#exogenous(0.05, 1.1)
-    predicted_iv = fit.predict(exog_for_prediction)
+    
+    out = predict_sub.copy(deep = True)
+    out['predicted_iv'] = fit.predict(exog_for_prediction)
+
     
     if do_plot:
-        simple_3d_plot(predict_sub['tau'], predict_sub['moneyness'], predicted_iv)
+        simple_3d_plot(out['tau'], out['moneyness'], out['predicted_iv'], 'out/' + curr_day.strftime('%Y-%m-%d') + '.png')
     
-    return 
+    return out
 
 
 def filter_sub(_df):
@@ -580,7 +583,8 @@ if __name__ == '__main__':
     # Then compare the current day to it and query all for that we require a price
 
     #instrument_tracker = []
-    cont = []
+    #counter = 0
+    collected_out = []
     for d in run_dates:
         try:
             print(d)
@@ -645,8 +649,13 @@ if __name__ == '__main__':
 
             # @Todo: Still need to pick latest date for this!
             # Also @Todo: Plot fitted vola surface: fitted vola over tau and moneyness
-            pred = calibrate_on_iv_surface(sub, predict_sub = daily_instruments)
-            cont.append(pred)
+            pred = calibrate_on_iv_surface(sub, predict_sub = daily_instruments, curr_day = d)
+            pred['day'] = d
+            filtered_pred = pred.loc[(pred['moneyness'] <= 1.3) & (pred['predicted_iv'] <= 2.5)]
+            collected_out.append(filtered_pred)
+            #if counter == 10:
+            #    pdb.set_trace()
+            #counter += 1
 
 
 
@@ -675,8 +684,9 @@ if __name__ == '__main__':
 
         except Exception as e:
             print('error in : ', e)
-    pdb.set_trace()
-    pd.DataFrame(cont).to_csv('out/fitted_data.csv')
+    
+    out_df = pd.concat(collected_out, ignore_index = True)
+    pd.DataFrame(out_df).to_csv('out/fitted_data.csv')
 
     
 """
