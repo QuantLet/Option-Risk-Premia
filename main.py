@@ -25,7 +25,7 @@ import statsmodels as sm
 
 from pathlib import Path
 from src.brc import BRC
-from src.helpers import decompose_instrument_name
+from src.helpers import decompose_instrument_name, find_nearest_location
 from src.blackscholes import Call, Put
 from scipy import stats
 from statsmodels import api
@@ -184,6 +184,7 @@ def rookley(df, h_m=0.01, h_t=0.01, gridsize=149, kernel='epak'):
     second_tau = sig[:, 4]
     interaction = sig[:, 5]
     
+    """
     pdb.set_trace()
     fig = plt.figure(figsize=(12, 12))
     ax = fig.add_subplot(projection='3d')
@@ -199,14 +200,15 @@ def rookley(df, h_m=0.01, h_t=0.01, gridsize=149, kernel='epak'):
     #plt.plot(df.moneyness, first)
     #plt.plot(df.moneyness, second)
     #plt.show()
+    """
 
     S_min, S_max = min(df.index_price), max(df.index_price)
     K_min, K_max = min(df.strike), max(df.strike)
     S = np.linspace(S_min, S_max, gridsize)
     K = np.linspace(K_min, K_max, gridsize)
-    pdb.set_trace()
+    #pdb.set_trace()
 
-
+    """
     plt.scatter(df.moneyness, df.iv, label = 'IV')
     plt.show()
     plt.plot(M, smile, label = 'smile')
@@ -214,6 +216,7 @@ def rookley(df, h_m=0.01, h_t=0.01, gridsize=149, kernel='epak'):
     plt.plot(M, second, label = 'second derivative')
     plt.legend()
     plt.show()
+    """
 
     return smile, first, second, M, S, K, M_std, tau
 
@@ -263,13 +266,16 @@ def calibrate_on_iv_surface(df, predict_sub, curr_day, do_plot = True):
     exog_for_prediction = exogenous(predict_sub['tau'], predict_sub['moneyness'])#exogenous(0.05, 1.1)
     
     out = predict_sub.copy(deep = True)
-    out['predicted_iv'] = fit.predict(exog_for_prediction)
+    predicted = fit.predict(exog_for_prediction)
+    out['predicted_iv'] = predicted
+    #pdb.set_trace()
+    #out.set_index(df.index, inplace = True)
 
     
     if do_plot:
         simple_3d_plot(out['tau'], out['moneyness'], out['predicted_iv'], 'out/' + curr_day.strftime('%Y-%m-%d') + '.png')
     
-    return out
+    return predicted
 
 
 def filter_sub(_df):
@@ -568,6 +574,8 @@ if __name__ == '__main__':
     curr_date = startdate
     ndays_shift = 2
     do_plot = False
+    use_rookley = True
+    print('Rookley activated?! ', use_rookley)
 
     out = []
     
@@ -619,16 +627,54 @@ if __name__ == '__main__':
             _Tau                = list(map(lambda x: (x.days + (x.seconds/sec_to_date_factor)) / 365, Tdiff))#Tdiff/365 #list(map(lambda x: x.days/365, Tdiff)) # else: Tdiff/365
             
             daily_instruments['tau'] = _Tau
+
+            daily_instruments = sub.copy(deep = True)
+            predicted_iv = calibrate_on_iv_surface(sub, predict_sub = daily_instruments, curr_day = d)
+            daily_instruments['predicted_iv'] = predicted_iv
+            daily_instruments['day'] = d
+
+            # Add _id to pred
             
+            
+            if use_rookley:
+                #@Todo: Compare this to rookley
+                #@Todo: Minimum amount of observations!
+                #pdb.set_trace()
 
-            pred = calibrate_on_iv_surface(sub, predict_sub = daily_instruments, curr_day = d)
-            pred['day'] = d
-            filtered_pred = pred.loc[(pred['moneyness'] <= 1.3) & (pred['predicted_iv'] <= 2.5)]
-            collected_out.append(filtered_pred)
 
+                # @Todo: this needs to be fitted on daily_instruments!!!
+                predicted = sub.copy(deep = True)
+                for week in sub['nweeks'].unique():
+                    #test_rookley = smoothing_rookley(sub, sub['moneyness'], sub['tau'], 0.1, 0.1)
+                    # Run separately for each week and predict
+                    idx = sub.loc[sub['nweeks'] == week].index
+                    rookley_fit = rookley(sub.loc[idx])
+                    moneyness_fit = rookley_fit[3]
+                    iv_fit = rookley_fit[0]
+                    # for prediction, just find location of moneyness of the value to-be-predicted
+                    # then take the vola at the same point
+                    # GOT AN ERROR HERE: 
+                    # for each element in sub['moneyness'], find the closest matching one in moneyness_fit
+                    # Then select iv at the same location - should have length of 333 for the first one!
+                    daily_idx = daily_instruments.loc[daily_instruments['nweeks'] == week].index
+                    moneyness_loc = daily_instruments.loc[daily_idx].apply(lambda x: find_nearest_location(moneyness_fit,x['moneyness'] ), axis = 1)
+                    #find_nearest(moneyness_fit, x0)
+                    
+                    # Choose iv at location of moneyness_loc
+                    #@Todo: ERROR HERE!!!!
+                    daily_instruments.loc[daily_idx, 'rookley_predicted_iv'] = iv_fit[moneyness_loc]
+
+                    # Join on _id with pred
+
+                if counter == 10:
+                    pdb.set_trace()
+
+            #filtered_pred = pred.loc[(pred['moneyness'] <= 1.3) & (pred['predicted_iv'] <= 2.5)]
+            collected_out.append(daily_instruments)
 
         except Exception as e:
             print('error in : ', e)
-    
+    pdb.set_trace()
+    # Compare Rookley IV vs predicted_iv
     out_df = pd.concat(collected_out, ignore_index = True)
     pd.DataFrame(out_df).to_csv('out/fitted_data.csv')
