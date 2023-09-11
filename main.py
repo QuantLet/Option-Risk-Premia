@@ -586,7 +586,32 @@ if __name__ == '__main__':
 
     # Create a dataframe of instruments which should exist until maturity. 
     # Then compare the current day to it and query all for that we require a price
-    counter = 0
+
+    for d in run_dates:
+        print('day: ', d)
+        out.append(run(d))
+    transaction_df = pd.concat(out, axis = 0, ignore_index = True)
+    instrument_collector = []
+
+        
+    # Enforce Daily Existence of each instrument
+    for instrument in transaction_df['instrument_name'].unique():
+        print(instrument)
+        enf = transaction_df.loc[transaction_df['instrument_name'] == instrument]
+        maturitydate = enf['maturitydate_trading'].iloc[0]
+        strike = enf['strike'].iloc[0]
+        is_call = enf['is_call'].iloc[0]
+        rng = pd.date_range(enf['day'].min(), maturitydate)
+        
+        wrk = pd.DataFrame({'Date': rng, 'instrument_name': instrument, 'strike': strike, 'maturitydate_trading': maturitydate, 'is_call': is_call})
+
+        # Add days to maturity
+        wrk['days_to_maturity'] = wrk.apply(lambda x: x['maturitydate_trading'].day - x['Date'].day, axis = 1)
+
+        instrument_collector.append(wrk)
+    instrument_df = pd.concat(instrument_collector, axis = 0, ignore_index = True)
+
+    counter = -1
     collected_out = []
     for d in run_dates:
         counter += 1
@@ -594,22 +619,25 @@ if __name__ == '__main__':
         #    break;
         try:
             print(d)
-            out.append(run(d))
-
-            # Filter around specific times of the day, possibly when the most trading activity occurs. 
-            # Otherwise we have too much variation in this!
-            filtered = filter_sub(out[-1])
-            instrument_df = pd.concat(out, axis = 0, ignore_index = True)
+            #out.append(run(d))
 
             # 1) ENSURE THAT EACH INSTRUMENT EXISTS UNTIL MATURITY 
-            required_instruments_df = instrument_df.loc[(instrument_df['maturitydate_trading'] >= d)]
+            daily_instruments = instrument_df.loc[(instrument_df['Date'] == d)]
             #requried_instruments = required_instruments_df['instrument_name'].unique()
 
             # Feed static properties of required instruments to the prediction / vola fit
             # Feed all variables that we need later
-            daily_instruments = required_instruments_df[['instrument_name', 'strike', 'maturitydate_trading', 'is_call', 'days_to_maturity']].drop_duplicates()
+            #daily_instruments = required_instruments_df[['instrument_name', 'Date', 'strike', 'maturitydate_trading', 'is_call', 'days_to_maturity']].drop_duplicates()
 
+            #pdb.set_trace()
             # 2) Assign None to instrument_price if it doesn't exist
+
+            #_____________________________________
+
+            # Filter around specific times of the day, possibly when the most trading activity occurs. 
+            # Otherwise we have too much variation in this!
+            filtered = filter_sub(out[counter])
+            #instrument_df = pd.concat(out, axis = 0, ignore_index = True)
 
             # Python Daily observation close to specific time
             # https://stackoverflow.com/questions/42208206/find-daily-observation-closest-to-specific-time-for-irregularly-spaced-data
@@ -632,7 +660,7 @@ if __name__ == '__main__':
             predicted_iv = calibrate_on_iv_surface(sub, predict_sub = daily_instruments, curr_day = d)
             daily_instruments['predicted_iv'] = predicted_iv
             daily_instruments['day'] = d
-
+            #pdb.set_trace()
             # Add _id to pred
             
             
@@ -666,8 +694,8 @@ if __name__ == '__main__':
 
                     # Join on _id with pred
 
-                if counter == 10:
-                    pdb.set_trace()
+            #if counter == 10:
+            #    pdb.set_trace()
 
             #filtered_pred = pred.loc[(pred['moneyness'] <= 1.3) & (pred['predicted_iv'] <= 2.5)]
             collected_out.append(daily_instruments)
