@@ -1,4 +1,5 @@
 import pdb
+import numpy as np
 
 def delta_hedge(delta_vec, S, r, tau, N = 1):
     """
@@ -33,6 +34,9 @@ def delta_hedge(delta_vec, S, r, tau, N = 1):
         cost_of_shares.append(n_shares[i]*S[i])
         cumulative_cost.append(cost_of_shares[i] + cumulative_cost[i-1] + interest_cost[i-1])
         interest_cost.append(cumulative_cost[i]*r*dt)
+        if np.isnan(cumulative_cost[-1]):
+            print("nan!")
+            pdb.set_trace()
 
     
     #if delta_vec[-2] > 0.01:
