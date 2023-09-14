@@ -158,23 +158,19 @@ if __name__ == '__main__':
 
     #@Todo: Set bounds for prediction in the actual prediction
     #dat = dat.loc[pd.notna(dat['rookley_predicted_iv'])]
-    rook = analyze_portfolio(dat, 'all', 'rookley_predicted_iv')
-    pdb.set_trace()
-    test = analyze_portfolio(dat, 'all', 'predicted_iv')
+    #rook = analyze_portfolio(dat, 'all', 'rookley_predicted_iv')
+    #pdb.set_trace()
+    #test = analyze_portfolio(dat, 'all', 'predicted_iv')
     
-    
-    
-    
-    
-
     pnl_per_group = {}
     for week in dat['nweeks'].unique():
         print('Week Group: ', week)
         df = dat[dat['nweeks'] == week]
         df.sort_values('day', inplace = True)
-        #pnl_per_group[week] = analyze_portfolio(df, week, 'predicted_iv')
-        
+        pnl_per_group[week] = analyze_portfolio(df, week, 'predicted_iv')
+    pdb.set_trace()
     for key, val in pnl_per_group.items():
         print('Week: ', key)
         print(val.describe())
         
+    pdb.set_trace()
