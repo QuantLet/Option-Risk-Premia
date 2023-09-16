@@ -34,7 +34,7 @@ def analyze_portfolio(dat, week, iv_var_name):
     #@Todo: Use Rookley to solve this problem. Or reconstruct vola surface using another method, then price all options around the same time for this.
     # Might as well use Rookley at a specific point of the day
     dat = dat.rename(columns = {'spot': 'index_price'})
-
+    pdb.set_trace()
     # Min 4 days to maturity
     calls = dat.loc[(dat['is_call'] == 1) & (dat['tau'] * 365 >= 2)]
     print('Calls only')
@@ -53,6 +53,16 @@ def analyze_portfolio(dat, week, iv_var_name):
     collector = []
     dailies = {}
     pnl = {}
+    n_shares_dct = {}
+    cost_of_shares_dct = {}
+    interest_cost_dct = {}
+    cumulative_cost_dct = {}
+    delta_hedge_cost_dct = {}
+    final_instrument_price_dct = {}
+    initial_instrument_price_dct = {}
+    initial_tau_dct = {}
+
+
     counter = 0
     for instrument in calls['instrument_name'].unique():
         
@@ -90,15 +100,19 @@ def analyze_portfolio(dat, week, iv_var_name):
             print('nan!!')
             continue;
             #pdb.set_trace()
-        n_shares, cost_of_shares, cumulative_cost, interest_cost = delta_hedge(daily['delta'].to_list(), daily['index_price'].to_list(), 0.01, daily['tau'].iloc[0])
-        delta_hedge_cost = cumulative_cost[-1]
-
-
-
+        n_shares_dct[instrument], cost_of_shares_dct[instrument], cumulative_cost_dct[instrument], interest_cost_dct[instrument] = delta_hedge(daily['delta'].to_list(), daily['index_price'].to_list(), 0.01, daily['tau'].iloc[0])
+        delta_hedge_cost = cumulative_cost_dct[instrument][-1]
         initial_instrument_price = daily.iloc[0]['instrument_price']
         final_instrument_price = daily.iloc[-1]['instrument_price']
+        initial_tau = daily.iloc[0]['tau']
 
+
+        # Store
         dailies[instrument] = daily
+        initial_instrument_price_dct[instrument] = initial_instrument_price
+        final_instrument_price_dct[instrument] = final_instrument_price
+        initial_tau_dct[instrument] = initial_tau
+
         # @Todo also have to consider the payoff of the long call here!!
         # Delta hedge cost is negative if we made a profit in the hedge position!
         #pnl[instrument] = final_instrument_price - initial_instrument_price - delta_hedge_cost #+ daily['hedge_pnl'].sum()
@@ -113,8 +127,6 @@ def analyze_portfolio(dat, week, iv_var_name):
             pdb.set_trace()
             pnl[instrument] = np.nan
 
-        collector.append([daily, n_shares, cost_of_shares, cumulative_cost, interest_cost, delta_hedge_cost, initial_instrument_price, final_instrument_price, pnl])
-
         #counter += 1
         #if counter >= 1000:
         #    pdb.set_trace()
@@ -123,9 +135,33 @@ def analyze_portfolio(dat, week, iv_var_name):
     pnl_df.to_csv('out/pnl_df' + iv_var_name + '_week=' + str(week) + '.csv')
     print(pnl_df.describe())
 
+    pdb.set_trace()
+    #test_out = pd.DataFrame([pnl, n_shares_dct, cost_of_shares_dct, cumulative_cost_dct, interest_cost_dct, initial_instrument_price_dct, final_instrument_price_dct])
+    #columns = ['pnl', 'n_shares', 'cost_of_shares', 'cumulative_cost', 'interest_cost', 'initial_instrument_price', 'final_instrument_price']
+
+    #dailies_df = pd.DataFrame(data = dailies.values(), index = dailies.keys())
+
+    # n_shares_dct, cost_of_shares_dct, cumulative_cost_dct, interest_cost_dct, 
+    # 'n_shares', 'cost_of_shares', 'cumulative_cost', 'interest_cost',
+    perf_overview = pd.DataFrame(data = [pnl,  initial_instrument_price_dct, final_instrument_price_dct, initial_tau_dct], index = ['pnl',  'initial_instrument_price', 'final_instrument_price', 'tau']).T
+    perf_overview['ndays'] = round(perf_overview['tau'] * 365)
+    perf_overview['tau_rounded'] = round(perf_overview['tau'], 2)
+
+    grp = perf_overview.groupby('ndays')['pnl']
+    print(grp.describe())
+
+    perf_overview.loc[perf_overview['ndays'] == 9].describe()
+
+    # Instead: Add all None's in the last row if daily data frame, then add the columns
+
     # @Todo: PnL per Group: First time-to-maturity, moneyness. Also show over time. 
     # Compare to Initial IV and Difference between Initial IV to running average. 
     # Check Jackwerth
+
+    #@Todo: 
+    # 1) Performance over Time
+    # 2) Relate this to IV vs Realized Vola Premium
+    # 3) 
 
     return pnl_df
 
@@ -160,8 +196,9 @@ if __name__ == '__main__':
     #dat = dat.loc[pd.notna(dat['rookley_predicted_iv'])]
     #rook = analyze_portfolio(dat, 'all', 'rookley_predicted_iv')
     #pdb.set_trace()
-    #test = analyze_portfolio(dat, 'all', 'predicted_iv')
+    test = analyze_portfolio(dat, 'all', 'predicted_iv')
     
+    pdb.set_trace()
     pnl_per_group = {}
     for week in dat['nweeks'].unique():
         print('Week Group: ', week)
