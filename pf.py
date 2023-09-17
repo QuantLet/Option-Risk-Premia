@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import pdb
-from src.delta_hedging import delta_hedge
+from src.delta_hedging import delta_hedge, simple_delta_hedge
 from src.blackscholes import Call
 from src.helpers import assign_groups, load_expiration_price_history, compute_vola
 
@@ -40,15 +40,15 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     #dat = dat.merge(expiration_history, on ='Date')
     
     # Min 4 days to maturity
-    #calls = dat.loc[(dat['is_call'] == 1) & (dat['tau'] * 365 >= 2)]
-    calls = dat.loc[(dat['is_call'] == 1)]
+    calls = dat.loc[(dat['is_call'] == 1) & (dat['tau'] * 365 >= 2)]
+    #calls = dat.loc[(dat['is_call'] == 1)]
     print('Calls only')
 
     calls['instrument_price_on_expiration'] = calls.apply(lambda x: Call.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], 0), axis = 1)
 
     # First, use BS Call value function to get Dollar Value for Call Parameters
-    calls['instrument_price'] = calls.apply(lambda x: Call.Price(x['index_price'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
-    calls['delta'] = calls.apply(lambda x: Call.Delta(x['index_price'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
+    calls['instrument_price'] = calls.apply(lambda x: Call.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
+    calls['delta'] = calls.apply(lambda x: Call.Delta(x['expiration_price'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
 
     # Not yet!! Must force all diffs to be 1, cant skip any!!
     #date_diffs = calls.groupby('instrument_name')['date'].diff()
@@ -60,6 +60,7 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     collector = []
     dailies = {}
     pnl = {}
+    pnl_foreign = {}
     n_shares_dct = {}
     cost_of_shares_dct = {}
     interest_cost_dct = {}
@@ -95,7 +96,7 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
         #    continue;
         #pdb.set_trace()
         # Delta Hedge
-        daily['future_position'] = daily['delta'] * daily['index_price']
+        
 
         # @Todo: 
         # Insert another row into daily, then concatenate all later
@@ -115,15 +116,24 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
         # So we are going one row too far!!
         # Clip (drop last row) for delta hedge calculation
         clipped = daily.iloc[:-1]
-        
-        n_shares_dct[instrument], cost_of_shares_dct[instrument], cumulative_cost_dct[instrument], interest_cost_dct[instrument] = delta_hedge(daily['delta'].to_list(), daily['index_price'].to_list(), 0.01, daily['tau'].iloc[0])
+        expiration_price = daily.iloc[-1]['expiration_price']
+
+        # @Todo:
+        # Do the individual rows have wrong spot prices?!
+        hedge_payoff_vec = simple_delta_hedge(daily)
+        hedge_payoff_sum = hedge_payoff_vec.sum()
+
+        n_shares_dct[instrument], cost_of_shares_dct[instrument], cumulative_cost_dct[instrument], interest_cost_dct[instrument] = delta_hedge(daily['delta'].to_list(), daily['expiration_price'].to_list(), 0.01, daily['tau'].iloc[0], expiration_price)
         delta_hedge_cost = cumulative_cost_dct[instrument][-1]
         initial_instrument_price = daily.iloc[0]['instrument_price']
 
         #@Todo: Still have to estimate instrument price from expiration price
         final_instrument_price = daily.iloc[-1]['instrument_price_on_expiration']
         initial_tau = daily.iloc[0]['tau']
-        
+
+        #if daily.shape[0] >= 10:
+        #    pdb.set_trace()
+        #    daily[['day', 'instrument_price', 'delta', 'index_price', 'expiration_price', 'tau', 'index_return', 'hedge_payoff', 'future_position', 'instrument_price']]
 
         # Store
         dailies[instrument] = daily
@@ -140,7 +150,8 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
         # Relative to initial price
         # ABSOLUTE
         # Maybe goes to infinity for small initial_instrument_price 
-        pnl[instrument] = (final_instrument_price - initial_instrument_price - delta_hedge_cost) #/ initial_instrument_price
+        pnl_foreign[instrument] = (final_instrument_price - initial_instrument_price - delta_hedge_cost) #/ initial_instrument_price
+        pnl[instrument] = (final_instrument_price - initial_instrument_price - hedge_payoff_sum) #/ initial_instrument_price
 
         if np.isnan(pnl[instrument]):
             print('delta hedge cost is nan')
@@ -155,7 +166,7 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     pnl_df.to_csv('out/pnl_df' + iv_var_name + '_week=' + str(week) + '.csv')
     print(pnl_df.describe())
 
-    pdb.set_trace()
+    #pdb.set_trace()
     #test_out = pd.DataFrame([pnl, n_shares_dct, cost_of_shares_dct, cumulative_cost_dct, interest_cost_dct, initial_instrument_price_dct, final_instrument_price_dct])
     #columns = ['pnl', 'n_shares', 'cost_of_shares', 'cumulative_cost', 'interest_cost', 'initial_instrument_price', 'final_instrument_price']
 
@@ -164,24 +175,35 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     # n_shares_dct, cost_of_shares_dct, cumulative_cost_dct, interest_cost_dct, 
     # 'n_shares', 'cost_of_shares', 'cumulative_cost', 'interest_cost',
     perf_overview = pd.DataFrame(data = [pnl,  initial_instrument_price_dct, final_instrument_price_dct, initial_tau_dct, start_date_dct, end_date_dct], index = ['pnl',  'initial_instrument_price', 'final_instrument_price', 'tau', 'start_date', 'end_date']).T
-    perf_overview['return_on_init_price'] = perf_overview['pnl'] / perf_overview['initial_instrument_price']
-    perf_overview['ndays'] = perf_overview['tau'] * 365
+    #perf_overview['return_on_init_price'] = perf_overview['pnl'] / perf_overview['initial_instrument_price']
+    #perf_overview['ndays'] = perf_overview['tau'] * 365
     #perf_overview['ndays_rounded'] = round(perf_overview['tau'], 2)
 
-    grp = perf_overview.groupby('ndays')['pnl']
-    print(grp.describe())
+    overview = pd.DataFrame({'pnl': pnl, 'tau': initial_tau_dct})
+    overview['ndays'] = overview['tau'] * 365
+    overview.groupby('ndays').describe()
+    pdb.set_trace()
+
+    over = assign_groups(overview)
+    over.groupby('nweeks').describe()
+
+    #grp = perf_overview.groupby('tau')['pnl']
+    #print(grp.describe())
+    #pdb.set_trace()
+    #grp.describe().loc[['min', '25%', '50%', '75%', 'max']]
+    #pd.DataFrame(data = [grp.min(), grp.quantile(0.25), grp.quantile(0.5), grp.quantile(0.75), grp.max()]).T
 
     # perf_overview.loc[(perf_overview['ndays'] > 1) & (perf_overview['ndays'] < 2)]['pnl'].mean()
-    perf_overview.loc[(perf_overview['ndays'] > 1) & (perf_overview['ndays'] < 2)]['pnl'].describe()
+    #perf_overview.loc[(perf_overview['ndays'] > 1) & (perf_overview['ndays'] < 2)]['pnl'].describe()
 
     # @Todo: Now relate this plot to the IV over Realized Vola premium!!
     plt.plot(pd.to_datetime(perf_overview['start_date']), perf_overview['pnl'])
     plt.ylim(-5000, 5000)
     plt.show()
     
-    plt.plot(pd.to_datetime(perf_overview['start_date']), perf_overview['return_on_init_price'])
-    plt.ylim(-2, 2)
-    plt.show()
+    #plt.plot(pd.to_datetime(perf_overview['start_date']), perf_overview['return_on_init_price'])
+    #plt.ylim(-2, 2)
+    #plt.show()
     
     
     #perf_overview.loc[perf_overview['ndays'] == 9].describe()
@@ -269,10 +291,10 @@ if __name__ == '__main__':
     #@Todo: Set bounds for prediction in the actual prediction
     #dat = dat.loc[pd.notna(dat['rookley_predicted_iv'])]
     #rook = analyze_portfolio(dat, 'all', 'rookley_predicted_iv')
-    pdb.set_trace()
+    #pdb.set_trace()
     rookley_missing_instruments = dat.loc[dat['rookley_predicted_iv'].isna(), 'instrument_name']
     rookley_filtered_dat = dat.loc[~dat['instrument_name'].isin(rookley_missing_instruments)]
-    rook_test = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv', expiration_history = expiration_price_history)
+    #rook_test = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv', expiration_history = expiration_price_history)
 
     test = analyze_portfolio(dat, 'all', 'predicted_iv', expiration_history = expiration_price_history)
     

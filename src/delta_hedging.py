@@ -1,7 +1,7 @@
 import pdb
 import numpy as np
 
-def delta_hedge(delta_vec, S, r, tau, N = 1):
+def delta_hedge(delta_vec, S, r, tau, expiration_price, N = 1):
     """
     delta_vec is vector of BS delta values
     S is vector of stock prices
@@ -14,7 +14,7 @@ def delta_hedge(delta_vec, S, r, tau, N = 1):
 
     #@Todo: Ensure that Delta is 0 at the end, we need to unravel the position
     delta_vec.append(0)
-    S.append(S[-1]) # Underlying stays constant while we unravel
+    S.append(expiration_price) # final price is expiration price
 
 
     dt = tau / len(delta_vec)
@@ -44,3 +44,26 @@ def delta_hedge(delta_vec, S, r, tau, N = 1):
     #raise ValueError('Delta must be 0 at last')
 
     return n_shares, cost_of_shares, cumulative_cost, interest_cost
+
+
+
+def simple_delta_hedge(daily):
+    """
+    Simple Version
+
+    Must have more than 1 row!
+    """
+    
+    #nrows = daily.shape[0]
+    #for i in range(nrows):
+
+    daily['future_position'] = daily['delta'] * daily['index_price']
+    daily['future_position'].iloc[-1] = 0
+    daily['index_return'] = daily['index_price'].pct_change().shift(-1)
+    daily['index_return'].iloc[-1] = 0
+
+    # Hedge Payoff
+    daily['hedge_payoff'] = daily['future_position'] * daily['index_return']
+    return daily['hedge_payoff']
+
+
