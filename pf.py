@@ -44,7 +44,7 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     calls = dat.loc[(dat['is_call'] == 1)]
     print('Calls only')
 
-    calls['instrument_price_on_expiration'] = calls.apply(lambda x: Call.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
+    calls['instrument_price_on_expiration'] = calls.apply(lambda x: Call.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], 0), axis = 1)
 
     # First, use BS Call value function to get Dollar Value for Call Parameters
     calls['instrument_price'] = calls.apply(lambda x: Call.Price(x['index_price'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
@@ -112,6 +112,10 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
             print('nan!!')
             continue;
             #pdb.set_trace()
+        # So we are going one row too far!!
+        # Clip (drop last row) for delta hedge calculation
+        clipped = daily.iloc[:-1]
+        
         n_shares_dct[instrument], cost_of_shares_dct[instrument], cumulative_cost_dct[instrument], interest_cost_dct[instrument] = delta_hedge(daily['delta'].to_list(), daily['index_price'].to_list(), 0.01, daily['tau'].iloc[0])
         delta_hedge_cost = cumulative_cost_dct[instrument][-1]
         initial_instrument_price = daily.iloc[0]['instrument_price']
@@ -119,7 +123,7 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
         #@Todo: Still have to estimate instrument price from expiration price
         final_instrument_price = daily.iloc[-1]['instrument_price_on_expiration']
         initial_tau = daily.iloc[0]['tau']
-        pdb.set_trace()
+        
 
         # Store
         dailies[instrument] = daily
@@ -266,8 +270,10 @@ if __name__ == '__main__':
     #dat = dat.loc[pd.notna(dat['rookley_predicted_iv'])]
     #rook = analyze_portfolio(dat, 'all', 'rookley_predicted_iv')
     pdb.set_trace()
-    
-    
+    rookley_missing_instruments = dat.loc[dat['rookley_predicted_iv'].isna(), 'instrument_name']
+    rookley_filtered_dat = dat.loc[~dat['instrument_name'].isin(rookley_missing_instruments)]
+    rook_test = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv', expiration_history = expiration_price_history)
+
     test = analyze_portfolio(dat, 'all', 'predicted_iv', expiration_history = expiration_price_history)
     
     pdb.set_trace()
