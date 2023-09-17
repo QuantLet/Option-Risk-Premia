@@ -40,8 +40,8 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     #dat = dat.merge(expiration_history, on ='Date')
     
     # Min 4 days to maturity
-    calls = dat.loc[(dat['is_call'] == 1) & (dat['tau'] * 365 >= 2)]
-    #calls = dat.loc[(dat['is_call'] == 1)]
+    #calls = dat.loc[(dat['is_call'] == 1) & (dat['tau'] * 365 >= 2)]
+    calls = dat.loc[(dat['is_call'] == 1)]
     print('Calls only')
 
     calls['instrument_price_on_expiration'] = calls.apply(lambda x: Call.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
@@ -119,7 +119,7 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
         #@Todo: Still have to estimate instrument price from expiration price
         final_instrument_price = daily.iloc[-1]['instrument_price_on_expiration']
         initial_tau = daily.iloc[0]['tau']
-
+        pdb.set_trace()
 
         # Store
         dailies[instrument] = daily
@@ -160,16 +160,23 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     # n_shares_dct, cost_of_shares_dct, cumulative_cost_dct, interest_cost_dct, 
     # 'n_shares', 'cost_of_shares', 'cumulative_cost', 'interest_cost',
     perf_overview = pd.DataFrame(data = [pnl,  initial_instrument_price_dct, final_instrument_price_dct, initial_tau_dct, start_date_dct, end_date_dct], index = ['pnl',  'initial_instrument_price', 'final_instrument_price', 'tau', 'start_date', 'end_date']).T
-    perf_overview['ndays'] = round(perf_overview['tau'] * 365)
-    perf_overview['tau_rounded'] = round(perf_overview['tau'], 2)
+    perf_overview['return_on_init_price'] = perf_overview['pnl'] / perf_overview['initial_instrument_price']
+    perf_overview['ndays'] = perf_overview['tau'] * 365
+    #perf_overview['ndays_rounded'] = round(perf_overview['tau'], 2)
 
     grp = perf_overview.groupby('ndays')['pnl']
     print(grp.describe())
 
+    # perf_overview.loc[(perf_overview['ndays'] > 1) & (perf_overview['ndays'] < 2)]['pnl'].mean()
+    perf_overview.loc[(perf_overview['ndays'] > 1) & (perf_overview['ndays'] < 2)]['pnl'].describe()
 
     # @Todo: Now relate this plot to the IV over Realized Vola premium!!
     plt.plot(pd.to_datetime(perf_overview['start_date']), perf_overview['pnl'])
     plt.ylim(-5000, 5000)
+    plt.show()
+    
+    plt.plot(pd.to_datetime(perf_overview['start_date']), perf_overview['return_on_init_price'])
+    plt.ylim(-2, 2)
     plt.show()
     
     
@@ -186,6 +193,8 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     # 2) Relate this to IV vs Realized Vola Premium
     # 3) Take actual expiration price for final instrument price instead of an estimation!!!
     # 4) For #1, Calculate Mean IV and Realized Variance!
+    # 5) Restrict for ATM instruments, only count each once!
+    # Exclude Outliers
 
     return pnl_df
 
@@ -227,7 +236,6 @@ if __name__ == '__main__':
             plt.savefig('plots/iv_vs_rv_ndays=' + str(i) + '.png')
             #vola_df['rolling_daily_real_vola'] = compute_vola(avg_daily_vola['rookley_predicted_iv'], window_size)
 
-            
             avg_daily_vola['voldiff'] = avg_daily_vola['rolling_iv'] - avg_daily_vola['rolling_rv']
             print(avg_daily_vola['voldiff'].describe())
 
@@ -238,7 +246,6 @@ if __name__ == '__main__':
             plt.savefig('plots/voladiff_ndays=' + str(i) + '.png')
             
 
-    pdb.set_trace()
     # Assess difference between Rookley and simple Regression estimated IV
     dat['ivdiff_abs'] = dat['rookley_predicted_iv'] - dat['predicted_iv']
     dat['ivdiff_rel'] = dat['ivdiff_abs'] / dat['rookley_predicted_iv']
@@ -258,7 +265,9 @@ if __name__ == '__main__':
     #@Todo: Set bounds for prediction in the actual prediction
     #dat = dat.loc[pd.notna(dat['rookley_predicted_iv'])]
     #rook = analyze_portfolio(dat, 'all', 'rookley_predicted_iv')
-    #pdb.set_trace()
+    pdb.set_trace()
+    
+    
     test = analyze_portfolio(dat, 'all', 'predicted_iv', expiration_history = expiration_price_history)
     
     pdb.set_trace()
