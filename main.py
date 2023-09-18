@@ -31,6 +31,7 @@ from scipy import stats
 from statsmodels import api
 from src.surface_plot_regression import surface_plot
 from src.plots import simple_3d_plot
+from src.helpers import assign_groups
 #from statsmodels.api import OLS
 #from src.vola_plots import plot_atm_iv_term_structure
 
@@ -595,21 +596,24 @@ if __name__ == '__main__':
 
         
     # Enforce Daily Existence of each instrument
-    for instrument in transaction_df['instrument_name'].unique():
-        print(instrument)
-        enf = transaction_df.loc[transaction_df['instrument_name'] == instrument]
+    def stratify_instruments(enf):
+
         maturitydate = enf['maturitydate_trading'].iloc[0]
         strike = enf['strike'].iloc[0]
         is_call = enf['is_call'].iloc[0]
         rng = pd.date_range(enf['day'].min(), maturitydate)
         
-        wrk = pd.DataFrame({'Date': rng, 'instrument_name': instrument, 'strike': strike, 'maturitydate_trading': maturitydate, 'is_call': is_call})
+        wrk = pd.DataFrame({'Date': rng, 'strike': strike, 'maturitydate_trading': maturitydate, 'is_call': is_call})
 
         # Add days to maturity
         wrk['days_to_maturity'] = wrk.apply(lambda x: x['maturitydate_trading'].day - x['Date'].day, axis = 1)
 
-        instrument_collector.append(wrk)
-    instrument_df = pd.concat(instrument_collector, axis = 0, ignore_index = True)
+        return wrk
+
+    instrument_collector = transaction_df.groupby(['instrument_name']).apply(lambda x: stratify_instruments(x))
+    instrument_df = instrument_collector.reset_index()
+
+    #instrument_df = pd.concat(instrument_collector, axis = 0, ignore_index = True)
 
     counter = -1
     collected_out = []
@@ -620,7 +624,7 @@ if __name__ == '__main__':
         try:
             print(d)
             #out.append(run(d))
-
+            
             # 1) ENSURE THAT EACH INSTRUMENT EXISTS UNTIL MATURITY 
             daily_instruments = instrument_df.loc[(instrument_df['Date'] == d)]
             #requried_instruments = required_instruments_df['instrument_name'].unique()
@@ -638,7 +642,7 @@ if __name__ == '__main__':
             # Otherwise we have too much variation in this!
             filtered = filter_sub(out[counter])
             #instrument_df = pd.concat(out, axis = 0, ignore_index = True)
-
+            
             # Python Daily observation close to specific time
             # https://stackoverflow.com/questions/42208206/find-daily-observation-closest-to-specific-time-for-irregularly-spaced-data
             filtered.set_index('date', inplace = True)
@@ -655,8 +659,9 @@ if __name__ == '__main__':
             _Tau                = list(map(lambda x: (x.days + (x.seconds/sec_to_date_factor)) / 365, Tdiff))#Tdiff/365 #list(map(lambda x: x.days/365, Tdiff)) # else: Tdiff/365
             
             daily_instruments['tau'] = _Tau
+            daily_instruments = assign_groups(daily_instruments)
 
-            daily_instruments = sub.copy(deep = True)
+            #daily_instruments = sub.copy(deep = True) # HERE!!!
             predicted_iv = calibrate_on_iv_surface(sub, predict_sub = daily_instruments, curr_day = d)
             daily_instruments['predicted_iv'] = predicted_iv
             daily_instruments['day'] = d
@@ -676,33 +681,37 @@ if __name__ == '__main__':
                     #test_rookley = smoothing_rookley(sub, sub['moneyness'], sub['tau'], 0.1, 0.1)
                     # Run separately for each week and predict
                     idx = sub.loc[sub['nweeks'] == week].index
-                    rookley_fit = rookley(sub.loc[idx])
-                    moneyness_fit = rookley_fit[3]
-                    iv_fit = rookley_fit[0]
-                    # for prediction, just find location of moneyness of the value to-be-predicted
-                    # then take the vola at the same point
-                    # GOT AN ERROR HERE: 
-                    # for each element in sub['moneyness'], find the closest matching one in moneyness_fit
-                    # Then select iv at the same location - should have length of 333 for the first one!
-                    daily_idx = daily_instruments.loc[daily_instruments['nweeks'] == week].index
-                    moneyness_loc = daily_instruments.loc[daily_idx].apply(lambda x: find_nearest_location(moneyness_fit,x['moneyness'] ), axis = 1)
-                    #find_nearest(moneyness_fit, x0)
-                    
-                    # Choose iv at location of moneyness_loc
-                    #@Todo: ERROR HERE!!!!
-                    daily_instruments.loc[daily_idx, 'rookley_predicted_iv'] = iv_fit[moneyness_loc]
+                    if len(idx) > 0:
+                        rookley_fit = rookley(sub.loc[idx])
+                        moneyness_fit = rookley_fit[3]
+                        iv_fit = rookley_fit[0]
+                        # for prediction, just find location of moneyness of the value to-be-predicted
+                        # then take the vola at the same point
+                        # GOT AN ERROR HERE: 
+                        # for each element in sub['moneyness'], find the closest matching one in moneyness_fit
+                        # Then select iv at the same location - should have length of 333 for the first one!
+                        daily_idx = daily_instruments.loc[daily_instruments['nweeks'] == week].index
+                        moneyness_loc = daily_instruments.loc[daily_idx].apply(lambda x: find_nearest_location(moneyness_fit,x['moneyness'] ), axis = 1)
+                        #find_nearest(moneyness_fit, x0)
+                        
+                        # Choose iv at location of moneyness_loc
+                        #@Todo: ERROR HERE!!!!
+                        daily_instruments.loc[daily_idx, 'rookley_predicted_iv'] = iv_fit[moneyness_loc]
+                    else:
+                        print('Not subscriptable')
+                        #pdb.set_trace()
 
                     # Join on _id with pred
 
             #if counter == 10:
             #    pdb.set_trace()
-
             #filtered_pred = pred.loc[(pred['moneyness'] <= 1.3) & (pred['predicted_iv'] <= 2.5)]
             collected_out.append(daily_instruments)
 
         except Exception as e:
             print('error in : ', e)
-    pdb.set_trace()
+            #pdb.set_trace()
+    
     # Compare Rookley IV vs predicted_iv
     out_df = pd.concat(collected_out, ignore_index = True)
     pd.DataFrame(out_df).to_csv('out/fitted_data.csv')

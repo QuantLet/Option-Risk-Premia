@@ -166,40 +166,16 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     pnl_df.to_csv('out/pnl_df' + iv_var_name + '_week=' + str(week) + '.csv')
     print(pnl_df.describe())
 
-    #pdb.set_trace()
-    #test_out = pd.DataFrame([pnl, n_shares_dct, cost_of_shares_dct, cumulative_cost_dct, interest_cost_dct, initial_instrument_price_dct, final_instrument_price_dct])
-    #columns = ['pnl', 'n_shares', 'cost_of_shares', 'cumulative_cost', 'interest_cost', 'initial_instrument_price', 'final_instrument_price']
-
-    #dailies_df = pd.DataFrame(data = dailies.values(), index = dailies.keys())
-
-    # n_shares_dct, cost_of_shares_dct, cumulative_cost_dct, interest_cost_dct, 
-    # 'n_shares', 'cost_of_shares', 'cumulative_cost', 'interest_cost',
     perf_overview = pd.DataFrame(data = [pnl,  initial_instrument_price_dct, final_instrument_price_dct, initial_tau_dct, start_date_dct, end_date_dct], index = ['pnl',  'initial_instrument_price', 'final_instrument_price', 'tau', 'start_date', 'end_date']).T
-    #perf_overview['return_on_init_price'] = perf_overview['pnl'] / perf_overview['initial_instrument_price']
-    #perf_overview['ndays'] = perf_overview['tau'] * 365
-    #perf_overview['ndays_rounded'] = round(perf_overview['tau'], 2)
+    perf_overview.to_csv('out/perf_overview' + iv_var_name + '_week=' + str(week) + '.csv')
 
     overview = pd.DataFrame({'pnl': pnl, 'tau': initial_tau_dct})
     overview['ndays'] = overview['tau'] * 365
-    overview.groupby('ndays').describe()
-    pdb.set_trace()
+    #overview.groupby('ndays').describe()
 
     over = assign_groups(overview)
-    over.groupby('nweeks').describe()
-
-    #grp = perf_overview.groupby('tau')['pnl']
-    #print(grp.describe())
-    #pdb.set_trace()
-    #grp.describe().loc[['min', '25%', '50%', '75%', 'max']]
-    #pd.DataFrame(data = [grp.min(), grp.quantile(0.25), grp.quantile(0.5), grp.quantile(0.75), grp.max()]).T
-
-    # perf_overview.loc[(perf_overview['ndays'] > 1) & (perf_overview['ndays'] < 2)]['pnl'].mean()
-    #perf_overview.loc[(perf_overview['ndays'] > 1) & (perf_overview['ndays'] < 2)]['pnl'].describe()
-
-    # @Todo: Now relate this plot to the IV over Realized Vola premium!!
-    plt.plot(pd.to_datetime(perf_overview['start_date']), perf_overview['pnl'])
-    plt.ylim(-5000, 5000)
-    plt.show()
+    print(over.groupby('nweeks').describe())
+    over.to_csv('out/overview' + iv_var_name + '_week=' + str(week) + '.csv')
     
     #plt.plot(pd.to_datetime(perf_overview['start_date']), perf_overview['return_on_init_price'])
     #plt.ylim(-2, 2)
@@ -222,7 +198,7 @@ def analyze_portfolio(dat, week, iv_var_name, expiration_history):
     # 5) Restrict for ATM instruments, only count each once!
     # Exclude Outliers
 
-    return pnl_df
+    return perf_overview
 
 if __name__ == '__main__':
 
@@ -294,20 +270,18 @@ if __name__ == '__main__':
     #pdb.set_trace()
     rookley_missing_instruments = dat.loc[dat['rookley_predicted_iv'].isna(), 'instrument_name']
     rookley_filtered_dat = dat.loc[~dat['instrument_name'].isin(rookley_missing_instruments)]
-    #rook_test = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv', expiration_history = expiration_price_history)
-
-    test = analyze_portfolio(dat, 'all', 'predicted_iv', expiration_history = expiration_price_history)
     
-    pdb.set_trace()
-    pnl_per_group = {}
-    for week in dat['nweeks'].unique():
-        print('Week Group: ', week)
-        df = dat[dat['nweeks'] == week]
-        df.sort_values('day', inplace = True)
-        pnl_per_group[week] = analyze_portfolio(df, week, 'predicted_iv')
-    pdb.set_trace()
-    for key, val in pnl_per_group.items():
-        print('Week: ', key)
-        print(val.describe())
-        
+    rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv', expiration_history = expiration_price_history)
+
+    # @Todo: Now relate this plot to the IV over Realized Vola premium!!
+    fig = plt.figure(figsize = (10,7))
+    plt.plot(pd.to_datetime(rookley_performance_overview['start_date']), rookley_performance_overview['pnl'])
+    plt.ylim(-5000, 5000)
+    plt.savefig('plots/rookley_pnl.png')
+
+    regression_performance_overview = analyze_portfolio(dat, 'all', 'predicted_iv', expiration_history = expiration_price_history)
+    plt.plot(pd.to_datetime(regression_performance_overview['start_date']), regression_performance_overview['pnl'])
+    plt.ylim(-5000, 5000)
+    plt.savefig('plots/regression_pnl.png')
+
     pdb.set_trace()
