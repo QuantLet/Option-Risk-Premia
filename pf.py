@@ -91,44 +91,27 @@ def analyze_portfolio(dat, week, iv_var_name, calls = True):
 
         # Absolute Pnl
         pnl[instrument] = (final_instrument_price - initial_instrument_price - hedge_payoff_sum)
+        
         # Relative to initial price
-        pnl_relative = pnl[instrument] / initial_instrument_price
+        if initial_instrument_price > 0.01:
+            pnl_relative = pnl[instrument] / initial_instrument_price
+        else:
+            pnl_relative = np.nan
 
     pnl_df = pd.DataFrame({'pnl': pnl})
     pnl_df.to_csv('out/pnl_df' + iv_var_name + '_week=' + str(week) + '.csv')
     print(pnl_df.describe())
 
     perf_overview = pd.DataFrame(data = [pnl,  initial_instrument_price_dct, final_instrument_price_dct, initial_tau_dct, start_date_dct, end_date_dct], index = ['pnl',  'initial_instrument_price', 'final_instrument_price', 'tau', 'start_date', 'end_date']).T
-    perf_overview.to_csv('out/perf_overview' + iv_var_name + '_week=' + str(week) + '.csv')
+    perf_overview.to_csv('out/perf_overview' + iv_var_name + '_calls=' + str(calls) +'_week=' + str(week) + '.csv')
 
-    overview = pd.DataFrame({'pnl': pnl, 'tau': initial_tau_dct})
+    overview = pd.DataFrame({'pnl': pnl, 'pnl_relative': pnl_relative,'tau': initial_tau_dct})
     overview['ndays'] = overview['tau'] * 365
     #overview.groupby('ndays').describe()
 
     over = assign_groups(overview)
     print(over.groupby('nweeks').describe())
-    over.to_csv('out/overview' + iv_var_name + '_week=' + str(week) + '.csv')
-    
-    #plt.plot(pd.to_datetime(perf_overview['start_date']), perf_overview['return_on_init_price'])
-    #plt.ylim(-2, 2)
-    #plt.show()
-    
-    
-    #perf_overview.loc[perf_overview['ndays'] == 9].describe()
-
-    # Instead: Add all None's in the last row if daily data frame, then add the columns
-
-    # @Todo: PnL per Group: First time-to-maturity, moneyness. Also show over time. 
-    # Compare to Initial IV and Difference between Initial IV to running average. 
-    # Check Jackwerth
-
-    #@Todo: 
-    # 1) Performance over Time (use start date and end date)
-    # 2) Relate this to IV vs Realized Vola Premium
-    # 3) Take actual expiration price for final instrument price instead of an estimation!!!
-    # 4) For #1, Calculate Mean IV and Realized Variance!
-    # 5) Restrict for ATM instruments, only count each once!
-    # Exclude Outliers
+    over.to_csv('out/overview' + iv_var_name + '_calls=' + str(calls) + '_week=' + str(week) + '.csv')
 
     return perf_overview
 
@@ -148,8 +131,6 @@ if __name__ == '__main__':
     dat.sort_values('day', inplace = True)
 
     # Merge Expiration Prices to Transactions
-    #pdb.set_trace()
-    #window_size = 2
     dat = dat.merge(expiration_price_history, on ='Date')
     vola_df = dat.copy(deep=True)
 
@@ -200,17 +181,21 @@ if __name__ == '__main__':
     rookley_missing_instruments = dat.loc[dat['rookley_predicted_iv'].isna(), 'instrument_name']
     rookley_filtered_dat = dat.loc[~dat['instrument_name'].isin(rookley_missing_instruments)]
     
-    rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
+    for is_calls in [True, False]:
 
-    # @Todo: Now relate this plot to the IV over Realized Vola premium!!
-    fig = plt.figure(figsize = (10,7))
-    plt.plot(pd.to_datetime(rookley_performance_overview['start_date']), rookley_performance_overview['pnl'])
-    plt.ylim(-5000, 5000)
-    plt.savefig('plots/rookley_pnl.png')
+        # Run Analysis for Rookley and Regression
+        rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv', is_calls)
+        regression_performance_overview = analyze_portfolio(dat, 'all', 'predicted_iv', is_calls)
 
-    regression_performance_overview = analyze_portfolio(dat, 'all', 'predicted_iv')
-    plt.plot(pd.to_datetime(regression_performance_overview['start_date']), regression_performance_overview['pnl'])
-    plt.ylim(-5000, 5000)
-    plt.savefig('plots/regression_pnl.png')
-
-    pdb.set_trace()
+        # @Todo: Now relate this plot to the IV over Realized Vola premium!!
+        fig = plt.figure(figsize = (10,7))
+        
+        plt.subplot(2, 1, 1)
+        plt.plot(pd.to_datetime(rookley_performance_overview['start_date']), rookley_performance_overview['pnl'])
+        plt.ylim(-5000, 5000)
+        plt.savefig('plots/rookley_pnl_calls=' + str(is_calls) + '.png')
+        
+        plt.subplot(2, 1, 2)
+        plt.plot(pd.to_datetime(regression_performance_overview['start_date']), regression_performance_overview['pnl'])
+        plt.ylim(-5000, 5000)
+        plt.savefig('plots/regression_pnl_calls=' + str(is_calls) + '.png')
