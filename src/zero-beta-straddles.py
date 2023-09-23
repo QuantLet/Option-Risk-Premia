@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 
-from blackscholes import Call, Put
+from blackscholes import Call, Put, d1
 import pdb
 
 def get_call_beta(s, k, r, vol, tau, _lambda = 0, beta_s = 1):
@@ -22,6 +22,7 @@ def get_call_beta(s, k, r, vol, tau, _lambda = 0, beta_s = 1):
     call_price = Call.Price(s, k, r, vol, tau)
 
     # Argument for Cumulative Normal Distribution
+    #x = d1(s, k, r, vol, tau)
     x = (np.log(s/k) + ((r - _lambda + (0.5 * (vol**2))) * tau)) / (vol * tau**0.5)
     cdf = N(x)
 
@@ -61,7 +62,7 @@ def put_price_via_parity():
 
 if __name__ == '__main__':
     print('Starting Zero-Beta Test')
-    spot = 10300
+    spot = 10000
     strike = 10000
     interest_rate = 0
     vola = 0.5
@@ -77,3 +78,6 @@ if __name__ == '__main__':
 
     call_weights, put_weights = get_straddle_weights(call_beta, put_beta)
     print('\nTheta: ', call_weights, '\n1 - Theta: ', put_weights)
+
+    # The return of an (already rebalanced?!) zero-beta straddle is defined in 
+    # Equation (18)
