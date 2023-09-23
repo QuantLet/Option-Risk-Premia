@@ -53,6 +53,8 @@ def analyze_portfolio(dat, week, iv_var_name, calls = True):
     final_instrument_price_dct = {}
     initial_instrument_price_dct = {}
     initial_tau_dct = {}
+    initial_strike_dct = {}
+    initial_moneyness_dct = {}
     start_date_dct = {}
     end_date_dct = {}
 
@@ -74,17 +76,21 @@ def analyze_portfolio(dat, week, iv_var_name, calls = True):
         # Execute Hedge
         hedge_payoff_vec = simple_delta_hedge(daily)
         hedge_payoff_sum = hedge_payoff_vec.sum()
-        
+
         # Helpers
         initial_instrument_price = daily.iloc[0]['instrument_price']
         final_instrument_price = daily.iloc[-1]['instrument_price_on_expiration']
         initial_tau = daily.iloc[0]['tau']
+        initial_strike = daily.iloc[0]['strike']
+        initial_moneyness = daily.iloc[0]['moneyness']
 
         # Store
         dailies[instrument] = daily
         initial_instrument_price_dct[instrument] = initial_instrument_price
         final_instrument_price_dct[instrument] = final_instrument_price
         initial_tau_dct[instrument] = initial_tau
+        initial_strike_dct[instrument] = initial_strike
+        initial_moneyness_dct[instrument] = initial_moneyness
         start_date_dct[instrument] = daily.iloc[0]['day']
         end_date_dct[instrument] = daily.iloc[-1]['day']
         delta_hedge_cost_dct[instrument] = hedge_payoff_sum 
@@ -105,7 +111,7 @@ def analyze_portfolio(dat, week, iv_var_name, calls = True):
     perf_overview = pd.DataFrame(data = [pnl,  initial_instrument_price_dct, final_instrument_price_dct, initial_tau_dct, start_date_dct, end_date_dct], index = ['pnl',  'initial_instrument_price', 'final_instrument_price', 'tau', 'start_date', 'end_date']).T
     perf_overview.to_csv('out/perf_overview' + iv_var_name + '_calls=' + str(calls) +'_week=' + str(week) + '.csv')
 
-    overview = pd.DataFrame({'pnl': pnl, 'pnl_relative': pnl_relative,'tau': initial_tau_dct})
+    overview = pd.DataFrame({'pnl': pnl, 'pnl_relative': pnl_relative,'tau': initial_tau_dct, 'moneuyness': initial_moneyness_dct, 'strike': initial_strike_dct})
     overview['ndays'] = overview['tau'] * 365
     #overview.groupby('ndays').describe()
 
