@@ -16,6 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import pdb
+from src.plots import simple_3d_plot, plot_performance
 from src.blackscholes import Call, Put
 from src.helpers import assign_groups, load_expiration_price_history, compute_vola
 from src.zero_beta_straddles import get_call_beta, get_put_beta, get_straddle_weights
@@ -34,10 +35,11 @@ def analyze_portfolio(dat, week, iv_var_name):
     #dat = dat.rename(columns = {'spot': 'index_price'})
  
     # Run for dailies first
-    print('Only Dailies!')
+    print('Up to 30 Days!')
 
     dat['ndays'] = dat['tau'] * 365
-    sub = dat.loc[(dat['ndays'] >= 0) & (dat['ndays']<= 1)]
+    sub = dat.loc[(dat['ndays'] >= 0) & (dat['ndays']<= 30)]
+    #sub = dat
 
     # Min 4 days to maturity
     existing_options = sub
@@ -79,7 +81,7 @@ def analyze_portfolio(dat, week, iv_var_name):
     counter = 0
     out_dct = {}
     # Looping over Calls only to match Puts
-    for instrument in options.loc[options['is_call'] == 1]['instrument_name'].unique():
+    for instrument in options['instrument_name'].unique(): #.loc[options['is_call'] == 1]
         try:
             # We could also just price Puts by Put-Call-Parity (same IV)
 
@@ -98,16 +100,8 @@ def analyze_portfolio(dat, week, iv_var_name):
                 print('Couldnt find matching Instrument')
                 continue
             put_df = options.loc[options['instrument_name'] == matching_put_name]
-            if put_df.shape[0] != 1:
-                print('No Put')
-                pdb.set_trace()
-                # Match here via Put-Call-Parity
-                continue
-
-            if call_df.shape[0] > 1:
-                print("here")
-                pdb.set_trace()
-
+            
+            # Only take the first row! No rebalancing performed at the time
             call_price = call_df.iloc[0]['instrument_price']
             call_beta = call_df.iloc[0]['call_beta']
             spot = call_df.iloc[0]['spot']
@@ -139,7 +133,7 @@ def analyze_portfolio(dat, week, iv_var_name):
             out['combined_ret'] = out['combined_payoff'] / (out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
 
             keyname = str(call_name) + ' + ' + str(matching_put_name) 
-            out_dct[keyname] = out
+            out_dct[keyname] = out.iloc[0].to_frame()
             #out_l.append(out)
 
             #print('\nCall: ', call_df[['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta']])
@@ -197,15 +191,17 @@ if __name__ == '__main__':
     # Run Analysis for Rookley and Regression
     #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
     performance_overview_l = analyze_portfolio(dat, 'all', 'predicted_iv')
-    
+
     collected = []
     for key, val in performance_overview_l.items():
-        collected.append(val)
-    performance_overview = pd.concat(collected, ignore_index=True)   
+        collected.append(val.T)
+
+    performance_overview = pd.concat(collected, ignore_index=True).reset_index()
+    
     #test = pd.DataFrame.from_dict(regression_performance_overview_l, orient = 'index')
     #regression_performance_overview = pd.DataFrame([regression_performance_overview_l.values()], index = regression_performance_overview_l.keys())
     #regression_performance_overview = pd.concat(regression_performance_overview_l, ignore_index = True)
-    print(performance_overview[['combined_payoff', 'combined_ret', 'tau']].describe())
+    #print(performance_overview[['combined_payoff', 'combined_ret', 'tau']].describe())
 
     # Investigate too low days to maturity
     # Maybe the -29 comes from taking days to maturity until end-of-month....
@@ -218,32 +214,32 @@ if __name__ == '__main__':
 
     #performance_overview.loc[performance_overview['days_to_maturity'] != -29][['combined_payoff', 'combined_ret', 'tau', 'moneyness']].describe()
 
-    performance_overview['rounded_tau'] = round(performance_overview['tau'], 2)
-    performance_overview['rounded_moneyness'] = round(performance_overview['moneyness'], 2)
+    # The transposed / pd.Series transformation fucks up the data type, so got to force float
+    performance_overview['tau'] = performance_overview['tau'].astype(float)
+    performance_overview['rounded_tau'] = round(performance_overview['tau'].astype(float) * 365).astype(int)
+    performance_overview['rounded_moneyness'] = round(performance_overview['moneyness'].astype(float), 2)
+    performance_overview['combined_payoff'] = performance_overview['combined_payoff'].astype(float)
+    performance_overview['combined_ret'] = performance_overview['combined_ret'].astype(float)
     des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']].groupby(['rounded_tau', 'rounded_moneyness']).describe()
     print(des.to_string())
     des.to_csv('out/Zero_Beta_Performance_Overview_Summary_Statistics.csv')
+  
 
+
+    #@Todo: Ensure that x axis is date! its too tight!
+    #@Todo: Invert Returns and Combined Payoff for long straddles!
+    # @Todo Introduce interest rate!
+
+    pdb.set_trace()
+    # Make PNL plot over Tau and Moneyness
+    simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
+    simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
+
+    # Prepare Performance Plots
+    performance_overview = assign_groups(performance_overview)
     
+    # Per Tau
+    plot_performance(performance_overview, 'rounded_tau')
 
-    # Make this plot over Tau and Moneyness
-
-    performance_overview['Date'] = pd.to_datetime(performance_overview['Date'])
-    for tau in performance_overview['rounded_tau'].unique():
-
-        tau_sub = performance_overview.loc[performance_overview['rounded_tau'] == tau]
-        tau_label = str(tau)
-
-        # @Todo: Now relate this plot to the IV over Realized Vola premium!!
-        fig = plt.figure(figsize = (10,7))
-            
-        plt.subplot(2, 1, 1)
-        plt.plot(tau_sub['Date'], tau_sub['combined_payoff'], label = tau_label)
-        plt.ylim(-5000, 5000)
-        
-        plt.subplot(2,1,2)
-        plt.plot(tau_sub['Date'], tau_sub['combined_ret'], label = tau_label)
-        plt.ylim(-2, 2)
-
-        plt.legend()
-        plt.savefig('plots/' + 'zero_beta_straddle_tau=' + tau_label + '.png')
+    # Per Week
+    plot_performance(performance_overview, 'nweeks')
