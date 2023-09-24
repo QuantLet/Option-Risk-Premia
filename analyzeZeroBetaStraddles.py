@@ -35,10 +35,33 @@ def analyze_portfolio(dat, week, iv_var_name):
  
     # Run for dailies first
     print('Only Dailies!')
+
+    dat['ndays'] = dat['tau'] * 365
+    sub = dat.loc[(dat['ndays'] >= 2) & (dat['ndays']<= 3)]
+
     # Min 4 days to maturity
-    options = dat.loc[dat['days_to_maturity'] == 2]
+    existing_options = sub
     #options = dat.loc[dat['tau'] * 365 >= 7]
-    
+
+    # Construct Pairs - Match Calls and Puts Names so that they have the same strike and maturity
+    existing_options['pair_name'] = existing_options.apply(lambda x: x['instrument_name'].replace('-C', '-P') if x['is_call'] == 1 else x['instrument_name'].replace('-P', '-C'), axis = 1)
+
+    # For which paired instruments do we not have observations?
+    missing_options = existing_options[~existing_options['pair_name'].isin(existing_options['instrument_name'])]
+
+    # Reverse instrument name and pair name and then fill with Put-Call-Parity
+    missing_options = missing_options.rename(columns = {'instrument_name': 'pair_name', 'pair_name': 'instrument_name'})
+
+    # Reverse Puts and Calls
+    missing_options['is_call'] = abs(missing_options['is_call'] - 1)
+
+    # Overwrite Moneyness
+    missing_options['moneyness'] = missing_options['strike'] / missing_options['spot']
+
+    # Combine with existing options
+    options = pd.concat([existing_options, missing_options], ignore_index=True)
+
+
     # First, use BS Call value function to get Dollar Value for Call Parameters
     options['instrument_price_on_expiration'] = options.apply(lambda x: Call.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], 0) if x['is_call'] == 1 else Put.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], 0), axis = 1)
     options['instrument_price'] = options.apply(lambda x: Call.Price(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 1 else Put.Price(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
@@ -48,12 +71,13 @@ def analyze_portfolio(dat, week, iv_var_name):
     options['call_beta'] = options.apply(lambda x: get_call_beta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 1 else np.nan, axis = 1)
     #options['put_beta'] = options.apply(lambda x: get_put_beta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 0 else np.nan, axis = 1)
 
-    # Construct Pairs - Match Calls and Puts Names so that they have the same strike and maturity
-    options['pair_name'] = options.apply(lambda x: x['instrument_name'].replace('-C', '-P') if x['is_call'] == 1 else x['instrument_name'].replace('-P', '-C'), axis = 1)
 
+    # @Todo Check this one:
+    # BTC-24SEP21-26000-C
+    # Looks like wrong tau
 
     counter = 0
-    out_l = []
+    out_dct = {}
     # Looping over Calls only to match Puts
     for instrument in options.loc[options['is_call'] == 1]['instrument_name'].unique():
         try:
@@ -62,10 +86,13 @@ def analyze_portfolio(dat, week, iv_var_name):
             call_idx = options['instrument_name'] == instrument
             #daily = options.loc[idx]
             
-            # Perform Rebalancing
+            # Perform Rebalancing / @Todo: No rebalancing so far!!
+
+            # Match
             call_df = options.loc[call_idx]
             matching_put_names = call_df['pair_name'].unique()
             if len(matching_put_names) == 1:
+                call_name = call_df['instrument_name'].unique()[0]
                 matching_put_name = matching_put_names[0]
             else:
                 print('Couldnt find matching Instrument')
@@ -73,7 +100,13 @@ def analyze_portfolio(dat, week, iv_var_name):
             put_df = options.loc[options['instrument_name'] == matching_put_name]
             if put_df.shape[0] != 1:
                 print('No Put')
+                pdb.set_trace()
+                # Match here via Put-Call-Parity
                 continue
+
+            if call_df.shape[0] > 1:
+                print("here")
+                pdb.set_trace()
 
             call_price = call_df.iloc[0]['instrument_price']
             call_beta = call_df.iloc[0]['call_beta']
@@ -96,16 +129,18 @@ def analyze_portfolio(dat, week, iv_var_name):
             put_df['weighted_payoff'] = put_df['payoff'] * put_weight
             
             #perf = call_df['weighted_payoff'] + put_df['weighted_payoff']
-            call_sub = call_df[['Date', 'instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta', 'payoff', 'weighted_payoff', 'ret', 'weighted_ret']].reset_index()
+            call_sub = call_df[['Date', 'moneyness', 'days_to_maturity', 'tau', 'instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta', 'payoff', 'weighted_payoff', 'ret', 'weighted_ret']].reset_index()
             put_sub = put_df[['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'put_beta', 'payoff', 'weighted_payoff', 'ret', 'weighted_ret']].reset_index()
 
             out = call_sub.join(put_sub, lsuffix = '_call', rsuffix = '_put', how = 'outer')
 
             #out = pd.concat([call_sub, put_sub], ignore_index=True, suf)
             out['combined_payoff'] = out['weighted_payoff_call'] + out['weighted_payoff_put']
-            out['combined_ret'] = out['weighted_ret_call'] + out['weighted_ret_put']
+            out['combined_ret'] = out['combined_payoff'] / (out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
 
-            out_l.append(out)
+            keyname = str(call_name) + ' + ' + str(matching_put_name) 
+            out_dct[keyname] = out
+            #out_l.append(out)
 
             #print('\nCall: ', call_df[['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta']])
             #print('\nPut: ', put_df[['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'put_beta']])
@@ -114,7 +149,7 @@ def analyze_portfolio(dat, week, iv_var_name):
             print(e)
             pdb.set_trace()
     print('done')
-    return out_l
+    return out_dct
 
 
 
@@ -159,20 +194,52 @@ if __name__ == '__main__':
 
     # Run Analysis for Rookley and Regression
     #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
-    regression_performance_overview_l = analyze_portfolio(dat, 'all', 'predicted_iv')
-    pdb.set_trace()
-    regression_performance_overview = pd.concat(regression_performance_overview_l, ignore_index = True)
-    print(regression_performance_overview[['combined_payoff', 'combined_ret']].describe())
-
-    print('Currently Shorting Straddles, but should be inverting that!')
-
-    # @Todo: Now relate this plot to the IV over Realized Vola premium!!
-    fig = plt.figure(figsize = (10,7))
-        
-    plt.subplot(2, 1, 1)
-    plt.plot(pd.to_datetime(regression_performance_overview['Date']), regression_performance_overview['combined_payoff'])
-    plt.ylim(-5000, 5000)
+    performance_overview_l = analyze_portfolio(dat, 'all', 'predicted_iv')
     
-    plt.subplot(2,1,2)
-    plt.plot(pd.to_datetime(regression_performance_overview['Date']), regression_performance_overview['combined_ret'])
-    plt.savefig('plots/' + 'zero_beta_straddle' + '.png')
+    collected = []
+    for key, val in performance_overview_l.items():
+        collected.append(val)
+    performance_overview = pd.concat(collected, ignore_index=True)   
+    #test = pd.DataFrame.from_dict(regression_performance_overview_l, orient = 'index')
+    #regression_performance_overview = pd.DataFrame([regression_performance_overview_l.values()], index = regression_performance_overview_l.keys())
+    #regression_performance_overview = pd.concat(regression_performance_overview_l, ignore_index = True)
+    print(performance_overview[['combined_payoff', 'combined_ret', 'tau']].describe())
+
+    # Investigate too low days to maturity
+    # Maybe the -29 comes from taking days to maturity until end-of-month....
+    print('Maturitydate problem should come from stratify_instruments')
+
+    #performance_overview.loc[performance_overview['days_to_maturity'] > 2]
+    #performance_overview.loc[performance_overview['days_to_maturity'] == -29]
+    #performance_overview.loc[performance_overview['tau'] < 0]
+    #print('Currently Shorting Straddles, but should be inverting that!')
+
+    #performance_overview.loc[performance_overview['days_to_maturity'] != -29][['combined_payoff', 'combined_ret', 'tau', 'moneyness']].describe()
+
+    performance_overview['rounded_tau'] = round(performance_overview['tau'], 2)
+    performance_overview['rounded_moneyness'] = round(performance_overview['moneyness'], 2)
+    des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']].groupby(['rounded_tau', 'rounded_moneyness']).describe()
+    print(des.to_string())
+    des.to_csv('out/Zero_Beta_Performance_Overview_Summary_Statistics.csv')
+
+    # Make this plot over Tau and Moneyness
+
+    performance_overview['Date'] = pd.to_datetime(performance_overview['Date'])
+    for tau in performance_overview['rounded_tau'].unique():
+
+        tau_sub = performance_overview.loc[performance_overview['rounded_tau'] == tau]
+        tau_label = str(tau)
+
+        # @Todo: Now relate this plot to the IV over Realized Vola premium!!
+        fig = plt.figure(figsize = (10,7))
+            
+        plt.subplot(2, 1, 1)
+        plt.plot(tau_sub['Date'], tau_sub['combined_payoff'], label = tau_label)
+        plt.ylim(-5000, 5000)
+        
+        plt.subplot(2,1,2)
+        plt.plot(tau_sub['Date'], tau_sub['combined_ret'], label = tau_label)
+        plt.ylim(-2, 2)
+
+        plt.legend()
+        plt.savefig('plots/' + 'zero_beta_straddle_tau=' + tau_label + '.png')

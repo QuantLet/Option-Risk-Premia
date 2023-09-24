@@ -46,6 +46,19 @@ def get_straddle_weights(call_beta, put_beta):
     theta = ((-1) * put_beta) / (call_beta - put_beta)
     return theta, 1 - theta
 
+def get_call_prices_via_put_call_parity(put_price, s, k, r, tau):
+    """
+
+    """
+    call_price = put_price + s - (k * np.exp(-r * tau))
+    return call_price
+
+def get_put_prices_via_put_call_parity(call_price, s, k, r, tau):
+    """
+
+    """
+    put_price = call_price - s + (k * np.exp(-r * tau))
+    return put_price
 
 """
 def zero_beta_straddle_return(spot, call_price, call_beta, ):

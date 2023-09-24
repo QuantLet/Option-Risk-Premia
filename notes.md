@@ -66,3 +66,8 @@ Thoughts on Option Beta
 
 Thoughts on Negative Vola Premium
 perhaps: Vola Premium = RV - IV
+
+Next Steps:
+Ensure matching for missing puts (match with put-call-parity)
+Rerun from 2017
+Performance Measures
