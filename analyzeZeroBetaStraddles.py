@@ -37,7 +37,7 @@ def analyze_portfolio(dat, week, iv_var_name):
     print('Only Dailies!')
 
     dat['ndays'] = dat['tau'] * 365
-    sub = dat.loc[(dat['ndays'] >= 2) & (dat['ndays']<= 3)]
+    sub = dat.loc[(dat['ndays'] >= 0) & (dat['ndays']<= 1)]
 
     # Min 4 days to maturity
     existing_options = sub
@@ -170,11 +170,13 @@ if __name__ == '__main__':
         dat = assign_groups(dat)
     
     dat.sort_values('day', inplace = True)
-
+    
     # Merge Expiration Prices to Transactions
-    dat = dat.merge(expiration_price_history, on ='Date')
+    dat['maturitydate'] = dat['maturitydate_trading'].apply(lambda x: str(x)[:10])
+    dat = dat.merge(expiration_price_history, left_on ='maturitydate', right_on = 'Date')
+    dat.rename(columns = {'Date_x': 'Date'}, inplace=True)
     vola_df = dat.copy(deep=True)
-
+    
     # Find Outliers
     print(dat[['rookley_predicted_iv', 'predicted_iv']].describe())
 
@@ -221,6 +223,8 @@ if __name__ == '__main__':
     des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']].groupby(['rounded_tau', 'rounded_moneyness']).describe()
     print(des.to_string())
     des.to_csv('out/Zero_Beta_Performance_Overview_Summary_Statistics.csv')
+
+    
 
     # Make this plot over Tau and Moneyness
 
