@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.dates as mdates
 
 def simple_3d_plot(x,y,z, save_path, xlabel = 'Tau', ylabel = 'Moneyness', zlabel = 'Fitted IV', zlim_min = 0, zlim_max = 4):
 
@@ -13,7 +14,8 @@ def simple_3d_plot(x,y,z, save_path, xlabel = 'Tau', ylabel = 'Moneyness', zlabe
     plt.xlim(0, 1)
     plt.ylim(0, 2)
     ax.set_zlim(zlim_min, zlim_max)
-    plt.savefig(save_path)
+    plt.show()
+    #plt.savefig(save_path, transparent = True)
 
 def plot_performance(performance_overview, time_var_name):
     """
@@ -29,7 +31,9 @@ def plot_performance(performance_overview, time_var_name):
 
         # Group per Week
         # @Todo: Now relate this plot to the IV over Realized Vola premium!!
-        fig = plt.figure(figsize = (10,7))
+        fig = plt.figure(figsize = (20,14))
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+        plt.gca().xaxis.set_major_locator(mdates.DayLocator())
             
         plt.subplot(2, 1, 1)
         plt.plot(tau_sub['Date'], tau_sub['combined_payoff'], label = tau_label)
@@ -39,5 +43,18 @@ def plot_performance(performance_overview, time_var_name):
         plt.plot(tau_sub['Date'], tau_sub['combined_ret'], label = tau_label)
         plt.ylim(-2, 2)
 
+        plt.gcf().autofmt_xdate()
         plt.legend()
-        plt.savefig('plots/zero_beta_straddle_' + time_var_name + '=' + tau_label + '.png')
+        plt.savefig('plots/zero_beta_straddle_' + time_var_name + '=' + tau_label + '.png', transparent = True)
+
+def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None):
+    """
+
+    """
+    fig, ax = plt.subplots(figsize=(10,8))
+    plt.suptitle('')
+    performance_overview.boxplot(column=[target_var_name], by=group_var_name, ax=ax, showmeans=True)
+    if ylim_min is not None and ylim_max is not None:
+        ax.set_ylim(ylim_min, ylim_max)
+    file_name = 'plots/boxplot_' + target_var_name + '_over_' + group_var_name + '.png'
+    plt.savefig(file_name, transparent = True)

@@ -606,6 +606,7 @@ if __name__ == '__main__':
         wrk = pd.DataFrame({'Date': rng, 'strike': strike, 'maturitydate_trading': maturitydate, 'is_call': is_call})
 
         # Add days to maturity
+        print('days to maturity is wrong!')
         wrk['days_to_maturity'] = wrk.apply(lambda x: x['maturitydate_trading'].day - x['Date'].day, axis = 1)
 
         return wrk

@@ -154,7 +154,7 @@ if __name__ == '__main__':
             plt.plot(avg_daily_vola['date'], avg_daily_vola['rolling_rv'], label = 'RV')
             plt.title('Days to Maturity: ' + str(i))
             plt.legend()
-            plt.savefig('plots/iv_vs_rv_ndays=' + str(i) + '.png')
+            plt.savefig('plots/iv_vs_rv_ndays=' + str(i) + '.png', transparent = True)
             #vola_df['rolling_daily_real_vola'] = compute_vola(avg_daily_vola['rookley_predicted_iv'], window_size)
 
             avg_daily_vola['voldiff'] = avg_daily_vola['rolling_iv'] - avg_daily_vola['rolling_rv']
@@ -164,9 +164,8 @@ if __name__ == '__main__':
             plt.plot(avg_daily_vola['date'], avg_daily_vola['voldiff'])
             plt.title('Days to Maturity: ' + str(i))
             plt.legend()
-            plt.savefig('plots/voladiff_ndays=' + str(i) + '.png')
+            plt.savefig('plots/voladiff_ndays=' + str(i) + '.png', transparent = True)
             
-
     # Assess difference between Rookley and simple Regression estimated IV
     dat['ivdiff_abs'] = dat['rookley_predicted_iv'] - dat['predicted_iv']
     dat['ivdiff_rel'] = dat['ivdiff_abs'] / dat['rookley_predicted_iv']

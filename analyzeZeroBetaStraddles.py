@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import pdb
-from src.plots import simple_3d_plot, plot_performance
+from src.plots import simple_3d_plot, plot_performance, grouped_boxplot
 from src.blackscholes import Call, Put
 from src.helpers import assign_groups, load_expiration_price_history, compute_vola
 from src.zero_beta_straddles import get_call_beta, get_put_beta, get_straddle_weights
@@ -81,7 +81,9 @@ def analyze_portfolio(dat, week, iv_var_name):
     counter = 0
     out_dct = {}
     # Looping over Calls only to match Puts
-    for instrument in options['instrument_name'].unique(): #.loc[options['is_call'] == 1]
+    # @Todo: Check how this behaves for all options, not just Calls
+    print('Check behavior for all options, not just Calls! This is not gonna work because we are expecting call_df to exist initially!')
+    for instrument in options['instrument_name'].loc[options['is_call'] == 1].unique(): #
         try:
             # We could also just price Puts by Put-Call-Parity (same IV)
 
@@ -216,27 +218,48 @@ if __name__ == '__main__':
 
     # The transposed / pd.Series transformation fucks up the data type, so got to force float
     performance_overview['tau'] = performance_overview['tau'].astype(float)
+    performance_overview['moneyness'] = performance_overview['moneyness'].astype(float)
     performance_overview['rounded_tau'] = round(performance_overview['tau'].astype(float) * 365).astype(int)
-    performance_overview['rounded_moneyness'] = round(performance_overview['moneyness'].astype(float), 2)
+    performance_overview['rounded_moneyness'] = round(performance_overview['moneyness'].astype(float), 1)
     performance_overview['combined_payoff'] = performance_overview['combined_payoff'].astype(float)
     performance_overview['combined_ret'] = performance_overview['combined_ret'].astype(float)
+
+    # Invert 
+    print('Invert Payoff and Returns!!')
+    performance_overview['combined_ret'] = performance_overview['combined_ret'] * (-1)
+    performance_overview['combined_payoff'] = performance_overview['combined_payoff'] * (-1)
+
     des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']].groupby(['rounded_tau', 'rounded_moneyness']).describe()
     print(des.to_string())
     des.to_csv('out/Zero_Beta_Performance_Overview_Summary_Statistics.csv')
+    performance_overview.to_csv('out/PerformanceOverview.csv')
   
-
+    
+    # Prepare Performance Plots
+    performance_overview = assign_groups(performance_overview)
+    performance_overview['Date'] = pd.to_datetime(performance_overview['Date'])
+    
+    
+    # Add Boxplots for Performance Overview per Tau!!!
+    grouped_boxplot(performance_overview, 'combined_payoff', 'rounded_tau', -5000, 5000)
+    grouped_boxplot(performance_overview, 'combined_ret', 'rounded_tau', -2, 2)
+    grouped_boxplot(performance_overview, 'combined_payoff', 'nweeks', -5000, 5000)
+    grouped_boxplot(performance_overview, 'combined_ret', 'nweeks', -2, 2)
+    
+    # If we don't round here, then it gets too messy. Adjust the X Axis otherwise...
+    #
+    grouped_boxplot(performance_overview.loc[(performance_overview['rounded_moneyness'] >= 0.7) & (performance_overview['rounded_moneyness'] <= 1.3)], 'combined_payoff', 'rounded_moneyness', -5000, 5000)
+    grouped_boxplot(performance_overview.loc[(performance_overview['rounded_moneyness'] >= 0.7) & (performance_overview['rounded_moneyness'] <= 1.3)], 'combined_ret', 'rounded_moneyness', -2, 2)
 
     #@Todo: Ensure that x axis is date! its too tight!
     #@Todo: Invert Returns and Combined Payoff for long straddles!
     # @Todo Introduce interest rate!
-
-    pdb.set_trace()
+    #@Todo: Color Moneyness ranges in plots!
+    #pdb.set_trace()
+    
     # Make PNL plot over Tau and Moneyness
     simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
     simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
-
-    # Prepare Performance Plots
-    performance_overview = assign_groups(performance_overview)
     
     # Per Tau
     plot_performance(performance_overview, 'rounded_tau')
