@@ -570,12 +570,13 @@ if __name__ == '__main__':
 
     # Debugging Start, End
     startdate = datetime.datetime(2021,1,1)
-    enddate = datetime.datetime(2023,1,1)
+    enddate = datetime.datetime(2023,7,1)
     run_dates = [startdate]
     curr_date = startdate
     ndays_shift = 2
     do_plot = False
-    use_rookley = True
+    use_rookley = False
+    use_regression = False
     print('Rookley activated?! ', use_rookley)
 
     out = []
@@ -592,6 +593,7 @@ if __name__ == '__main__':
         print('day: ', d)
         out.append(run(d))
     transaction_df = pd.concat(out, axis = 0, ignore_index = True)
+    transaction_df.to_csv('out/raw_transactions.csv')
     instrument_collector = []
 
         
@@ -607,15 +609,17 @@ if __name__ == '__main__':
 
         # Add days to maturity
         print('days to maturity is wrong!')
-        wrk['days_to_maturity'] = wrk.apply(lambda x: x['maturitydate_trading'].day - x['Date'].day, axis = 1)
+
+        # This needs to have the full date in days!!
+        #wrk['days_to_maturity'] = wrk.apply(lambda x: x['maturitydate_trading'].day - x['Date'].day, axis = 1)
 
         return wrk
 
-    instrument_collector = transaction_df.groupby(['instrument_name']).apply(lambda x: stratify_instruments(x))
-    instrument_df = instrument_collector.reset_index()
+    #instrument_collector = transaction_df.groupby(['instrument_name']).apply(lambda x: stratify_instruments(x))
+    instrument_df = transaction_df.reset_index()
 
     #instrument_df = pd.concat(instrument_collector, axis = 0, ignore_index = True)
-
+    
     counter = -1
     collected_out = []
     for d in run_dates:
@@ -627,7 +631,7 @@ if __name__ == '__main__':
             #out.append(run(d))
             
             # 1) ENSURE THAT EACH INSTRUMENT EXISTS UNTIL MATURITY 
-            daily_instruments = instrument_df.loc[(instrument_df['Date'] == d)]
+            daily_instruments = instrument_df.loc[(instrument_df['day'] == d)]
             #requried_instruments = required_instruments_df['instrument_name'].unique()
 
             # Feed static properties of required instruments to the prediction / vola fit
@@ -647,27 +651,31 @@ if __name__ == '__main__':
             # Python Daily observation close to specific time
             # https://stackoverflow.com/questions/42208206/find-daily-observation-closest-to-specific-time-for-irregularly-spaced-data
             filtered.set_index('date', inplace = True)
-            sub = filtered.iloc[filtered.index.indexer_between_time("15:30:00", "16:30:00")]
+            sub = filtered.iloc[filtered.index.indexer_between_time("10:00:00", "12:00:00")]
 
             # Use last price to determine moneyness for daily_instruments
             last_spot = sub['index_price'][-1]
             daily_instruments['spot'] = last_spot # for Black Scholes Call 
-            daily_instruments['moneyness'] = daily_instruments['strike'] / last_spot
-            
+            daily_instruments['moneyness'] = daily_instruments['strike'] / daily_instruments['spot']
+            pdb.set_trace()
+            daily_instruments[['base', 'maturity', 'strike', 'is_call_check', 'maturitystr', 'tau', 'maturitydate_trading', 'days_to_maturity']] = decompose_instrument_name(daily_instruments['instrument_name'], daily_instruments['day'])
+
             # maturitydate - current day to tau!
-            Tdiff = (daily_instruments['maturitydate_trading'] - d)
-            sec_to_date_factor   = 60*60*24
-            _Tau                = list(map(lambda x: (x.days + (x.seconds/sec_to_date_factor)) / 365, Tdiff))#Tdiff/365 #list(map(lambda x: x.days/365, Tdiff)) # else: Tdiff/365
+            #Tdiff = (daily_instruments['maturitydate_trading'] - d)
+            #sec_to_date_factor   = 60*60*24
+            #_Tau                = list(map(lambda x: (x.days + (x.seconds/sec_to_date_factor)) / 365, Tdiff))#Tdiff/365 #list(map(lambda x: x.days/365, Tdiff)) # else: Tdiff/365
             
-            daily_instruments['tau'] = _Tau
+            #daily_instruments['tau'] = _Tau
             daily_instruments = assign_groups(daily_instruments)
 
-            #daily_instruments = sub.copy(deep = True) # HERE!!!
-            predicted_iv = calibrate_on_iv_surface(sub, predict_sub = daily_instruments, curr_day = d)
-            daily_instruments['predicted_iv'] = predicted_iv
-            daily_instruments['day'] = d
-            #pdb.set_trace()
-            # Add _id to pred
+            if use_regression:
+
+                #daily_instruments = sub.copy(deep = True) # HERE!!!
+                predicted_iv = calibrate_on_iv_surface(sub, predict_sub = daily_instruments, curr_day = d)
+                daily_instruments['predicted_iv'] = predicted_iv
+                daily_instruments['day'] = d
+                #pdb.set_trace()
+                # Add _id to pred
             
             
             if use_rookley:
@@ -715,4 +723,4 @@ if __name__ == '__main__':
     
     # Compare Rookley IV vs predicted_iv
     out_df = pd.concat(collected_out, ignore_index = True)
-    pd.DataFrame(out_df).to_csv('out/fitted_data.csv')
+    pd.DataFrame(out_df).to_csv('out/fitted_data_raw.csv')

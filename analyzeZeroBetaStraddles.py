@@ -22,7 +22,7 @@ from src.helpers import assign_groups, load_expiration_price_history, compute_vo
 from src.zero_beta_straddles import get_call_beta, get_put_beta, get_straddle_weights
 
 
-def analyze_portfolio(dat, week, iv_var_name):
+def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price):
     """
     dat, pd.DataFrame as from main.py
     week, int, week indicator
@@ -31,15 +31,20 @@ def analyze_portfolio(dat, week, iv_var_name):
         2) 'rookley_predicted_iv' for rookley
     calls: Boolean, if False then puts
     """
-
-    #dat = dat.rename(columns = {'spot': 'index_price'})
- 
-    # Run for dailies first
-    print('Up to 30 Days!')
+    if not center_on_expiration_price:
+        dat['spot'] = dat['index_price']
 
     dat['ndays'] = dat['tau'] * 365
-    sub = dat.loc[(dat['ndays'] >= 0) & (dat['ndays']<= 30)]
+    dat.sort_values('day', inplace=True)
+    #sub = dat.loc[(dat['ndays'] >= 0) & (dat['ndays']<= 30)]
     #sub = dat
+
+    # Get first mentioning of each option
+    #pdb.set_trace()
+    sub = dat.groupby('instrument_name').first().reset_index()
+    
+    # Locate on the last expiration price
+    #sub['spot']
 
     # Min 4 days to maturity
     existing_options = sub
@@ -57,7 +62,7 @@ def analyze_portfolio(dat, week, iv_var_name):
     # Reverse Puts and Calls
     missing_options['is_call'] = abs(missing_options['is_call'] - 1)
 
-    # Overwrite Moneyness
+    # Overwrite Spot and Moneyness 
     missing_options['moneyness'] = missing_options['strike'] / missing_options['spot']
 
     # Combine with existing options
@@ -125,7 +130,7 @@ def analyze_portfolio(dat, week, iv_var_name):
             put_df['weighted_payoff'] = put_df['payoff'] * put_weight
             
             #perf = call_df['weighted_payoff'] + put_df['weighted_payoff']
-            call_sub = call_df[['Date', 'moneyness', 'days_to_maturity', 'tau', 'instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta', 'payoff', 'weighted_payoff', 'ret', 'weighted_ret']].reset_index()
+            call_sub = call_df[['day', 'moneyness', 'days_to_maturity', 'tau', 'instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta', 'payoff', 'weighted_payoff', 'ret', 'weighted_ret']].reset_index()
             put_sub = put_df[['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'put_beta', 'payoff', 'weighted_payoff', 'ret', 'weighted_ret']].reset_index()
 
             out = call_sub.join(put_sub, lsuffix = '_call', rsuffix = '_put', how = 'outer')
@@ -154,11 +159,14 @@ def analyze_portfolio(dat, week, iv_var_name):
 
 if __name__ == '__main__':
 
+    # Params
+    center_on_expiration_price = False
+
     # Load Expiration Price History
     expiration_price_history = load_expiration_price_history()
 
     # Load Fitted Data from main.py
-    dat = pd.read_csv('out/fitted_data.csv')#pd.read_csv('data/option_transactions.csv')
+    dat = pd.read_csv('out/raw_transactions.csv')#pd.read_csv('data/option_transactions.csv')
     dat['date'] = pd.to_datetime(dat['day'])
 
     if not 'nweeks' in dat.columns:
@@ -171,33 +179,41 @@ if __name__ == '__main__':
     dat['maturitydate'] = dat['maturitydate_trading'].apply(lambda x: str(x)[:10])
     dat = dat.merge(expiration_price_history, left_on ='maturitydate', right_on = 'Date')
     dat.rename(columns = {'Date_x': 'Date'}, inplace=True)
+    
+    if center_on_expiration_price:
+        # Use expiration date also as spot for each day ('trade around spot")
+        dat = dat.merge(expiration_price_history.rename(columns={'expiration_price':'spot'}), left_on = 'day', right_on = 'Date')
+
+    # Drop all mentionings of 'Date', since it is only associated to expiration
+    #dat.drop(columns = ['Date_x', 'Date_y'], inplace = True)
+
     vola_df = dat.copy(deep=True)
     
     # Find Outliers
-    print(dat[['rookley_predicted_iv', 'predicted_iv']].describe())
+    print(dat['iv'].describe())
 
     max_iv = 2.5
     min_iv = 0
-    iv_vars = ['rookley_predicted_iv', 'predicted_iv']
+    iv_vars = ['iv']
 
     for iv_var in iv_vars:
         dat.loc[dat[iv_var] >= max_iv, iv_var] = max_iv 
         dat.loc[dat[iv_var] <= min_iv, iv_var] = min_iv
 
     #@Todo: Set bounds for prediction in the actual prediction
-    rookley_missing_instruments = dat.loc[dat['rookley_predicted_iv'].isna(), 'instrument_name']
-    rookley_filtered_dat = dat.loc[~dat['instrument_name'].isin(rookley_missing_instruments)]
+    #rookley_missing_instruments = dat.loc[dat['rookley_predicted_iv'].isna(), 'instrument_name']
+    #rookley_filtered_dat = dat.loc[~dat['instrument_name'].isin(rookley_missing_instruments)]
     
 
 
     # Run Analysis for Rookley and Regression
     #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
-    performance_overview_l = analyze_portfolio(dat, 'all', 'predicted_iv')
+    performance_overview_l = analyze_portfolio(dat, 'all', 'iv', center_on_expiration_price)
 
     collected = []
     for key, val in performance_overview_l.items():
         collected.append(val.T)
-
+    
     performance_overview = pd.concat(collected, ignore_index=True).reset_index()
     
     #test = pd.DataFrame.from_dict(regression_performance_overview_l, orient = 'index')
@@ -220,7 +236,7 @@ if __name__ == '__main__':
     performance_overview['tau'] = performance_overview['tau'].astype(float)
     performance_overview['moneyness'] = performance_overview['moneyness'].astype(float)
     performance_overview['rounded_tau'] = round(performance_overview['tau'].astype(float) * 365).astype(int)
-    performance_overview['rounded_moneyness'] = round(performance_overview['moneyness'].astype(float), 1)
+    performance_overview['rounded_moneyness'] = round(performance_overview['moneyness'].astype(float), 2)
     performance_overview['combined_payoff'] = performance_overview['combined_payoff'].astype(float)
     performance_overview['combined_ret'] = performance_overview['combined_ret'].astype(float)
 
@@ -228,7 +244,14 @@ if __name__ == '__main__':
     print('Invert Payoff and Returns!!')
     performance_overview['combined_ret'] = performance_overview['combined_ret'] * (-1)
     performance_overview['combined_payoff'] = performance_overview['combined_payoff'] * (-1)
+    
 
+    # Much stronger than [0.9, 1.1]
+    atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']]
+    grouped_boxplot(performance_overview, 'combined_ret', 'rounded_tau', -2, 2)
+    grouped_boxplot(performance_overview, 'combined_payoff', 'rounded_tau', -5000, 5000)
+    pdb.set_trace()
+    
     des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']].groupby(['rounded_tau', 'rounded_moneyness']).describe()
     print(des.to_string())
     des.to_csv('out/Zero_Beta_Performance_Overview_Summary_Statistics.csv')
@@ -237,7 +260,7 @@ if __name__ == '__main__':
     
     # Prepare Performance Plots
     performance_overview = assign_groups(performance_overview)
-    performance_overview['Date'] = pd.to_datetime(performance_overview['Date'])
+    performance_overview['day'] = pd.to_datetime(performance_overview['day'])
     
     
     # Add Boxplots for Performance Overview per Tau!!!
