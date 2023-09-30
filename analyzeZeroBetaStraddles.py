@@ -77,12 +77,12 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     # First, use BS Call value function to get Dollar Value for Call Parameters
     options['instrument_price_on_expiration'] = options.apply(lambda x: Call.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], 0) if x['is_call'] == 1 else Put.Price(x['expiration_price'], x['strike'], 0, x[iv_var_name], 0), axis = 1)
     options['instrument_price'] = options.apply(lambda x: Call.Price(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 1 else Put.Price(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
-    options['delta'] = options.apply(lambda x: Call.Delta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
+    options['delta'] = options.apply(lambda x: Call.Delta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 1 else Put.Price(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
 
     # Calculate Call Beta, Put Beta for every day
     options['call_beta'] = options.apply(lambda x: get_call_beta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 1 else np.nan, axis = 1)
     #options['put_beta'] = options.apply(lambda x: get_put_beta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 0 else np.nan, axis = 1)
-
+    #get_put_beta()
 
     # @Todo Check this one:
     # BTC-24SEP21-26000-C
@@ -93,25 +93,28 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     # Looping over Calls only to match Puts
     # @Todo: Check how this behaves for all options, not just Calls
     print('Check behavior for all options, not just Calls! This is not gonna work because we are expecting call_df to exist initially!')
-    for instrument in options['instrument_name'].loc[options['is_call'] == 1].unique(): #
+    for instrument in options['instrument_name'].unique(): #.loc[options['is_call'] == 1]
         try:
-            # We could also just price Puts by Put-Call-Parity (same IV)
-
-            call_idx = options['instrument_name'] == instrument
-            #daily = options.loc[idx]
             
-            # Perform Rebalancing / @Todo: No rebalancing so far!!
+            # No Rebalancing implemented so far!
+            opt = options.loc[options['instrument_name'] == instrument]
+            matching_instrument = opt['pair_name'].iloc[0]
 
-            # Match
-            call_df = options.loc[call_idx]
-            matching_put_names = call_df['pair_name'].unique()
-            if len(matching_put_names) == 1:
-                call_name = call_df['instrument_name'].unique()[0]
-                matching_put_name = matching_put_names[0]
+            if opt['is_call'].iloc[0] == 1:
+                call_df = opt.copy(deep = True)
+                put_df = options.loc[options['instrument_name'] == matching_instrument]
+
+            elif opt['is_call'].iloc[0] == 0:
+                put_df = opt.copy(deep = True)
+                call_df = options.loc[options['instrument_name'] == matching_instrument]
+
             else:
-                print('Couldnt find matching Instrument')
-                continue
-            put_df = options.loc[options['instrument_name'] == matching_put_name]
+                raise ValueError('is_call is not binary!')
+
+            # For Key-Name in dict
+            call_name = call_df['instrument_name'].iloc[0]
+            put_name = put_df['instrument_name'].iloc[0]
+
             
             # Only take the first row! No rebalancing performed at the time
             call_price = call_df.iloc[0]['instrument_price']
@@ -144,7 +147,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             out['combined_payoff'] = out['weighted_payoff_call'] + out['weighted_payoff_put']
             out['combined_ret'] = out['combined_payoff'] / (out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
 
-            keyname = str(call_name) + ' + ' + str(matching_put_name) 
+            keyname = str(call_name) + ' + ' + str(put_name) 
             out_dct[keyname] = out.iloc[0].to_frame()
             #out_l.append(out)
 
