@@ -22,7 +22,7 @@ from src.helpers import assign_groups, load_expiration_price_history, compute_vo
 from src.zero_beta_straddles import get_call_beta, get_put_beta, get_straddle_weights
 
 
-def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price):
+def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True):
     """
     dat, pd.DataFrame as from main.py
     week, int, week indicator
@@ -41,13 +41,18 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price):
 
     # Get first mentioning of each option
     #pdb.set_trace()
-    sub = dat.groupby('instrument_name').first().reset_index()
-    
+    if first_occurrence_only:
+        sub = dat.groupby('instrument_name').first().reset_index()
+        print('Using first occurrence of an instrument!')
+    else:
+        sub = dat
+        print('Not using unique instruments! Using all!')
+
     # Locate on the last expiration price
     #sub['spot']
 
     # Min 4 days to maturity
-    existing_options = sub
+    existing_options = sub.copy(deep = True)
     #options = dat.loc[dat['tau'] * 365 >= 7]
 
     # Construct Pairs - Match Calls and Puts Names so that they have the same strike and maturity
@@ -244,12 +249,17 @@ if __name__ == '__main__':
     print('Invert Payoff and Returns!!')
     performance_overview['combined_ret'] = performance_overview['combined_ret'] * (-1)
     performance_overview['combined_payoff'] = performance_overview['combined_payoff'] * (-1)
-    
+
+
+    # IRR
+    #(performance_overview['combined_ret'] * 365) / (performance_overview['rounded_tau'])
+    performance_overview['daily_ret'] = performance_overview['combined_ret'] / performance_overview['rounded_tau']
+    performance_overview.loc[(performance_overview['daily_ret'] > -100) & (performance_overview['daily_ret'] <= 100)]['daily_ret'].dropna().describe()
 
     # Much stronger than [0.9, 1.1]
     atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']]
-    grouped_boxplot(performance_overview, 'combined_ret', 'rounded_tau', -2, 2)
-    grouped_boxplot(performance_overview, 'combined_payoff', 'rounded_tau', -5000, 5000)
+    grouped_boxplot(performance_overview, 'combined_ret', 'rounded_tau', -2, 2, 'atm')
+    grouped_boxplot(performance_overview, 'combined_payoff', 'rounded_tau', -5000, 5000, 'atm')
     pdb.set_trace()
     
     des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']].groupby(['rounded_tau', 'rounded_moneyness']).describe()

@@ -22,11 +22,11 @@ def plot_performance(performance_overview, time_var_name):
     time_var_name = 'rounded_tau' or 'nweeks'
     plot_fname = 'plots/' + 'zero_beta_straddle_tau=' + tau_label + '.png'
     """
-    performance_overview['Date'] = pd.to_datetime(performance_overview['Date'])
+    performance_overview['day'] = pd.to_datetime(performance_overview['day'])
     for tau in performance_overview[time_var_name].unique():
 
         tau_sub = performance_overview.loc[performance_overview[time_var_name] == tau]
-        tau_sub.sort_values('Date', inplace = True)
+        tau_sub.sort_values('day', inplace = True)
         tau_label = str(tau)
 
         # Group per Week
@@ -36,18 +36,18 @@ def plot_performance(performance_overview, time_var_name):
         plt.gca().xaxis.set_major_locator(mdates.DayLocator())
             
         plt.subplot(2, 1, 1)
-        plt.plot(tau_sub['Date'], tau_sub['combined_payoff'], label = tau_label)
+        plt.plot(tau_sub['day'], tau_sub['combined_payoff'], label = tau_label)
         plt.ylim(-5000, 5000)
         
         plt.subplot(2,1,2)
-        plt.plot(tau_sub['Date'], tau_sub['combined_ret'], label = tau_label)
+        plt.plot(tau_sub['day'], tau_sub['combined_ret'], label = tau_label)
         plt.ylim(-2, 2)
 
         plt.gcf().autofmt_xdate()
         plt.legend()
         plt.savefig('plots/zero_beta_straddle_' + time_var_name + '=' + tau_label + '.png', transparent = True)
 
-def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None):
+def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None, file_name_addition = ''):
     """
 
     """
@@ -56,5 +56,5 @@ def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_
     performance_overview.boxplot(column=[target_var_name], by=group_var_name, ax=ax, showmeans=True)
     if ylim_min is not None and ylim_max is not None:
         ax.set_ylim(ylim_min, ylim_max)
-    file_name = 'plots/boxplot_' + target_var_name + '_over_' + group_var_name + '.png'
+    file_name = 'plots/boxplot_' + target_var_name + '_over_' + group_var_name + '_' + file_name_addition + '.png'
     plt.savefig(file_name, transparent = True)
