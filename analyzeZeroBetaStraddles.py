@@ -285,7 +285,6 @@ if __name__ == '__main__':
     for key, val in performance_overview_l.items():
         # First row summarizes results
         collected.append(val.iloc[0])
-    pdb.set_trace()
     performance_overview = pd.DataFrame(collected)
     #performance_overview = pd.concat(collected, ignore_index=True).reset_index()
     
@@ -296,7 +295,7 @@ if __name__ == '__main__':
 
     # Investigate too low days to maturity
     # Maybe the -29 comes from taking days to maturity until end-of-month....
-    print('Maturitydate problem should come from stratify_instruments')
+
     #pdb.set_trace()
     #performance_overview.apply(lambda x: math.isinf(performance_overview['combined_payoff'][x]), axis = 1)
     #inf_idx = performance_overview['combined_payoff'][np.isinf(performance_overview['combined_payoff'])].index
@@ -310,34 +309,27 @@ if __name__ == '__main__':
     #performance_overview.loc[performance_overview['days_to_maturity'] != -29][['combined_payoff', 'combined_ret', 'tau', 'moneyness']].describe()
 
     # The transposed / pd.Series transformation fucks up the data type, so got to force float
-    performance_overview['tau'] = performance_overview['tau'].astype(float)
-    performance_overview['moneyness'] = performance_overview['moneyness'].astype(float)
-    performance_overview['rounded_tau'] = round(performance_overview['tau'].astype(float) * 365).astype(int)
-    performance_overview['rounded_moneyness'] = round(performance_overview['moneyness'].astype(float), 2)
-    performance_overview['combined_payoff'] = performance_overview['combined_payoff'].astype(float)
-    performance_overview['combined_ret'] = performance_overview['combined_ret'].astype(float)
-    performance_overview['combined_payoff_daily'] = performance_overview['combined_payoff_daily'].astype(float)
-    performance_overview['combined_ret_daily'] = performance_overview['combined_ret_daily'].astype(float)
 
     # Invert 
-    print('Invert Payoff and Returns!!')
-    performance_overview['combined_ret'] = performance_overview['combined_ret'] * (-1)
-    performance_overview['combined_payoff'] = performance_overview['combined_payoff'] * (-1)
-    performance_overview['combined_ret_daily'] = performance_overview['combined_ret_daily'] * (-1)
-    performance_overview['combined_payoff'] = performance_overview['combined_payoff_daily'] * (-1)
+    #print('Invert Payoff and Returns!!')
+    #performance_overview['combined_ret'] = performance_overview['combined_ret'] * (-1)
+    #performance_overview['combined_payoff'] = performance_overview['combined_payoff'] * (-1)
+    #performance_overview['combined_ret_daily'] = performance_overview['combined_ret_daily'] * (-1)
+    #performance_overview['combined_payoff'] = performance_overview['combined_payoff_daily'] * (-1)
 
     # IRR
-    #(performance_overview['combined_ret'] * 365) / (performance_overview['rounded_tau'])
-    #performance_overview['daily_ret'] = performance_overview['combined_ret'] / performance_overview['rounded_tau']
+    #(performance_overview['combined_ret'] * 365) / (performance_overview['tau'])
+    #performance_overview['daily_ret'] = performance_overview['combined_ret'] / performance_overview['tau']
     #performance_overview.loc[(performance_overview['daily_ret'] > -100) & (performance_overview['daily_ret'] <= 100)]['daily_ret'].dropna().describe()
-    pdb.set_trace()
+    #pdb.set_trace()
     # Much stronger than [0.9, 1.1]
-    atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness', 'combined_payoff_daily','combined_ret_daily']]
-    grouped_boxplot(atm_sub, 'combined_ret', 'rounded_tau', -2, 2, 'atm')
-    grouped_boxplot(atm_sub, 'combined_payoff', 'rounded_tau', -5000, 5000, 'atm')
-    grouped_boxplot(atm_sub, 'combined_ret_daily', 'rounded_tau', -2, 2, 'atm')
-    grouped_boxplot(atm_sub, 'combined_payoff_daily', 'rounded_tau', -5000, 5000, 'atm')
-    pdb.set_trace()
+    atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['tau', 'moneyness', 'combined_payoff', 'combined_ret', 'combined_payoff_daily','combined_ret_daily']]
+    atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']]
+    grouped_boxplot(atm_sub, 'combined_ret', 'tau', -2, 2, 'atm')
+    grouped_boxplot(atm_sub, 'combined_payoff', 'tau', -5000, 5000, 'atm')
+    grouped_boxplot(atm_sub, 'combined_ret_daily', 'tau', -2, 2, 'atm')
+    grouped_boxplot(atm_sub, 'combined_payoff_daily', 'tau', -5000, 5000, 'atm')
+    #pdb.set_trace()
     
 
     # HOW CAN WE HAVE PLUS AND NEG INFINITE combined_payoff?!
@@ -353,7 +345,7 @@ if __name__ == '__main__':
     #perf.loc[perf['combined_payoff'] == perf['combined_payoff'].min()]
 
 
-    des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'rounded_tau','rounded_moneyness']].groupby(['rounded_tau', 'rounded_moneyness']).describe()
+    des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'tau','moneyness']].groupby(['tau', 'moneyness']).describe()
     print(des.to_string())
     des.to_csv('out/Zero_Beta_Performance_Overview_Summary_Statistics.csv')
     performance_overview.to_csv('out/PerformanceOverview.csv')
@@ -365,17 +357,17 @@ if __name__ == '__main__':
     
     
     # Add Boxplots for Performance Overview per Tau!!!
-    grouped_boxplot(performance_overview, 'combined_payoff_daily', 'rounded_tau', -5000, 5000)
-    grouped_boxplot(performance_overview, 'combined_ret_daily', 'rounded_tau', -2, 2)
+    grouped_boxplot(performance_overview, 'combined_payoff_daily', 'tau', -5000, 5000)
+    grouped_boxplot(performance_overview, 'combined_ret_daily', 'tau', -2, 2)
     grouped_boxplot(performance_overview, 'combined_payoff_daily', 'nweeks', -5000, 5000)
     grouped_boxplot(performance_overview, 'combined_ret_daily', 'nweeks', -2, 2)
     
     # If we don't round here, then it gets too messy. Adjust the X Axis otherwise...
     #
-    grouped_boxplot(performance_overview.loc[(performance_overview['rounded_moneyness'] >= 0.7) & (performance_overview['rounded_moneyness'] <= 1.3)], 'combined_payoff', 'rounded_moneyness', -5000, 5000)
-    grouped_boxplot(performance_overview.loc[(performance_overview['rounded_moneyness'] >= 0.7) & (performance_overview['rounded_moneyness'] <= 1.3)], 'combined_ret', 'rounded_moneyness', -2, 2)
-    grouped_boxplot(performance_overview.loc[(performance_overview['rounded_moneyness'] >= 0.7) & (performance_overview['rounded_moneyness'] <= 1.3)], 'combined_payoff_daily', 'rounded_moneyness', -5000, 5000)
-    grouped_boxplot(performance_overview.loc[(performance_overview['rounded_moneyness'] >= 0.7) & (performance_overview['rounded_moneyness'] <= 1.3)], 'combined_ret_daily', 'rounded_moneyness', -2, 2)
+    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff', 'moneyness', -5000, 5000)
+    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret', 'moneyness', -2, 2)
+    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff_daily', 'moneyness', -5000, 5000)
+    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret_daily', 'moneyness', -2, 2)
     #@Todo: Ensure that x axis is date! its too tight!
     #@Todo: Invert Returns and Combined Payoff for long straddles!
     # @Todo Introduce interest rate!
@@ -387,7 +379,7 @@ if __name__ == '__main__':
     simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
     
     # Per Tau
-    plot_performance(performance_overview, 'rounded_tau')
+    plot_performance(performance_overview, 'tau')
 
     # Per Week
     plot_performance(performance_overview, 'nweeks')
