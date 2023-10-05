@@ -1,3 +1,4 @@
+from matplotlib.pyplot import thetagrids
 import numpy as np
 from scipy.stats import norm
 
@@ -35,16 +36,33 @@ def get_put_beta(call_price, put_price, spot, call_beta, beta_s = 1):
     beta_s = 1 because it is the beta of holding the spot
     """
     put_beta = (1/put_price) * ((call_price * call_beta) - (spot * beta_s))
-    return put_beta
+    return put_beta#max(put_beta, 0.01)
 
-def get_straddle_weights(call_beta, put_beta):
+def get_straddle_weights(call_beta, put_beta, min_weight = 0.01, max_weight = 1):
     """
     Find Call Weights (theta) and Put Weights so that the overall market beta of holding both is 0
     theta is the fraction fo the straddle's value in call options
     returns call weight, put weight
+
+    put_beta needs to be min 0.01, or this goes all to zero
     """
-    theta = ((-1) * put_beta) / (call_beta - put_beta)
-    return theta, 1 - theta
+    call_weight = ((-1) * put_beta) / (call_beta - put_beta)
+    put_weight = 1 - call_weight
+
+    if call_weight <= min_weight:
+        print('Call Weight under Minimum: ', call_weight)
+        call_weight = 0
+    if call_weight >= max_weight:
+        print('Call Weight over Maximum: ', call_weight)
+        call_weight = max_weight
+    if put_weight <= min_weight:
+        print('Put Weight under Minimum: ', put_weight)
+        put_weight = 0
+    if put_weight >= max_weight:
+        print('Put Weight over Maximum: ', put_weight)
+        put_weight = max_weight
+
+    return call_weight, put_weight
 
 def get_call_prices_via_put_call_parity(put_price, s, k, r, tau):
     """
