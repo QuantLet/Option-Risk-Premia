@@ -71,3 +71,55 @@ Next Steps:
 Ensure matching for missing puts (match with put-call-parity)
 Rerun from 2017
 Performance Measures
+
+Get IRR: Combined Return over Tau
+
+Check if Expiration Price is correct!!!!
+Also whats used for the final pricing!!!
+
+Show the PnL over time and relate to Vola Premium (IV vs RV)
+
+Translate the IV to percent change and compare to the percent change of expiration price 
+
+Plot: Vola Premium (IV - RV) AND daily Straddle Returns for Tau in a single plot
+Maybe group by Tau
+
+Get Correlation between Vola Premium and Straddle Returns
+Does Vola Premium Today have predictive power for Straddle Returns tomorrow?
+
+# Vola Methods:
+    - Rookley
+    - Regression IV Surface
+    - None 
+    Try None and see if results are robust
+
+
+# Next important Thing:
+Condition on where Moneyness is in [0.95, 1.05] and plot the Returns over Tau! 
+That one has the biggest potential!
+
+# Make a run with and without overwriting spot with expiration price. We are cutting off some of the time-to-maturity here. 
+
+So ATM Straddles are losing lots of value. Introduce Crash-resistant Straddles!
+Check with the paper why ATM Straddles are losing so much value. 
+
+# Thoughts on Centering with respect to Expiration Price
+- Pro: Nice to start on the same time every day
+- Con: Centering might distort the results, since IV is dependent on Moneyness (and we are re-centering the spot, which changes moneyness)
+- Con: When trading a call and a put from a different time, then they have a different spot. "unrealistic" straddles
+Solution: Run the analysis centered around expiration price and then confirm results by checking if they match with a subset (window) around the expiration price
+Another Solution: ALWAYS use Put-Call-Parity, so that we are always dealing with 2 instruments around the same spot!
+
+# Graphics
+- Combined Payoff vs Combined Return plot should look the same!! 
+- So maybe filter around times?! 
+
+# Plan
+Use every option exactly how and when it traded and complete the straddle using put call parity 
+Get average return of the instruments 
+How much do puts lose on avg?
+Statistical Tests
+Crash-free Straddles
+
+Check Formula for Weights!!!
+
