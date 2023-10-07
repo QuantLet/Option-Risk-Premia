@@ -143,6 +143,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             call_name = call_df['instrument_name']
             put_name = put_df['instrument_name']
 
+            if call_name == 'BTC-4DEC21-57000-C' or put_name == 'BTC-4DEC21-57000-C':
+                print("here")
+                pdb.set_trace()
+
             
             # Only take the first row! No rebalancing performed at the time
             call_price = call_df['instrument_price']
@@ -164,9 +168,9 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             call_df['weight'] = call_weight
             call_df['cost_base'] = call_df['weight'] * call_df['instrument_price']
             if long:
-                call_df['payoff'] = call_df['instrument_price'] - call_df['instrument_price_on_expiration']
-            else:
                 call_df['payoff'] = call_df['instrument_price_on_expiration'] - call_df['instrument_price'] 
+            else:
+                call_df['payoff'] = call_df['instrument_price'] - call_df['instrument_price_on_expiration']
             call_df['ret'] = call_df['payoff'] / call_df['instrument_price']
             call_df['weighted_ret'] = call_df['ret'] * call_weight
             call_df['weighted_payoff'] = call_df['payoff'] * call_weight
@@ -181,16 +185,6 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             put_df['weighted_ret'] = put_df['ret'] * put_weight
             put_df['weighted_payoff'] = put_df['payoff'] * put_weight
 
-            if call_df['spot'] != put_df['spot']:
-                print('Spots are not the same')
-                pdb.set_trace()
-                # @Todo: Found the problem! Well they are  not on the same day!!!!
-                # Solution: Create a synthetic partner for each options!!
-
-
-            if math.isinf(put_df['weighted_payoff']) or math.isinf(call_df['weighted_payoff']):
-                print('Inf!! in payoff')
-                pdb.set_trace()
             
             cols = ['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta', 'put_beta', 'cost_base','payoff', 'weight', 'weighted_payoff', 'ret', 'weighted_ret']
             call_sub = call_df[cols]
@@ -286,6 +280,7 @@ if __name__ == '__main__':
         # First row summarizes results
         collected.append(val.iloc[0])
     performance_overview = pd.DataFrame(collected)
+    performance_overview.to_csv('out/performance_overview.csv')
     #performance_overview = pd.concat(collected, ignore_index=True).reset_index()
     
     #test = pd.DataFrame.from_dict(regression_performance_overview_l, orient = 'index')
@@ -332,9 +327,9 @@ if __name__ == '__main__':
     #pdb.set_trace()
     
 
-    # HOW CAN WE HAVE PLUS AND NEG INFINITE combined_payoff?!
-    print('Check +- inf payoff!! Check Payoff vs Returns!!')
-    #perf = performance_overview.copy(deep = True)
+    # HOW CAN WE HAVE a return outside of [-1,1]?!
+    
+    perf = performance_overview.copy(deep = True)
     #perf['combined_payoff_adj'] = perf['combined_payoff']
     #perf[perf['combined_payoff_adj'] > 500] = 500
     #perf[perf['combined_payoff_adj'] < -2] = -2
