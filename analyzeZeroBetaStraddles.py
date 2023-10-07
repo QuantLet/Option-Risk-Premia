@@ -37,7 +37,7 @@ def greeks(options, iv_var_name):
     #get_put_beta()
     return options
 
-def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, synthetic_matches_only = True, long = False):
+def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, synthetic_matches_only = True, long = False, crash_resistant = True):
     """
     dat, pd.DataFrame as from main.py
     week, int, week indicator
@@ -49,6 +49,8 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     first_occurrence_only: Using only the first observation of an instrument
     synthetic_matches_only: Always use Put-Call-Parity to find matching Straddle instrument instead of existing instruments (snapped at different times)
     long: long straddle, else short straddle
+    crash_resistant: using FOTM options to protect against crash. For now pretending that the premium is 0 and strike is 1000 further out, meaning
+    that the max loss per short position is 1000
     """
     if not center_on_expiration_price:
         dat['spot'] = dat['index_price']
@@ -143,11 +145,6 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             call_name = call_df['instrument_name']
             put_name = put_df['instrument_name']
 
-            if call_name == 'BTC-4DEC21-57000-C' or put_name == 'BTC-4DEC21-57000-C':
-                print("here")
-                pdb.set_trace()
-
-            
             # Only take the first row! No rebalancing performed at the time
             call_price = call_df['instrument_price']
             call_beta = call_df['call_beta']
@@ -160,17 +157,17 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
             call_weight, put_weight = get_straddle_weights(call_beta, put_beta)
 
-            if math.isinf(call_weight) or math.isinf(put_weight) or call_weight < 0 or put_weight < 0:
-                print('Inf!!')
-                pdb.set_trace()
-
             # Sell call_weight of Calls and put_weight of Puts
             call_df['weight'] = call_weight
             call_df['cost_base'] = call_df['weight'] * call_df['instrument_price']
             if long:
                 call_df['payoff'] = call_df['instrument_price_on_expiration'] - call_df['instrument_price'] 
             else:
-                call_df['payoff'] = call_df['instrument_price'] - call_df['instrument_price_on_expiration']
+                diff = call_df['instrument_price'] - call_df['instrument_price_on_expiration']
+                if crash_resistant:
+                    diff = max(diff, -1000)
+                call_df['payoff'] = diff
+
             call_df['ret'] = call_df['payoff'] / call_df['instrument_price']
             call_df['weighted_ret'] = call_df['ret'] * call_weight
             call_df['weighted_payoff'] = call_df['payoff'] * call_weight
@@ -180,7 +177,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             if long:
                 put_df['payoff'] = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
             else:
-                put_df['payoff'] = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
+                diff = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
+                if crash_resistant:
+                    diff = max(diff, -1000)
+                put_df['payoff'] = diff
             put_df['ret'] = put_df['payoff'] / put_df['instrument_price']
             put_df['weighted_ret'] = put_df['ret'] * put_weight
             put_df['weighted_payoff'] = put_df['payoff'] * put_weight
@@ -370,8 +370,8 @@ if __name__ == '__main__':
     #pdb.set_trace()
     
     # Make PNL plot over Tau and Moneyness
-    simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
-    simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
+    #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
+    #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
     
     # Per Tau
     plot_performance(performance_overview, 'tau')
