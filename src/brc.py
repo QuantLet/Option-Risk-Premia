@@ -462,16 +462,20 @@ class BRC:
         }
         return None
 
-    async def call_api(self):
-        async with websockets.connect('wss://test.deribit.com/ws/api/v2') as websocket:
-            print('Remove TEST from url')
+    async def call_api(self, test = False):
+        if test:
+            url = 'wss://test.deribit.com/ws/api/v2'
+            print('Using TEST API!')
+        else:
+            url = 'wss://www.deribit.com/ws/api/v2'
+            print('Using LIVE API!')
+        async with websockets.connect(url) as websocket:
             await websocket.send(json.dumps(self.msg))
             while websocket.open:
                 print(self.msg)
                 response = await websocket.recv()
                 # do something with the response...
                 self.response = json.loads(response)
-                pdb.set_trace()
                 self.historical_interest_rate = round(self.response['result'], 4)
                 return None
 
