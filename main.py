@@ -446,6 +446,8 @@ def run(curr_day, perpetual_funding_rate = True):
             if perpetual_funding_rate:
                 dat['funding_rate'] = brc.download_historical_funding_rate(starttime = curr_day_starttime,
                                                                             endtime = curr_day_endtime)
+            else:
+                dat['funding_rate'] = None
             assert(dat.shape[0] != 0)
     
             # Convert dates, utc
@@ -470,7 +472,7 @@ def run(curr_day, perpetual_funding_rate = True):
 
             # Prepare for moneyness domain restriction (0.8 < m < 1.2)
             dat['moneyness']    = round(dat['strike'] / dat['index_price'], 2)
-            df                  = dat[['_id', 'index_price', 'amount', 'strike', 'maturity', 'is_call', 'tau', 'iv', 'date', 'moneyness', 'instrument_name', 'days_to_maturity', 'maturitydate_char', 'maturitydate_trading', 'timestamp','instrument_price']]    
+            df                  = dat[['_id', 'index_price', 'amount', 'strike', 'maturity', 'is_call', 'tau', 'iv', 'date', 'moneyness', 'instrument_name', 'days_to_maturity', 'maturitydate_char', 'maturitydate_trading', 'timestamp','instrument_price', 'funding_rate']]    
                         
             ## Isolate vars
             df['iv'] = df['iv'] / 100
