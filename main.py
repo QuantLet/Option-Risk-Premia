@@ -415,7 +415,7 @@ def stratify_instruments(enf):
 
     return wrk
 
-def run(curr_day):
+def run(curr_day, perpetual_funding_rate = True):
     print("Entering Main Loop")
 
     errors = []
@@ -443,6 +443,9 @@ def run(curr_day):
                             endtime = curr_day_endtime) 
             dat = pd.DataFrame(dat)
 
+            if perpetual_funding_rate:
+                dat['funding_rate'] = brc.download_historical_funding_rate(starttime = curr_day_starttime,
+                                                                            endtime = curr_day_endtime)
             assert(dat.shape[0] != 0)
     
             # Convert dates, utc
@@ -493,9 +496,7 @@ def run(curr_day):
             # Look at change in underlying around each expiration
 
             # Save output, concatenate to single DF later
-            
             return df
-
             #term_structure(df, curr_day, r_bandwidth)
             #plot_atm_iv_term_structure(df, curr_day, r_bandwidth)
            
@@ -599,7 +600,7 @@ if __name__ == '__main__':
     print('Rookley activated?! ', use_rookley)
 
     out = []
-    
+
     while curr_date < enddate:
         curr_date += datetime.timedelta(1)
 
@@ -611,6 +612,7 @@ if __name__ == '__main__':
     for d in run_dates:
         print('day: ', d)
         out.append(run(d))
+
     transaction_df = pd.concat(out, axis = 0, ignore_index = True)
     transaction_df.to_csv('out/raw_transactions.csv')
     
