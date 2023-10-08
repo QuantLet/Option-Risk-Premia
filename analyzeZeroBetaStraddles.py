@@ -37,7 +37,36 @@ def greeks(options, iv_var_name):
     #get_put_beta()
     return options
 
-def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, synthetic_matches_only = True, long = False, crash_resistant = True):
+def get_synthetic_options(existing_options, fotm, move_strike = 2000, move_iv = 1.3):
+    """
+    Create a synthetic Pair via Put-Call-Parity
+
+    If fotm is active, then create FOTM option that adds to strike and IV
+
+    """
+    # For which paired instruments do we not have observations?
+    print('Synthetic Matches Only!')
+    #missing_options = existing_options.copy(deep = True)
+    # @Todo: Looks like this doesnt work yet. Didnt change the output!
+    missing_options = existing_options.copy(deep = True)
+    missing_options = missing_options[['instrument_name', 'pair_name', 'is_call', 'strike', 'spot', 'tau', 'iv', 'expiration_price']]
+
+    # Reverse instrument name and pair name and then fill with Put-Call-Parity
+    missing_options[['instrument_name', 'pair_name']] = missing_options[['pair_name', 'instrument_name']]
+
+    # Reverse Puts and Calls
+    missing_options['is_call'] = abs(missing_options['is_call'] - 1)
+
+    if fotm:
+        missing_options['strike'] += move_strike
+        missing_options['iv'] = missing_options['iv'] * move_iv
+
+    # Overwrite Spot and Moneyness 
+    missing_options['moneyness'] = missing_options['strike'] / missing_options['spot']
+
+    return missing_options
+
+def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, long = False, crash_resistant = True):
     """
     dat, pd.DataFrame as from main.py
     week, int, week indicator
@@ -48,6 +77,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
     first_occurrence_only: Using only the first observation of an instrument
     synthetic_matches_only: Always use Put-Call-Parity to find matching Straddle instrument instead of existing instruments (snapped at different times)
+    --> now synthetic is always on
     long: long straddle, else short straddle
     crash_resistant: using FOTM options to protect against crash. For now pretending that the premium is 0 and strike is 1000 further out, meaning
     that the max loss per short position is 1000
@@ -69,49 +99,26 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
         sub = dat
         print('Not using unique instruments! Using all!')
 
-    # Locate on the last expiration price
-    #sub['spot']
-
     # Restrict Moneyness
     sub = sub.loc[(sub['moneyness'] <= 1.3) & sub['moneyness'] >= 0.7]
 
     # Min 4 days to maturity
     existing_options = sub.copy(deep = True)
-    #options = dat.loc[dat['tau'] * 365 >= 7]
 
     # Construct Pairs - Match Calls and Puts Names so that they have the same strike and maturity
     existing_options['pair_name'] = existing_options.apply(lambda x: x['instrument_name'].replace('-C', '-P') if x['is_call'] == 1 else x['instrument_name'].replace('-P', '-C'), axis = 1)
+    missing_options = get_synthetic_options(existing_options, fotm = False)
 
-    # For which paired instruments do we not have observations?
-    if synthetic_matches_only:
-        print('Synthetic Matches Only!')
-        #missing_options = existing_options.copy(deep = True)
-        # @Todo: Looks like this doesnt work yet. Didnt change the output!
-        missing_options = existing_options.copy(deep = True)
-        missing_options = missing_options[['instrument_name', 'pair_name', 'is_call', 'strike', 'spot', 'tau', 'iv', 'expiration_price']]
-    else:    
-        missing_options = existing_options[~existing_options['pair_name'].isin(existing_options['instrument_name'])]
+    # Create FOTM Pairs for existing and missing options each
+    fotm_calls = get_synthetic_options(existing_options, True, 2000, 1.3)
+    fotm_puts = get_synthetic_options(missing_options, True, -2000, 1.3)
 
-    # Reverse instrument name and pair name and then fill with Put-Call-Parity
-    #missing_options = missing_options.rename(columns = {'instrument_name': 'pair_name', 'pair_name': 'instrument_name'})
-    missing_options[['instrument_name', 'pair_name']] = missing_options[['pair_name', 'instrument_name']]
-
-
-    # Reverse Puts and Calls
-    missing_options['is_call'] = abs(missing_options['is_call'] - 1)
-
-    # Overwrite Spot and Moneyness 
-    missing_options['moneyness'] = missing_options['strike'] / missing_options['spot']
     
-    # Combine with existing options
-    #options = pd.concat([existing_options, missing_options], ignore_index=True)
-
     exist = greeks(existing_options, iv_var_name)
     missing = greeks(missing_options, iv_var_name)
+    fotm_c = greeks(fotm_calls, iv_var_name)
+    fotm_p = greeks(fotm_puts, iv_var_name)
 
-    # @Todo Check this one:
-    # BTC-24SEP21-26000-C
-    # Looks like wrong tau
 
     counter = 0
     out_dct = {}
@@ -157,15 +164,24 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
             call_weight, put_weight = get_straddle_weights(call_beta, put_beta)
 
+            # Get FOTM Call and Put Price
+            # Restrict max Payoff with the FOTM Strike (e.g. 2000)
+            # Consider Cost of FOTM Option
+            
+            
+
             # Sell call_weight of Calls and put_weight of Puts
             call_df['weight'] = call_weight
-            call_df['cost_base'] = call_df['weight'] * call_df['instrument_price']
+            if crash_resistant:
+                call_df['cost_base'] = call_df['weight'] * (call_df['instrument_price'] + fotm_c.iloc[i]['instrument_price'])
+            else:
+                call_df['cost_base'] = call_df['weight'] * (call_df['instrument_price'])
             if long:
                 call_df['payoff'] = call_df['instrument_price_on_expiration'] - call_df['instrument_price'] 
             else:
                 diff = call_df['instrument_price'] - call_df['instrument_price_on_expiration']
                 if crash_resistant:
-                    diff = max(diff, -1000)
+                    diff = max(diff, -2000) 
                 call_df['payoff'] = diff
 
             call_df['ret'] = call_df['payoff'] / call_df['instrument_price']
@@ -173,13 +189,16 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             call_df['weighted_payoff'] = call_df['payoff'] * call_weight
 
             put_df['weight'] = put_weight
-            put_df['cost_base'] = put_df['weight'] * put_df['instrument_price']
+            if crash_resistant:
+                put_df['cost_base'] = put_df['weight'] * (put_df['instrument_price'] + fotm_p.iloc[i]['instrument_price'])
+            else:
+                put_df['cost_base'] = put_df['weight'] * (put_df['instrument_price'])
             if long:
                 put_df['payoff'] = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
             else:
                 diff = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
                 if crash_resistant:
-                    diff = max(diff, -1000)
+                    diff = max(diff, -2000)
                 put_df['payoff'] = diff
             put_df['ret'] = put_df['payoff'] / put_df['instrument_price']
             put_df['weighted_ret'] = put_df['ret'] * put_weight
