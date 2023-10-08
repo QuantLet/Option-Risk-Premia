@@ -284,12 +284,6 @@ if __name__ == '__main__':
         dat.loc[dat[iv_var] >= max_iv, iv_var] = max_iv 
         dat.loc[dat[iv_var] <= min_iv, iv_var] = min_iv
 
-    #@Todo: Set bounds for prediction in the actual prediction
-    #rookley_missing_instruments = dat.loc[dat['rookley_predicted_iv'].isna(), 'instrument_name']
-    #rookley_filtered_dat = dat.loc[~dat['instrument_name'].isin(rookley_missing_instruments)]
-    
-
-
     # Run Analysis for Rookley and Regression
     #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
     performance_overview_l = analyze_portfolio(dat, 'all', 'iv', center_on_expiration_price)
@@ -300,6 +294,10 @@ if __name__ == '__main__':
         collected.append(val.iloc[0])
     performance_overview = pd.DataFrame(collected)
     performance_overview.to_csv('out/performance_overview.csv')
+
+    # Plot Straddle Returns for inspection
+    # @Todo: Should also do this for each day and instrument only once!
+    performance_overview['combined_ret'].plot.kde()
 
     # Invert 
     #print('Invert Payoff and Returns!!')
