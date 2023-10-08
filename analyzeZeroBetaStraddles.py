@@ -300,29 +300,6 @@ if __name__ == '__main__':
         collected.append(val.iloc[0])
     performance_overview = pd.DataFrame(collected)
     performance_overview.to_csv('out/performance_overview.csv')
-    #performance_overview = pd.concat(collected, ignore_index=True).reset_index()
-    
-    #test = pd.DataFrame.from_dict(regression_performance_overview_l, orient = 'index')
-    #regression_performance_overview = pd.DataFrame([regression_performance_overview_l.values()], index = regression_performance_overview_l.keys())
-    #regression_performance_overview = pd.concat(regression_performance_overview_l, ignore_index = True)
-    #print(performance_overview[['combined_payoff', 'combined_ret', 'tau']].describe())
-
-    # Investigate too low days to maturity
-    # Maybe the -29 comes from taking days to maturity until end-of-month....
-
-    #pdb.set_trace()
-    #performance_overview.apply(lambda x: math.isinf(performance_overview['combined_payoff'][x]), axis = 1)
-    #inf_idx = performance_overview['combined_payoff'][np.isinf(performance_overview['combined_payoff'])].index
-    #infsub = performance_overview.loc[inf_idx]
-
-    #performance_overview.loc[performance_overview['days_to_maturity'] > 2]
-    #performance_overview.loc[performance_overview['days_to_maturity'] == -29]
-    #performance_overview.loc[performance_overview['tau'] < 0]
-    #print('Currently Shorting Straddles, but should be inverting that!')
-
-    #performance_overview.loc[performance_overview['days_to_maturity'] != -29][['combined_payoff', 'combined_ret', 'tau', 'moneyness']].describe()
-
-    # The transposed / pd.Series transformation fucks up the data type, so got to force float
 
     # Invert 
     #print('Invert Payoff and Returns!!')
@@ -331,33 +308,12 @@ if __name__ == '__main__':
     #performance_overview['combined_ret_daily'] = performance_overview['combined_ret_daily'] * (-1)
     #performance_overview['combined_payoff'] = performance_overview['combined_payoff_daily'] * (-1)
 
-    # IRR
-    #(performance_overview['combined_ret'] * 365) / (performance_overview['tau'])
-    #performance_overview['daily_ret'] = performance_overview['combined_ret'] / performance_overview['tau']
-    #performance_overview.loc[(performance_overview['daily_ret'] > -100) & (performance_overview['daily_ret'] <= 100)]['daily_ret'].dropna().describe()
-    #pdb.set_trace()
-    # Much stronger than [0.9, 1.1]
     atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['tau', 'moneyness', 'combined_payoff', 'combined_ret', 'combined_payoff_daily','combined_ret_daily']]
     atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']]
     grouped_boxplot(atm_sub, 'combined_ret', 'tau', -2, 2, 'atm')
     grouped_boxplot(atm_sub, 'combined_payoff', 'tau', -5000, 5000, 'atm')
     grouped_boxplot(atm_sub, 'combined_ret_daily', 'tau', -2, 2, 'atm')
     grouped_boxplot(atm_sub, 'combined_payoff_daily', 'tau', -5000, 5000, 'atm')
-    #pdb.set_trace()
-    
-
-    # HOW CAN WE HAVE a return outside of [-1,1]?!
-    
-    perf = performance_overview.copy(deep = True)
-    #perf['combined_payoff_adj'] = perf['combined_payoff']
-    #perf[perf['combined_payoff_adj'] > 500] = 500
-    #perf[perf['combined_payoff_adj'] < -2] = -2
-    #perf.describe()
-
-    # Something is wrong here - we should have a range from -40k to 27k
-    #perf.loc[perf['combined_payoff'] == perf['combined_payoff'].max()].iloc[0]
-    #perf.loc[perf['combined_payoff'] == perf['combined_payoff'].min()]
-
 
     des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'tau','moneyness']].groupby(['tau', 'moneyness']).describe()
     print(des.to_string())
@@ -377,7 +333,6 @@ if __name__ == '__main__':
     grouped_boxplot(performance_overview, 'combined_ret_daily', 'nweeks', -2, 2)
     
     # If we don't round here, then it gets too messy. Adjust the X Axis otherwise...
-    #
     grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff', 'moneyness', -5000, 5000)
     grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret', 'moneyness', -2, 2)
     grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff_daily', 'moneyness', -5000, 5000)
