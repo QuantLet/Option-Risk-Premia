@@ -37,7 +37,7 @@ def greeks(options, iv_var_name):
     #get_put_beta()
     return options
 
-def get_synthetic_options(existing_options, fotm, move_strike, move_iv):
+def get_synthetic_options(existing_options, fotm, move_strike = 2000, move_iv = 1.3):
     """
     Create a synthetic Pair via Put-Call-Parity
 
@@ -118,7 +118,6 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     missing = greeks(missing_options, iv_var_name)
     fotm_c = greeks(fotm_calls, iv_var_name)
     fotm_p = greeks(fotm_puts, iv_var_name)
-    pdb.set_trace()
 
 
     counter = 0
@@ -165,15 +164,24 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
             call_weight, put_weight = get_straddle_weights(call_beta, put_beta)
 
+            # Get FOTM Call and Put Price
+            # Restrict max Payoff with the FOTM Strike (e.g. 2000)
+            # Consider Cost of FOTM Option
+            
+            
+
             # Sell call_weight of Calls and put_weight of Puts
             call_df['weight'] = call_weight
-            call_df['cost_base'] = call_df['weight'] * call_df['instrument_price']
+            if crash_resistant:
+                call_df['cost_base'] = call_df['weight'] * (call_df['instrument_price'] + fotm_c.iloc[i]['instrument_price'])
+            else:
+                call_df['cost_base'] = call_df['weight'] * (call_df['instrument_price'])
             if long:
                 call_df['payoff'] = call_df['instrument_price_on_expiration'] - call_df['instrument_price'] 
             else:
                 diff = call_df['instrument_price'] - call_df['instrument_price_on_expiration']
                 if crash_resistant:
-                    diff = max(diff, -1000) - 20 # Premium for FOTM Option
+                    diff = max(diff, -2000) 
                 call_df['payoff'] = diff
 
             call_df['ret'] = call_df['payoff'] / call_df['instrument_price']
@@ -181,13 +189,16 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             call_df['weighted_payoff'] = call_df['payoff'] * call_weight
 
             put_df['weight'] = put_weight
-            put_df['cost_base'] = put_df['weight'] * put_df['instrument_price']
+            if crash_resistant:
+                put_df['cost_base'] = put_df['weight'] * (put_df['instrument_price'] + fotm_p.iloc[i]['instrument_price'])
+            else:
+                put_df['cost_base'] = put_df['weight'] * (put_df['instrument_price'])
             if long:
                 put_df['payoff'] = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
             else:
                 diff = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
                 if crash_resistant:
-                    diff = max(diff, -1000) - 20 # Premium for FOTM Option
+                    diff = max(diff, -2000)
                 put_df['payoff'] = diff
             put_df['ret'] = put_df['payoff'] / put_df['instrument_price']
             put_df['weighted_ret'] = put_df['ret'] * put_weight
