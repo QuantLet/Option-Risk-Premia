@@ -14,7 +14,7 @@ from bson.json_util import dumps # dump Output
 
 # Todo: connection doesnt stop atm
 class BRC:
-    def __init__(self):
+    def __init__(self, collection_name):
         
         self.MONGO_HOST = '35.205.115.90'
         self.MONGO_DB   = 'cryptocurrency'
@@ -24,7 +24,7 @@ class BRC:
         print('\nGoing Local')
         self.client = pymongo.MongoClient('localhost', 27017) 
         self.db = self.client[self.MONGO_DB]
-        self.collection_name = 'deribit_transactions'
+        self.collection_name = collection_name #'deribit_transactions'
         self.collection = self.db[self.collection_name]
         print('using collection: ', self.collection_name)
         self._generate_stats()
@@ -499,7 +499,7 @@ class BRC:
 
 
 if __name__ == '__main__':
-    brc = BRC()
+    brc = BRC(collection_name='deribit_transactions')
     brc.download_historical_funding_rate(datetime.datetime(2022, 1, 1, 0, 0, 0), datetime.datetime(2022, 1, 4, 0, 0, 0))
     pdb.set_trace()
     #dat, interest_rate = brc._run(datetime.datetime(2022, 1, 1, 0, 0, 0),

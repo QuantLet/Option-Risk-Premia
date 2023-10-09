@@ -32,16 +32,16 @@ def greeks(options, iv_var_name):
     options['delta'] = options.apply(lambda x: Call.Delta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 1 else Put.Delta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']), axis = 1)
 
     # Calculate Call Beta, Put Beta for every day
-    options['call_beta'] = options.apply(lambda x: get_call_beta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 1 else np.nan, axis = 1)
+    options['beta'] = options.apply(lambda x: get_call_beta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 1 else np.nan, axis = 1)
     #options['put_beta'] = options.apply(lambda x: get_put_beta(x['spot'], x['strike'], 0, x[iv_var_name], x['tau']) if x['is_call'] == 0 else np.nan, axis = 1)
     #get_put_beta()
     return options
 
-def get_synthetic_options(existing_options, fotm, move_strike = 2000, move_iv = 1.3):
+def get_synthetic_options(existing_options, fotm, move_strike = 1.2, move_iv = 1.3):
     """
     Create a synthetic Pair via Put-Call-Parity
 
-    If fotm is active, then create FOTM option that adds to strike and IV
+    If fotm is active, then create FOTM option that changes strike and IV by a factor
 
     """
     # For which paired instruments do we not have observations?
@@ -58,13 +58,39 @@ def get_synthetic_options(existing_options, fotm, move_strike = 2000, move_iv = 
     missing_options['is_call'] = abs(missing_options['is_call'] - 1)
 
     if fotm:
-        missing_options['strike'] += move_strike
+        missing_options['strike'] = missing_options['strike'] * move_strike
         missing_options['iv'] = missing_options['iv'] * move_iv
 
     # Overwrite Spot and Moneyness 
     missing_options['moneyness'] = missing_options['strike'] / missing_options['spot']
 
     return missing_options
+
+
+def portfolio_calculations(pf_df, weight, long):
+    """
+    pf_df: call_df, put_df
+    weight from straddle_weight
+    crash_resistant, long: boolean
+    """
+
+    # Sell call_weight of Calls and put_weight of Puts
+    pf_df['weight'] = weight
+    
+    pf_df['cost_base'] = pf_df['weight'] * (pf_df['instrument_price'])
+    if long:
+        pf_df['payoff'] = pf_df['instrument_price_on_expiration'] - pf_df['instrument_price'] 
+        pf_df['direction'] = 'long'
+    else:
+        pf_df['payoff'] = pf_df['instrument_price'] - pf_df['instrument_price_on_expiration']
+        pf_df['direction'] = 'short'
+
+    pf_df['ret'] = pf_df['payoff'] / pf_df['instrument_price']
+    pf_df['weighted_ret'] = pf_df['ret'] * weight
+    pf_df['weighted_payoff'] = pf_df['payoff'] * weight
+
+    return pf_df
+
 
 def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, long = False, crash_resistant = True):
     """
@@ -99,6 +125,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
         sub = dat
         print('Not using unique instruments! Using all!')
 
+    # Overwrite Moneyness with chosen Spot 
+    # (main.py uses dat['index_price'] for moneyness )
+    sub['moneyness'] = sub['strike'] / sub['spot']
+
     # Restrict Moneyness
     sub = sub.loc[(sub['moneyness'] <= 1.3) & sub['moneyness'] >= 0.7]
 
@@ -110,8 +140,8 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     missing_options = get_synthetic_options(existing_options, fotm = False)
 
     # Create FOTM Pairs for existing and missing options each
-    fotm_calls = get_synthetic_options(existing_options, True, 2000, 1.3)
-    fotm_puts = get_synthetic_options(missing_options, True, -2000, 1.3)
+    fotm_calls = get_synthetic_options(existing_options, True, 1.2, 1.3)
+    fotm_puts = get_synthetic_options(missing_options, True, 0.8, 1.3)
 
     
     exist = greeks(existing_options, iv_var_name)
@@ -154,68 +184,41 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
             # Only take the first row! No rebalancing performed at the time
             call_price = call_df['instrument_price']
-            call_beta = call_df['call_beta']
+            call_beta = call_df['beta']
             
             spot = call_df['spot']
             put_price = put_df['instrument_price']
             put_beta = get_put_beta(call_price, put_price, spot, call_beta)
-            put_df['put_beta'] = put_beta
-            call_df['put_beta'] = np.nan
+            put_df['beta'] = put_beta
+            #call_df['put_beta'] = np.nan
 
+            print('need to adjust straddle weights for FOTM Options too!!')
             call_weight, put_weight = get_straddle_weights(call_beta, put_beta)
 
             # Get FOTM Call and Put Price
             # Restrict max Payoff with the FOTM Strike (e.g. 2000)
             # Consider Cost of FOTM Option
+
+            call_df = portfolio_calculations(call_df, call_weight, False)            
+            put_df = portfolio_calculations(put_df, put_weight, False)
+
+            fotm_call_df = portfolio_calculations(fotm_c.iloc[i], call_weight, True)
+            fotm_put_df = portfolio_calculations(fotm_p.iloc[i], put_weight, True)
             
-            
-
-            # Sell call_weight of Calls and put_weight of Puts
-            call_df['weight'] = call_weight
-            if crash_resistant:
-                call_df['cost_base'] = call_df['weight'] * (call_df['instrument_price'] + fotm_c.iloc[i]['instrument_price'])
-            else:
-                call_df['cost_base'] = call_df['weight'] * (call_df['instrument_price'])
-            if long:
-                call_df['payoff'] = call_df['instrument_price_on_expiration'] - call_df['instrument_price'] 
-            else:
-                diff = call_df['instrument_price'] - call_df['instrument_price_on_expiration']
-                if crash_resistant:
-                    diff = max(diff, -2000) 
-                call_df['payoff'] = diff
-
-            call_df['ret'] = call_df['payoff'] / call_df['instrument_price']
-            call_df['weighted_ret'] = call_df['ret'] * call_weight
-            call_df['weighted_payoff'] = call_df['payoff'] * call_weight
-
-            put_df['weight'] = put_weight
-            if crash_resistant:
-                put_df['cost_base'] = put_df['weight'] * (put_df['instrument_price'] + fotm_p.iloc[i]['instrument_price'])
-            else:
-                put_df['cost_base'] = put_df['weight'] * (put_df['instrument_price'])
-            if long:
-                put_df['payoff'] = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
-            else:
-                diff = put_df['instrument_price'] - put_df['instrument_price_on_expiration']
-                if crash_resistant:
-                    diff = max(diff, -2000)
-                put_df['payoff'] = diff
-            put_df['ret'] = put_df['payoff'] / put_df['instrument_price']
-            put_df['weighted_ret'] = put_df['ret'] * put_weight
-            put_df['weighted_payoff'] = put_df['payoff'] * put_weight
-
-            
-            cols = ['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta', 'put_beta', 'cost_base','payoff', 'weight', 'weighted_payoff', 'ret', 'weighted_ret']
+            cols = ['instrument_name', 'spot', 'strike', 'moneyness', 'tau', 'instrument_price', 'instrument_price_on_expiration', 'direction', 'beta', 'cost_base','payoff', 'weight', 'weighted_payoff', 'ret', 'weighted_ret']
             call_sub = call_df[cols]
             put_sub = put_df[cols]
+            fotm_call_sub = fotm_call_df[cols]
+            fotm_put_sub = fotm_put_df[cols]            
+
+            pdb.set_trace()
+            # Test
+            out = pd.DataFrame({'atm_call': call_sub, 'fotm_call': fotm_call_sub, 'atm_put': put_sub, 'fotm_put': fotm_put_sub}).T
+            #out = call_sub.to_frame().join(put_sub.to_frame(), lsuffix = '_call', rsuffix = '_put', how = 'outer').T
+            out['day'] = opt['day']
+            out['days_to_maturity'] = opt['days_to_maturity']
+
             
-
-            out = call_sub.to_frame().join(put_sub.to_frame(), lsuffix = '_call', rsuffix = '_put', how = 'outer').T
-
-            #out = call_sub.join(put_sub, lsuffix = '_call', rsuffix = '_put', how = 'outer')
-            out[['day', 'days_to_maturity', 'moneyness', 'tau']] = opt[['day', 'days_to_maturity', 'moneyness', 'tau']]
-
-            #out = pd.concat([call_sub, put_sub], ignore_index=True, suf)
             out['combined_payoff'] = out['weighted_payoff'].sum() 
             out['combined_ret'] = out['combined_payoff'] / (out['cost_base'].sum()) #(out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
             
@@ -225,11 +228,8 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             
             keyname = str(call_name) + ' + ' + str(put_name) 
             out_dct[keyname] = out
-            #out_l.append(out)
 
-            #print('\nCall: ', call_df[['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'call_beta']])
-            #print('\nPut: ', put_df[['instrument_name', 'spot', 'instrument_price', 'instrument_price_on_expiration', 'put_beta']])
-            #print('\n Call Weight, Put Weight: ', call_weight, ' ... ' ,'put_weight')
+            
         except Exception as e:
             print(e)
             pdb.set_trace()
@@ -250,9 +250,10 @@ if __name__ == '__main__':
     expiration_price_history = load_expiration_price_history()
 
     # Load Fitted Data from main.py
-    dat = pd.read_csv('out/raw_transactions.csv')#pd.read_csv('data/option_transactions.csv')
+    print('Loading BTC Data')
+    dat = pd.read_csv('out/raw_deribit_transactions.csv') # deribit_transactions_eth for Ethereum
     dat['date'] = pd.to_datetime(dat['day'])
-
+    
     if not 'nweeks' in dat.columns:
         pdb.set_trace()
         dat = assign_groups(dat)
