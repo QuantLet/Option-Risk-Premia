@@ -5,6 +5,54 @@ from scipy.stats import norm
 from src.blackscholes import Call, Put, d1
 import pdb
 
+# Easier Version for both, Call and Put Betas together
+def get_beta(s, k, r, vol, tau, is_call, _lambda = 0, beta_s = 1):
+    """
+    Calculate Black Scholes Beta for Put OR Call
+    as Equation (11) in Shumway: Expected Option Returns
+
+    s: spot
+    k: strike
+    r: interest rate
+    vol: IV
+    tau: time-to-maturity
+    is_call: boolean. 1 for call, 0 for put
+    _lambda: dividend yield is always 0 for BTC, ETH
+    beta_s: always equals1, following page 14 Shumway
+    """
+
+    N = norm.cdf
+    if is_call == 1:
+        price = Call.Price(s, k, r, vol, tau)
+        delta = Call.Delta(s, k, r, vol, tau)
+    elif is_call == 0:
+        price = Put.Price(s, k, r, vol, tau)
+        delta = Put.Delta(s, k, r, vol, tau)
+    else:
+        raise NotImplementedError('Neither Put nor Call')
+
+    beta = (s/price) * delta * beta_s
+    return beta
+
+# Easier Version for both, Call and Put Betas together
+def get_combined_beta(p1, p2, delta1, delta2, spot ,_lambda = 0, beta_s = 1):
+    """
+    Calculate Black Scholes Beta for Put OR Call
+    as Equation (11) in Shumway: Expected Option Returns
+
+    s: spot
+    k: strike
+    r: interest rate
+    vol: IV
+    tau: time-to-maturity
+    is_call: boolean. 1 for call, 0 for put
+    _lambda: dividend yield is always 0 for BTC, ETH
+    beta_s: always equals1, following page 14 Shumway
+    """
+
+    beta = (spot/(p1 - p2)) * (delta1 - delta2) * beta_s
+    return beta
+
 def get_call_beta(s, k, r, vol, tau, _lambda = 0, beta_s = 1):
     """
     Calculate Black Scholes Call Beta
