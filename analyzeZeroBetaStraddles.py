@@ -38,7 +38,7 @@ def greeks(options, iv_var_name):
     #get_put_beta()
     return options
 
-def get_synthetic_options(existing_options, fotm, move_strike = 1.2, move_iv = 1.3):
+def get_synthetic_options(existing_options, fotm, move_strike_call = 1.2, move_strike_put = 0.8, move_iv = 1.3):
     """
     Create a synthetic Pair via Put-Call-Parity
 
@@ -53,7 +53,7 @@ def get_synthetic_options(existing_options, fotm, move_strike = 1.2, move_iv = 1
     missing_options = missing_options[['instrument_name', 'pair_name', 'is_call', 'strike', 'spot', 'tau', 'iv', 'expiration_price']]
 
     if fotm:
-        missing_options['strike'] = missing_options['strike'] * move_strike
+        missing_options['strike'] = missing_options.apply(lambda x: x['strike'] * move_strike_call if x['is_call'] == 1 else x['strike'] * move_strike_put, axis = 1)
         missing_options['iv'] = missing_options['iv'] * move_iv
     else:
         # If not FOTM, then we are inverting the instrument name / type (matching puts to calls and vice versa)
@@ -66,7 +66,7 @@ def get_synthetic_options(existing_options, fotm, move_strike = 1.2, move_iv = 1
         missing_options['is_call'] = abs(missing_options['is_call'] - 1)
 
     # Overwrite Spot and Moneyness 
-    missing_options['moneyness'] = missing_options['strike'] / missing_options['spot']
+    missing_options['moneyness'] = round(missing_options['strike'] / missing_options['spot'], 2)
 
     return missing_options
 
@@ -131,10 +131,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
     # Overwrite Moneyness with chosen Spot 
     # (main.py uses dat['index_price'] for moneyness )
-    sub['moneyness'] = sub['strike'] / sub['spot']
+    sub['moneyness'] = round(sub['strike'] / sub['spot'], 2)
 
     # Restrict Moneyness
-    sub = sub.loc[(sub['moneyness'] <= 1.3) & sub['moneyness'] >= 0.7]
+    sub = sub.loc[(sub['moneyness'] <= 1.3) & (sub['moneyness'] >= 0.7) & (sub['tau'] <= 0.3)]
 
     # Min 4 days to maturity
     existing_options = sub.copy(deep = True)
@@ -148,15 +148,15 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     print("We dont have a proper separation between calls and puts here!!!")
     # This should be converted into X * strike for calls and Y * strike for Puts. Then select just as for the "exist" dataframe.
     # This matching doesnt work yet. 
-    fotm_calls = get_synthetic_options(existing_options, True, 1.25, 1)
-    fotm_puts = get_synthetic_options(missing_options, True, 0.75, 1)
+    fotm_exist = get_synthetic_options(existing_options, True)
+    fotm_missing = get_synthetic_options(missing_options, True)
 
     
     exist = greeks(existing_options, iv_var_name)
     missing = greeks(missing_options, iv_var_name)
-    fotm_c = greeks(fotm_calls, iv_var_name)
-    fotm_p = greeks(fotm_puts, iv_var_name)
-
+    fotm_e = greeks(fotm_exist, iv_var_name)
+    fotm_m = greeks(fotm_missing, iv_var_name)
+    #pdb.set_trace()
     counter = 0
     out_dct = {}
     # Looping over Calls only to match Puts
@@ -178,14 +178,14 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             if opt['is_call'] == 1:
                 call_df = exist.iloc[i]
                 put_df = missing.iloc[i]
-                fotm_call = fotm_c.iloc[i]
-                fotm_put = fotm_p.iloc[i]
+                fotm_call = fotm_e.iloc[i]
+                fotm_put = fotm_m.iloc[i]
 
             elif opt['is_call'] == 0:
                 put_df = exist.iloc[i]
                 call_df = missing.iloc[i]
-                fotm_put = fotm_c.iloc[i]
-                fotm_call = fotm_p.iloc[i]
+                fotm_put = fotm_e.iloc[i]
+                fotm_call = fotm_m.iloc[i]
 
             else:
                 raise ValueError('is_call is not binary!')
@@ -212,22 +212,25 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
             # Test implementing the adjusted beta calculation for crash-resistant Straddles
             if crash_resistant:
-                print('Testing Crash Resistance')
                 #print('GOT IT: HAVE TO USE WHOLE POSITION BETA, MEANING S/(P1 - P2) * (DELTA1 - DELTA2)')
 
                 # Call Beta Adj is too often negative!! Check this!
-                call_beta_adj = get_combined_beta(call_df['instrument_price'], fotm_c.iloc[i]['instrument_price'],call_df['delta'], fotm_c.iloc[i]['delta'], spot)
-                put_beta_adj = get_combined_beta(put_df['instrument_price'], fotm_p.iloc[i]['instrument_price'],put_df['delta'], fotm_p.iloc[i]['delta'], spot)
+                call_beta_adj = get_combined_beta(call_df['instrument_price'], fotm_call['instrument_price'],call_df['delta'], fotm_call['delta'], spot)
+                put_beta_adj = get_combined_beta(put_df['instrument_price'], fotm_put['instrument_price'],put_df['delta'], fotm_put['delta'], spot)
                 
                 # @Todo: The fotm_c df doesnt ahve a beta here yet!!
-                #call_beta_adj = call_df['beta'] - fotm_c.iloc[i]['beta']
-                #put_beta_adj = put_df['beta'] - fotm_p.iloc[i]['beta']
+                #call_beta_adj = call_df['beta'] - fotm_call['beta']
+                #put_beta_adj = put_df['beta'] - fotm_put['beta']
                 if call_beta_adj < 0 or put_beta_adj > 0:
                     print('So now the difference in Call Beta is going to be negative!!')
-                    pdb.set_trace()
+                    # Perhaps unselect these imbalanced trades 
                 crash_resistant_call_weight, crash_resistant_put_weight = get_straddle_weights(call_beta_adj, put_beta_adj)
                 #print(crash_resistant_call_weight, crash_resistant_put_weight)
                 #print(call_weight, put_weight)
+            else:
+                call_beta_adj = np.nan
+                put_beta_adj = np.nan
+            
             
 
             # Get FOTM Call and Put Price
@@ -237,8 +240,8 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             call_df = portfolio_calculations(call_df, call_weight, False)            
             put_df = portfolio_calculations(put_df, put_weight, False)
 
-            fotm_call_df = portfolio_calculations(fotm_c.iloc[i], call_weight, True)
-            fotm_put_df = portfolio_calculations(fotm_p.iloc[i], put_weight, True)
+            fotm_call_df = portfolio_calculations(fotm_call, call_weight, True)
+            fotm_put_df = portfolio_calculations(fotm_put, put_weight, True)
 
             
             cols = ['instrument_name', 'spot', 'strike', 'moneyness', 'tau', 'instrument_price', 'instrument_price_on_expiration', 'direction', 'beta', 'cost_base','payoff', 'weight', 'weighted_payoff', 'ret', 'weighted_ret']
@@ -260,6 +263,9 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             daily_factor = call_df['tau'] * 365
             out['combined_payoff_daily'] = out['combined_payoff'] / daily_factor
             out['combined_ret_daily'] = out['combined_ret'] / daily_factor
+
+            out['call_beta_adj'] = call_beta_adj
+            out['put_beta_adj'] = put_beta_adj
             
             keyname = str(call_name) + ' + ' + str(put_name) 
             out_dct[keyname] = out
