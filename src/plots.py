@@ -17,7 +17,7 @@ def simple_3d_plot(x,y,z, save_path, xlabel = 'Tau', ylabel = 'Moneyness', zlabe
     plt.show()
     #plt.savefig(save_path, transparent = True)
 
-def plot_performance(performance_overview, time_var_name):
+def plot_performance(performance_overview, time_var_name, crash_resistant):
     """
     time_var_name = 'rounded_tau' or 'nweeks'
     plot_fname = 'plots/' + 'zero_beta_straddle_tau=' + tau_label + '.png'
@@ -45,16 +45,24 @@ def plot_performance(performance_overview, time_var_name):
 
         plt.gcf().autofmt_xdate()
         plt.legend()
-        plt.savefig('plots/zero_beta_straddle_' + time_var_name + '=' + tau_label + '.png', transparent = True)
+        if crash_resistant:
+            fname = 'plots/vanilla/zero_beta_straddle_' + time_var_name + '=' + tau_label + '.png'
+        else:
+            fname = 'plots/vanilla/zero_beta_straddle_' + time_var_name + '=' + tau_label + '.png'
+        plt.savefig(fname, transparent = True)
 
-def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None, file_name_addition = ''):
+def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None, file_name_addition = '', crash_resistant = False):
     """
 
     """
-    fig, ax = plt.subplots(figsize=(10,8))
+    fig, ax = plt.subplots(figsize=(20,16))
     plt.suptitle('')
     performance_overview.boxplot(column=[target_var_name], by=group_var_name, ax=ax, showmeans=True)
     if ylim_min is not None and ylim_max is not None:
         ax.set_ylim(ylim_min, ylim_max)
-    file_name = 'plots/boxplot_' + target_var_name + '_over_' + group_var_name + '_' + file_name_addition + '.png'
+    fig.tight_layout()
+    if crash_resistant:
+        file_name = 'plots/crash_resistant/boxplot_' + target_var_name + '_over_' + group_var_name + '_' + file_name_addition + '.png'
+    else:
+        file_name = 'plots/vanilla/boxplot_' + target_var_name + '_over_' + group_var_name + '_' + file_name_addition + '.png'
     plt.savefig(file_name, transparent = True)
