@@ -18,6 +18,7 @@ import math
 import pdb
 from datetime import timedelta
 from pathlib import Path
+from math import ceil
 from src.plots import simple_3d_plot, plot_performance, grouped_boxplot
 from src.blackscholes import Call, Put
 from src.helpers import assign_groups, load_expiration_price_history, compute_vola
@@ -51,7 +52,7 @@ def get_synthetic_options(existing_options, fotm, move_strike_call = 1.2, move_s
     #missing_options = existing_options.copy(deep = True)
     # @Todo: Looks like this doesnt work yet. Didnt change the output!
     missing_options = existing_options.copy(deep = True)
-    missing_options = missing_options[['instrument_name', 'pair_name', 'is_call', 'strike', 'spot', 'tau', 'iv', 'expiration_price']]
+    missing_options = missing_options[['instrument_name', 'pair_name', 'is_call', 'strike', 'spot', 'tau', 'iv', 'expiration_price', 'ndays_ceiling']]
 
     if fotm:
         missing_options['strike'] = missing_options.apply(lambda x: x['strike'] * move_strike_call if x['is_call'] == 1 else x['strike'] * move_strike_put, axis = 1)
@@ -117,6 +118,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
         dat['spot'] = dat['index_price']
 
     dat['ndays'] = dat['tau'] * 365
+    dat['ndays_ceiling'] = dat['ndays'].apply(lambda x: ceil(x)) #ceil(dat['ndays'])
     dat.sort_values('day', inplace=True)
     #sub = dat.loc[(dat['ndays'] >= 0) & (dat['ndays']<= 30)]
     #sub = dat
@@ -142,6 +144,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
     # Construct Pairs - Match Calls and Puts Names so that they have the same strike and maturity
     existing_options['pair_name'] = existing_options.apply(lambda x: x['instrument_name'].replace('-C', '-P') if x['is_call'] == 1 else x['instrument_name'].replace('-P', '-C'), axis = 1)
+    
+    #pdb.set_trace()
+    #print("Error here: missing_options doesnt have ndays_ceiling")
+    
     missing_options = get_synthetic_options(existing_options, fotm = False)
 
     # Create FOTM Pairs for existing and missing options each
@@ -228,10 +234,21 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
                 crash_resistant_call_weight, crash_resistant_put_weight = get_straddle_weights(call_beta_adj, put_beta_adj)
                 #print(crash_resistant_call_weight, crash_resistant_put_weight)
                 #print(call_weight, put_weight)
+                
+                # Otherwise: Could just be taking a subset when the calculation is done
+                # Check if Zero-Beta-Straddle is feasible, else just continue
+                if crash_resistant_call_weight is None or crash_resistant_put_weight is None:
+                    print('\nStraddle not feasible: ', opt)
+                    continue
             else:
                 call_beta_adj = np.nan
                 put_beta_adj = np.nan
-            
+
+                # Check if Zero-Beta-Straddle is feasible, else just continue
+                if call_weight is None or put_weight is None:
+                    print('\nStraddle not feasible: ', opt)
+                    continue
+                
             
 
             # Get FOTM Call and Put Price
@@ -260,8 +277,12 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             
             out['combined_payoff'] = out['weighted_payoff'].sum() 
             out['combined_ret'] = out['combined_payoff'] / (out['cost_base'].sum()) #(out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
-            
-            daily_factor = call_df['tau'] * 365
+
+            # If we center on expiration price, then we are resetting the time value of a call to the beginning of a day. 
+            if center_on_expiration_price:
+                daily_factor = call_df['ndays_ceiling']
+            else:
+                daily_factor = call_df['tau'] * 365
             out['combined_payoff_daily'] = out['combined_payoff'] / daily_factor
             out['combined_ret_daily'] = out['combined_ret'] / daily_factor
 
@@ -274,6 +295,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             
         except Exception as e:
             print(e)
+            print('Error!')
             pdb.set_trace()
     print('done')
     return out_dct
@@ -294,7 +316,7 @@ if __name__ == '__main__':
 
     # Params
     center_on_expiration_price = True
-    crash_resistance = True
+    crash_resistance = False
 
     # Load Expiration Price History
     expiration_price_history = load_expiration_price_history()
@@ -346,7 +368,6 @@ if __name__ == '__main__':
         collected.append(val.iloc[0])
     performance_overview = pd.DataFrame(collected)
 
-    pdb.set_trace()
     if crash_resistance:
         fname = 'out/crash_resistant/performance_overview.csv'
     else:
@@ -402,8 +423,7 @@ if __name__ == '__main__':
     # Make PNL plot over Tau and Moneyness
     #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
     #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
-    
-    # Per Tau
+    #
     plot_performance(performance_overview, 'tau', crash_resistance)
 
     # Per Week
