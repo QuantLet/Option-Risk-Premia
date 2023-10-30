@@ -56,7 +56,6 @@ def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_
 
     """
     fig, ax = plt.subplots(figsize=(20,16))
-    plt.suptitle('')
     performance_overview.boxplot(column=[target_var_name], by=group_var_name, ax=ax, showmeans=True)
     if ylim_min is not None and ylim_max is not None:
         ax.set_ylim(ylim_min, ylim_max)
@@ -65,4 +64,14 @@ def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_
         file_name = 'plots/crash_resistant/boxplot_' + target_var_name + '_over_' + group_var_name + '_' + file_name_addition + '.png'
     else:
         file_name = 'plots/vanilla/boxplot_' + target_var_name + '_over_' + group_var_name + '_' + file_name_addition + '.png'
-    plt.savefig(file_name, transparent = True)
+    
+    # Deactivate auto Title
+    plt.suptitle('')
+    plt.title('')
+    ax.get_figure().suptitle('')
+
+    # Adjust labels
+    n = 10  # Keeps every 7th label
+    [l.set_visible(False) for (i,l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
+    #plt.savefig(file_name, transparent = True)
+    plt.show()
