@@ -51,7 +51,7 @@ def plot_performance(performance_overview, time_var_name, crash_resistant):
             fname = 'plots/vanilla/zero_beta_straddle_' + time_var_name + '=' + tau_label + '.png'
         plt.savefig(fname, transparent = True)
 
-def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None, file_name_addition = '', crash_resistant = False):
+def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None, file_name_addition = '', crash_resistant = False, nth_label = 10):
     """
 
     """
@@ -71,7 +71,5 @@ def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_
     ax.get_figure().suptitle('')
 
     # Adjust labels
-    n = 10  # Keeps every 7th label
-    [l.set_visible(False) for (i,l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
-    #plt.savefig(file_name, transparent = True)
-    plt.show()
+    [l.set_visible(False) for (i,l) in enumerate(ax.xaxis.get_ticklabels()) if i % nth_label != 0]
+    plt.savefig(file_name, transparent = True)
