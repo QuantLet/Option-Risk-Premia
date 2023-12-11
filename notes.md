@@ -123,3 +123,22 @@ Crash-free Straddles
 
 Check Formula for Weights!!!
 
+Next Steps: 
+Regression and check if vola premium is significant!
+If weights are not properly assigned (e.g. call would have more than 1), then omit this
+
+Renditen in einen Topf legen und Pfade bauen. Portfolio Performance evaluieren, insbesondere Weekly und Ausfallwahrscheinlichkeit
+
+Perhaps Centering on Expiration Price manipulates the daily return? Because we are using the actual tau over there!
+
+Check the returns of straight calls and puts
+
+
+# Testing Results
+https://quantinar.com/course/144/tukeys-g-and-h-transformations
+https://github.com/QuantLet/Tukey/blob/master/TukeyPDF/TukeyPDF.ipynb
+
+Set g and h so that our distribution follows a normal one
+then employ a test on 0
+
+# Compare the zero-beta strategy to vanilla straddles!
