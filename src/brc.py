@@ -6,7 +6,9 @@ import numpy as np
 import websockets
 import asyncio
 import pdb
-
+import matplotlib.pyplot as plt
+from helpers import decompose_future_name
+from plots import group_plot
 import json
 from bson.json_util import dumps # dump Output
 #from src.vola_plots import trisurf, vola_surface_interpolated
@@ -447,7 +449,7 @@ class BRC:
             self.client.close()
 
         # Deribit
-    def create_msg(self, _tshigh, _tslow):
+    def create_msg(self, _tshigh, _tslow, instrument_name):
         # retrieves constant interest rate for time frame
         self.msg = \
         {
@@ -455,10 +457,21 @@ class BRC:
         "id" : None,
         "method" : "public/get_funding_rate_value",
         "params" : {
-            "instrument_name" : "BTC-PERPETUAL",
+            "instrument_name" : instrument_name, #"BTC-PERPETUAL"
             "start_timestamp" : _tslow,
             "end_timestamp" : _tshigh
             }
+        }
+        return None
+
+    def create_msg2(self,instrument_name):
+        msg = \
+        {"jsonrpc": "2.0",
+        "method": "public/get_funding_chart_data",
+        "id": None,
+        "params": {
+            "instrument_name": instrument_name,
+            "length": "8h"}
         }
         return None
 
@@ -476,18 +489,18 @@ class BRC:
                 response = await websocket.recv()
                 # do something with the response...
                 self.response = json.loads(response)
-                self.historical_interest_rate = round(self.response['result'], 4)
+                self.historical_interest_rate = round(self.response['result'], 8)
                 return None
 
 
-    def download_historical_funding_rate(self, starttime, endtime):
+    def download_historical_funding_rate(self, starttime, endtime, instrument_name):
         """
 
         """
         ts_high, ts_low = self._filter_by_timestamp(starttime, endtime)
         # This is the 8hour funding rate
         try:
-            self.create_msg(ts_high, ts_low)
+            self.create_msg(ts_high, ts_low, instrument_name)
             asyncio.get_event_loop().run_until_complete(self.call_api())
         except Exception as e:
             print('Error while downloading from Deribit: ', e)
@@ -496,12 +509,52 @@ class BRC:
         finally: 
             return self.historical_interest_rate
 
+    def download_other_funding_rate(self, instrument_name):
+        """
+
+        """
+        # This is the 8hour funding rate
+        try:
+            self.create_msg2(instrument_name)
+            asyncio.get_event_loop().run_until_complete(self.call_api())
+        except Exception as e:
+            print('Error while downloading from Deribit: ', e)
+            print('Proceeding with interest rate of None')
+            self.historical_interest_rate = None
+        finally: 
+            pdb.set_trace()
+            return self.historical_interest_rate
+
+
 
 
 if __name__ == '__main__':
-    brc = BRC(collection_name='deribit_transactions')
-    brc.download_historical_funding_rate(datetime.datetime(2022, 1, 1, 0, 0, 0), datetime.datetime(2022, 1, 4, 0, 0, 0))
+    #brc = BRC(collection_name='deribit_transactions')
+    #fund = brc.download_other_funding_rate(datetime.datetime(2023, 11, 25, 0, 0, 0), datetime.datetime(2023, 11, 25, 18, 0, 0), 'BTC-PERPETUAL')
+    brc = BRC(collection_name='deribit_futures_transactions')
+    out = brc._run(datetime.datetime(2017, 1, 20, 0, 0, 0), datetime.datetime(2023, 11, 25, 0, 0, 0))
+    df = pd.DataFrame(out).drop_duplicates()
+    df['date'] = list(map(lambda x: datetime.datetime.fromtimestamp(x/1000), df['timestamp']))
+    dat_params = decompose_future_name(df['instrument_name'], df['date'])
+    df         = df.join(dat_params).sort_values('timestamp')
+    df['premium'] = df['price'] - df['index_price']
+    df['pct_premium'] = df['premium'] / df['index_price']
+    df['annualized_premium'] = df.apply(lambda x: ((1 + x['pct_premium']) ** (x['tau']**(-1))) - 1 if x['tau'] >= 0.01 else None, axis = 1)
     pdb.set_trace()
+    
+    group_plot(df, 'date', 'price', 'instrument_name', 'out/futures_prices.png')
+    group_plot(df, 'date', 'mark_price', 'instrument_name', 'out/futures_mark_prices.png')
+    group_plot(df, 'date', 'premium', 'instrument_name', 'out/futures_premia.png')
+    group_plot(df, 'date', 'pct_premium', 'instrument_name', 'out/futures_pct_premia.png')
+    group_plot(df, 'date', 'annualized_premium', 'instrument_name', 'out/futures_annualized_premia.png')
+
+    pdb.set_trace()
+    
+
+    fund = brc.download_historical_funding_rate(datetime.datetime(2023, 11, 25, 0, 0, 0), datetime.datetime(2023, 11, 25, 21, 0, 0), 'ETH-PERPETUAL')
+    print(fund)
+    pdb.set_trace()
+    brc.download_other_funding_rate('BTC-PERPETUAL')
     #dat, interest_rate = brc._run(datetime.datetime(2022, 1, 1, 0, 0, 0),
     #               datetime.datetime(2022, 4, 1, 0, 0, 0),
     #                False, False, '')

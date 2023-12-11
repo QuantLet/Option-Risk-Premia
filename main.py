@@ -415,6 +415,40 @@ def stratify_instruments(enf):
 
     return wrk
 
+def get_funding_rate(curr_day, end_day, collection):
+        # Initiate BRC instance to query data. First and Last day are stored.
+    brc = BRC(collection_name=collection)
+    
+    day_l = []
+    funding_rate_btc_l = []
+    funding_rate_eth_l = []
+
+    while curr_day < end_day:
+        
+        curr_day += datetime.timedelta(1)
+        print(curr_day)
+        try:
+            # make sure days are properly set
+            curr_day_starttime = curr_day.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
+            curr_day_endtime = curr_day.replace(hour = 23, minute = 59, second = 59, microsecond = 0)
+
+            print('\nStarting Simulation from ', curr_day_starttime, ' to ', curr_day_endtime)
+
+            funding_rate_btc = brc.download_historical_funding_rate(starttime = curr_day_starttime,
+                                                                        endtime = curr_day_endtime,
+                                                                        instrument_name = 'BTC-PERPETUAL')
+            funding_rate_eth = brc.download_historical_funding_rate(starttime = curr_day_starttime,
+                                                                        endtime = curr_day_endtime,
+                                                                        instrument_name = 'ETH-PERPETUAL')
+            day_l.append(curr_day)
+            funding_rate_btc_l.append(funding_rate_btc)
+            funding_rate_eth_l.append(funding_rate_eth)
+            
+        except Exception as e:
+            print('Error: ', e)
+
+    return pd.DataFrame({'date': day_l, 'funding_eth': funding_rate_eth_l, 'funding_btc': funding_rate_btc_l})
+
 def run(curr_day, collection, perpetual_funding_rate = True):
     print("Entering Main Loop")
 
@@ -592,8 +626,8 @@ if __name__ == '__main__':
     for collection in collections:
 
         # Debugging Start, End
-        startdate = datetime.datetime(2018,1,1)
-        enddate = datetime.datetime(2023,7,1)
+        startdate = datetime.datetime(2023,1,1) #datetime.datetime(2018,1,1)
+        enddate = datetime.datetime(2023,11,24)
         run_dates = [startdate]
         curr_date = startdate
         ndays_shift = 2
@@ -602,13 +636,44 @@ if __name__ == '__main__':
         use_regression = False
         print('Rookley activated?! ', use_rookley)
 
+        # Compare BTC and ETH funding rates
+        #funding_dfs = []
+        #funding_dfs.append(get_funding_rate(curr_date, collection))
+        #funding = pd.concat(funding_dfs, ignore_index=True)
+        funding = get_funding_rate(curr_date, enddate, collection)
+
+        funding['eth_annualized'] = (1 + funding['funding_eth']) ** (365) - 1
+        funding['btc_annualized'] = (1 + funding['funding_btc']) ** (365) - 1
+        funding['diff'] = funding['eth_annualized'] - funding['btc_annualized']
+        print(funding.describe())
+
+        plt.plot(funding['date'], funding['funding_btc'], label = 'BTC')
+        plt.plot(funding['date'], funding['funding_eth'], label = 'ETH')
+        plt.legend()
+        plt.show()
+        
+
+        plt.plot(funding['date'], funding['btc_annualized'], label = 'BTC')
+        plt.plot(funding['date'], funding['eth_annualized'], label = 'ETH')
+        plt.legend()
+        plt.show()
+
+        
+        plt.plot(funding['date'], funding['diff'], label = 'ETH - BTC')
+        plt.legend()
+        plt.show()
+
+
+        pdb.set_trace()
+
         out = []
 
         while curr_date < enddate:
             curr_date += datetime.timedelta(1)
 
             run_dates.append(curr_date)
-            
+
+
         # Create a dataframe of instruments which should exist until maturity. 
         # Then compare the current day to it and query all for that we require a price
 
