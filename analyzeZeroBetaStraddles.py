@@ -98,7 +98,7 @@ def portfolio_calculations(pf_df, weight, long):
     return pf_df
 
 
-def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, long = False, crash_resistant = True):
+def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, long = True, crash_resistant = True):
     """
     dat, pd.DataFrame as from main.py
     week, int, week indicator
@@ -316,7 +316,7 @@ if __name__ == '__main__':
 
     # Params
     center_on_expiration_price = True
-    crash_resistance = False
+    crash_resistance = True
 
     # Load Expiration Price History
     expiration_price_history = load_expiration_price_history()
@@ -359,7 +359,7 @@ if __name__ == '__main__':
 
     # Run Analysis for Rookley and Regression
     #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
-    performance_overview_l = analyze_portfolio(dat, 'all', 'iv', center_on_expiration_price, True, False, crash_resistance)
+    performance_overview_l = analyze_portfolio(dat, 'all', 'iv', center_on_expiration_price, True, False, crash_resistant = crash_resistance)
 
     
     collected = []
@@ -373,10 +373,11 @@ if __name__ == '__main__':
     else:
         fname = 'out/vanilla/performance_overview.csv'
     performance_overview.to_csv(fname)
-
+    pdb.set_trace()
     # Plot Straddle Returns for inspection
     # @Todo: Should also do this for each day and instrument only once!
     performance_overview['combined_ret'].plot.kde()
+    plt.show()
 
     # Invert 
     #print('Invert Payoff and Returns!!')
@@ -428,3 +429,6 @@ if __name__ == '__main__':
 
     # Per Week
     plot_performance(performance_overview, 'nweeks', crash_resistance)
+
+
+    testsub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05) & (performance_overview['tau'] <= 0.02)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']].describe()
