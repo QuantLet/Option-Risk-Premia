@@ -626,8 +626,8 @@ if __name__ == '__main__':
     for collection in collections:
 
         # Debugging Start, End
-        startdate = datetime.datetime(2023,1,1) #datetime.datetime(2018,1,1)
-        enddate = datetime.datetime(2023,11,24)
+        startdate = datetime.datetime(2022,1,1,0) #datetime.datetime(2018,1,1)
+        enddate = datetime.datetime(2023,12,16,0)
         run_dates = [startdate]
         curr_date = startdate
         ndays_shift = 2
@@ -641,27 +641,32 @@ if __name__ == '__main__':
         #funding_dfs.append(get_funding_rate(curr_date, collection))
         #funding = pd.concat(funding_dfs, ignore_index=True)
         funding = get_funding_rate(curr_date, enddate, collection)
-
+        
         funding['eth_annualized'] = (1 + funding['funding_eth']) ** (365) - 1
         funding['btc_annualized'] = (1 + funding['funding_btc']) ** (365) - 1
         funding['diff'] = funding['eth_annualized'] - funding['btc_annualized']
+        funding['eth_pf'] = np.cumprod(1+funding['funding_eth'])
+        funding['btc_pf'] = np.cumprod(1+funding['funding_btc'])
         print(funding.describe())
-
+        funding.to_csv('funding.csv')
+        pdb.set_trace()
+        
+        fig, ax = plt.figure(figsize = (12,8))
         plt.plot(funding['date'], funding['funding_btc'], label = 'BTC')
         plt.plot(funding['date'], funding['funding_eth'], label = 'ETH')
         plt.legend()
-        plt.show()
+        plt.savefig("funding_btc_vs_eth.pdf")
         
-
+        fig, ax = plt.figure(figsize = (12,8))
         plt.plot(funding['date'], funding['btc_annualized'], label = 'BTC')
         plt.plot(funding['date'], funding['eth_annualized'], label = 'ETH')
         plt.legend()
-        plt.show()
+        plt.savefig('funding_brc_vs_eth_annualized.pdf')
 
-        
+        fig, ax = plt.figure(figsize = (12,8))
         plt.plot(funding['date'], funding['diff'], label = 'ETH - BTC')
         plt.legend()
-        plt.show()
+        plt.savefig('funding_btc_vs_eth_diff.pdf')
 
 
         pdb.set_trace()
