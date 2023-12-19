@@ -142,3 +142,9 @@ Set g and h so that our distribution follows a normal one
 then employ a test on 0
 
 # Compare the zero-beta strategy to vanilla straddles!
+
+
+# Introduce Fees! Likely the outpoerformance is due to fees unaccounted for (remember 0.0003)
+
+
+
