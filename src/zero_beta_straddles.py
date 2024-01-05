@@ -97,6 +97,10 @@ def get_straddle_weights(call_beta, put_beta, min_weight = 0.01, max_weight = 1)
     call_weight = ((-1) * put_beta) / (call_beta - put_beta)
     put_weight = 1 - call_weight
 
+    if call_weight <= min_weight or call_weight >= max_weight or put_weight <= min_weight or put_weight >= max_weight:
+        call_weight, put_weight = None, None
+
+    """
     if call_weight <= min_weight:
         print('Call Weight under Minimum: ', call_weight)
         call_weight = 0
@@ -109,6 +113,7 @@ def get_straddle_weights(call_beta, put_beta, min_weight = 0.01, max_weight = 1)
     if put_weight >= max_weight:
         print('Put Weight over Maximum: ', put_weight)
         put_weight = max_weight
+    """
 
     return call_weight, put_weight
 

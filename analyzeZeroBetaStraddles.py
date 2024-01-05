@@ -11,6 +11,7 @@ Use associated Future for risk-free rate
 Get risk-free rate for the time of the instrument!
 """
 
+from numpy.core.defchararray import center
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,7 +53,7 @@ def get_synthetic_options(existing_options, fotm, move_strike_call = 1.2, move_s
     #missing_options = existing_options.copy(deep = True)
     # @Todo: Looks like this doesnt work yet. Didnt change the output!
     missing_options = existing_options.copy(deep = True)
-    missing_options = missing_options[['instrument_name', 'pair_name', 'is_call', 'strike', 'spot', 'tau', 'iv', 'expiration_price', 'ndays_ceiling']]
+    missing_options = missing_options[['instrument_name', 'pair_name', 'is_call', 'index_change_rel', 'strike', 'spot', 'tau', 'iv', 'expiration_price', 'ndays_ceiling']]
 
     if fotm:
         missing_options['strike'] = missing_options.apply(lambda x: x['strike'] * move_strike_call if x['is_call'] == 1 else x['strike'] * move_strike_put, axis = 1)
@@ -98,7 +99,7 @@ def portfolio_calculations(pf_df, weight, long):
     return pf_df
 
 
-def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, long = True, crash_resistant = True):
+def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_occurrence_only = True, long = True, crash_resistant = True, fees = True):
     """
     dat, pd.DataFrame as from main.py
     week, int, week indicator
@@ -114,6 +115,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     crash_resistant: using FOTM options to protect against crash. For now pretending that the premium is 0 and strike is 1000 further out, meaning
     that the max loss per short position is 1000
     """
+    if long == False:
+        print('Try investing the received premium in the index!')
+
+
     if not center_on_expiration_price:
         dat['spot'] = dat['index_price']
 
@@ -138,7 +143,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
     # Restrict Moneyness
     sub = sub.loc[(sub['moneyness'] <= 1.3) & (sub['moneyness'] >= 0.7) & (sub['tau'] <= 0.3)]
-
+    
     # Min 4 days to maturity
     existing_options = sub.copy(deep = True)
 
@@ -170,6 +175,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     # @Todo: Check how this behaves for all options, not just Calls
     print('Check behavior for all options, not just Calls! This is not gonna work because we are expecting call_df to exist initially!')
     print('Check Formula for Weights!!!')
+    
     for i in range(len(exist)): #.loc[options['is_call'] == 1]
         try:
 
@@ -196,6 +202,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
             else:
                 raise ValueError('is_call is not binary!')
+
+            # For Return on Cash, Fees
+            index_price = opt['index_price']
+            index_change_rel = opt['index_change_rel']
 
             # For Key-Name in dict
             call_name = call_df['instrument_name']
@@ -248,9 +258,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
                 if call_weight is None or put_weight is None:
                     print('\nStraddle not feasible: ', opt)
                     continue
-                
             
-
             # Get FOTM Call and Put Price
             # Restrict max Payoff with the FOTM Strike (e.g. 2000)
             # Consider Cost of FOTM Option
@@ -262,20 +270,41 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             fotm_put_df = portfolio_calculations(fotm_put, put_weight, True)
 
             
-            cols = ['instrument_name', 'spot', 'strike', 'moneyness', 'tau', 'instrument_price', 'instrument_price_on_expiration', 'direction', 'beta', 'cost_base','payoff', 'weight', 'weighted_payoff', 'ret', 'weighted_ret']
+            cols = ['instrument_name', 'index_change_rel', 'spot', 'strike', 'moneyness', 'tau', 'instrument_price', 'instrument_price_on_expiration', 'direction', 'beta', 'cost_base','payoff', 'weight', 'weighted_payoff', 'ret', 'weighted_ret']
             call_sub = call_df[cols]
             put_sub = put_df[cols]
             fotm_call_sub = fotm_call_df[cols]
-            fotm_put_sub = fotm_put_df[cols]            
-
-            # Test
+            fotm_put_sub = fotm_put_df[cols]     
             out = pd.DataFrame({'atm_call': call_sub, 'fotm_call': fotm_call_sub, 'atm_put': put_sub, 'fotm_put': fotm_put_sub}).T
+
+            if fees:
+                n_options = 2
+                btc_fee_per_option = 0.0003
+                fees_abs = n_options * btc_fee_per_option * index_price
+            else:
+                fees_abs = 0
+            print('Fees: ', fees_abs)
+
+            if long == False: #  and counter == 0
+                counter += 1
+                # Use Cash if we are Short
+
+                collected_premia = out['instrument_price'].sum()
+                profit_on_cash = index_change_rel * collected_premia
+            else:
+                profit_on_cash = 0
+            #print('Profit on Cash:', profit_on_cash)
+        
+            
+            # Test
             #out = call_sub.to_frame().join(put_sub.to_frame(), lsuffix = '_call', rsuffix = '_put', how = 'outer').T
             out['day'] = opt['day']
             out['days_to_maturity'] = opt['days_to_maturity']
-
             
-            out['combined_payoff'] = out['weighted_payoff'].sum() 
+            out['combined_payoff'] = out['weighted_payoff'].sum() + profit_on_cash - fees_abs
+            if not np.isfinite(out['combined_payoff']):
+                print('not finite')
+                pdb.set_trace()
             out['combined_ret'] = out['combined_payoff'] / (out['cost_base'].sum()) #(out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
 
             # If we center on expiration price, then we are resetting the time value of a call to the beginning of a day. 
@@ -283,6 +312,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
                 daily_factor = call_df['ndays_ceiling']
             else:
                 daily_factor = call_df['tau'] * 365
+
             out['combined_payoff_daily'] = out['combined_payoff'] / daily_factor
             out['combined_ret_daily'] = out['combined_ret'] / daily_factor
 
@@ -292,7 +322,6 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             keyname = str(call_name) + ' + ' + str(put_name) 
             out_dct[keyname] = out
 
-            
         except Exception as e:
             print(e)
             print('Error!')
@@ -331,7 +360,7 @@ if __name__ == '__main__':
         dat = assign_groups(dat)
     
     dat.sort_values('day', inplace = True)
-    
+
     # Merge Expiration Prices to Transactions
     dat['maturitydate'] = dat['maturitydate_trading'].apply(lambda x: str(x)[:10])
     dat = dat.merge(expiration_price_history, left_on ='maturitydate', right_on = 'Date')
@@ -341,6 +370,13 @@ if __name__ == '__main__':
         # Use expiration date also as spot for each day ('trade around spot")
         dat = dat.merge(expiration_price_history.rename(columns={'expiration_price':'spot'}), left_on = 'day', right_on = 'Date')
 
+        print('WARNING: CHECK IF THIS IS A CORRECT OVERWRITE!!')
+
+    # Daily Returns of the Index. Required for Cash Investment on short side. Drop last observation where the return would be NaN.
+    dat['index_change_abs'] = dat['expiration_price'] - dat['index_price'] #dat['index_price'].diff().shift(-1)
+    dat['index_change_rel'] = dat['index_change_abs'] / dat['index_price']
+    #dat = dat[dat['index_change_abs'].notna()]
+    pdb.set_trace()
     # Drop all mentionings of 'Date', since it is only associated to expiration
     #dat.drop(columns = ['Date_x', 'Date_y'], inplace = True)
 
@@ -359,7 +395,8 @@ if __name__ == '__main__':
 
     # Run Analysis for Rookley and Regression
     #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
-    performance_overview_l = analyze_portfolio(dat, 'all', 'iv', center_on_expiration_price, True, False, crash_resistant = crash_resistance)
+    performance_overview_l = analyze_portfolio(dat, week = 'all', iv_var_name = 'iv', center_on_expiration_price = center_on_expiration_price, 
+                        first_occurrence_only = True, long = False, crash_resistant = crash_resistance, fees = True)
 
     
     collected = []
@@ -376,8 +413,15 @@ if __name__ == '__main__':
     pdb.set_trace()
     # Plot Straddle Returns for inspection
     # @Todo: Should also do this for each day and instrument only once!
-    performance_overview['combined_ret'].plot.kde()
-    plt.show()
+    #performance_overview['combined_ret'].plot.kde()
+    #plt.show()
+
+    # We are not just dropping bad performers here. For some instruments, beta-neutral weights are not possible. 
+    # For these, we will have NaN weights, which then translate into NaN payoff and consequently inf or -inf returns.
+    # Drop those cases.
+    # Ensure range limits.
+    performance_overview.replace([np.inf, -np.inf], np.nan, inplace=True)
+    performance_overview.dropna(subset=["combined_payoff_daily", "combined_ret_daily"], how="all", inplace=True)
 
     # Invert 
     #print('Invert Payoff and Returns!!')
@@ -388,6 +432,7 @@ if __name__ == '__main__':
 
     #atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['tau', 'moneyness', 'combined_payoff', 'combined_ret', 'combined_payoff_daily','combined_ret_daily']]
     atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']]
+    pdb.set_trace()
     grouped_boxplot(atm_sub, 'combined_ret', 'tau', -2, 2, 'atm', crash_resistance)
     grouped_boxplot(atm_sub, 'combined_payoff', 'tau', -5000, 5000, 'atm', crash_resistance)
     grouped_boxplot(atm_sub, 'combined_ret_daily', 'tau', -2, 2, 'atm', crash_resistance)
@@ -429,6 +474,5 @@ if __name__ == '__main__':
 
     # Per Week
     plot_performance(performance_overview, 'nweeks', crash_resistance)
-
 
     testsub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05) & (performance_overview['tau'] <= 0.02)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']].describe()
