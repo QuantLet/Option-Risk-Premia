@@ -302,9 +302,9 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             out['days_to_maturity'] = opt['days_to_maturity']
             
             out['combined_payoff'] = out['weighted_payoff'].sum() + profit_on_cash - fees_abs
-            if not np.isfinite(out['combined_payoff']):
-                print('not finite')
-                pdb.set_trace()
+            #if not np.isfinite(out['combined_payoff']):
+            #    print('not finite')
+            #    pdb.set_trace()
             out['combined_ret'] = out['combined_payoff'] / (out['cost_base'].sum()) #(out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
 
             # If we center on expiration price, then we are resetting the time value of a call to the beginning of a day. 
@@ -345,7 +345,7 @@ if __name__ == '__main__':
 
     # Params
     center_on_expiration_price = True
-    crash_resistance = True
+    crash_resistance = False
 
     # Load Expiration Price History
     expiration_price_history = load_expiration_price_history()
@@ -376,7 +376,7 @@ if __name__ == '__main__':
     dat['index_change_abs'] = dat['expiration_price'] - dat['index_price'] #dat['index_price'].diff().shift(-1)
     dat['index_change_rel'] = dat['index_change_abs'] / dat['index_price']
     #dat = dat[dat['index_change_abs'].notna()]
-    pdb.set_trace()
+    #pdb.set_trace()
     # Drop all mentionings of 'Date', since it is only associated to expiration
     #dat.drop(columns = ['Date_x', 'Date_y'], inplace = True)
 
@@ -410,7 +410,7 @@ if __name__ == '__main__':
     else:
         fname = 'out/vanilla/performance_overview.csv'
     performance_overview.to_csv(fname)
-    pdb.set_trace()
+    #pdb.set_trace()
     # Plot Straddle Returns for inspection
     # @Todo: Should also do this for each day and instrument only once!
     #performance_overview['combined_ret'].plot.kde()
