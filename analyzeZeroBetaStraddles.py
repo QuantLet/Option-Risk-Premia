@@ -339,13 +339,36 @@ if __name__ == '__main__':
     # Output Paths must exist:
     # /plots/vanilla
     # /plots/crash_resistant
-    required_paths = ['plots/vanilla', 'plots/crash_resistant', 'out/vanilla', 'out/crash_resistant']
+    required_paths = ['plots/vanilla/fees',
+                      'plots/vanilla/no_fees',
+                      'plots/crash_resistant/fees',
+                      'plots/crash_resistant/no_fees',
+                      'out/vanilla/fees',
+                      'out/vanilla/no_fees', 
+                      'out/crash_resistant/fees',
+                      'out/crash_resistant/no_fees']
+                      
     for req_path in required_paths:
         Path(req_path).mkdir(parents=True, exist_ok=True)
 
     # Params
     center_on_expiration_price = True
     crash_resistance = False
+    apply_fees = True
+
+    # Output Directories
+    if crash_resistance:
+        out_dir_start = 'out/crash_resistant/'
+        plot_dir_start = 'plots/crash_resistant/'
+    else:
+        out_dir_start = 'out/vanilla/'
+        plot_dir_start = 'plots/vanilla/'
+    if apply_fees:
+        out_dir = out_dir_start + 'fees/'
+        plot_dir = plot_dir_start + 'fees/'
+    else:
+        out_dir = out_dir_start + 'no_fees/'
+        plot_dir = plot_dir_start + 'no_fees/'
 
     # Load Expiration Price History
     expiration_price_history = load_expiration_price_history()
@@ -396,7 +419,7 @@ if __name__ == '__main__':
     # Run Analysis for Rookley and Regression
     #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
     performance_overview_l = analyze_portfolio(dat, week = 'all', iv_var_name = 'iv', center_on_expiration_price = center_on_expiration_price, 
-                        first_occurrence_only = True, long = False, crash_resistant = crash_resistance, fees = True)
+                        first_occurrence_only = True, long = False, crash_resistant = crash_resistance, fees = apply_fees)
 
     
     collected = []
@@ -405,11 +428,7 @@ if __name__ == '__main__':
         collected.append(val.iloc[0])
     performance_overview = pd.DataFrame(collected)
 
-    if crash_resistance:
-        fname = 'out/crash_resistant/performance_overview.csv'
-    else:
-        fname = 'out/vanilla/performance_overview.csv'
-    performance_overview.to_csv(fname)
+    performance_overview.to_csv(out_dir + 'performance_overview.csv')
     #pdb.set_trace()
     # Plot Straddle Returns for inspection
     # @Todo: Should also do this for each day and instrument only once!
@@ -433,10 +452,10 @@ if __name__ == '__main__':
     #atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['tau', 'moneyness', 'combined_payoff', 'combined_ret', 'combined_payoff_daily','combined_ret_daily']]
     atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']]
     pdb.set_trace()
-    grouped_boxplot(atm_sub, 'combined_ret', 'tau', -2, 2, 'atm', crash_resistance)
-    grouped_boxplot(atm_sub, 'combined_payoff', 'tau', -5000, 5000, 'atm', crash_resistance)
-    grouped_boxplot(atm_sub, 'combined_ret_daily', 'tau', -2, 2, 'atm', crash_resistance)
-    grouped_boxplot(atm_sub, 'combined_payoff_daily', 'tau', -5000, 5000, 'atm', crash_resistance)
+    grouped_boxplot(atm_sub, 'combined_ret', 'tau', -2, 2, plot_dir, 'atm', crash_resistance)
+    grouped_boxplot(atm_sub, 'combined_payoff', 'tau', -5000, 5000, plot_dir, 'atm', crash_resistance)
+    grouped_boxplot(atm_sub, 'combined_ret_daily', 'tau', -2, 2, plot_dir, 'atm', crash_resistance)
+    grouped_boxplot(atm_sub, 'combined_payoff_daily', 'tau', -5000, 5000, plot_dir, 'atm', crash_resistance)
 
     des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'tau','moneyness']].groupby(['tau', 'moneyness']).describe()
     print(des.to_string())
@@ -450,16 +469,16 @@ if __name__ == '__main__':
     
     
     # Add Boxplots for Performance Overview per Tau!!!
-    grouped_boxplot(performance_overview, 'combined_payoff_daily', 'tau', -5000, 5000, '', crash_resistance)
-    grouped_boxplot(performance_overview, 'combined_ret_daily', 'tau', -2, 2, '', crash_resistance)
-    grouped_boxplot(performance_overview, 'combined_payoff_daily', 'nweeks', -5000, 5000, '', crash_resistance)
-    grouped_boxplot(performance_overview, 'combined_ret_daily', 'nweeks', -2, 2, '', crash_resistance)
+    grouped_boxplot(performance_overview, 'combined_payoff_daily', 'tau', -5000, 5000, plot_dir, '', crash_resistance)
+    grouped_boxplot(performance_overview, 'combined_ret_daily', 'tau', -2, 2, plot_dir, '', crash_resistance)
+    grouped_boxplot(performance_overview, 'combined_payoff_daily', 'nweeks', -5000, 5000, plot_dir, '', crash_resistance)
+    grouped_boxplot(performance_overview, 'combined_ret_daily', 'nweeks', -2, 2, plot_dir, '', crash_resistance)
     
     # If we don't round here, then it gets too messy. Adjust the X Axis otherwise...
-    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff', 'moneyness', -5000, 5000, '', crash_resistance)
-    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret', 'moneyness', -2, 2, '', crash_resistance)
-    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff_daily', 'moneyness', -5000, 5000, '', crash_resistance)
-    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret_daily', 'moneyness', -2, 2, '', crash_resistance)
+    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff', 'moneyness', -5000, 5000, plot_dir, '', crash_resistance)
+    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret', 'moneyness', -2, 2, plot_dir, '', crash_resistance)
+    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff_daily', 'moneyness', -5000, 5000, plot_dir, '', crash_resistance)
+    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret_daily', 'moneyness', -2, 2, plot_dir, '', crash_resistance)
     #@Todo: Ensure that x axis is date! its too tight!
     #@Todo: Invert Returns and Combined Payoff for long straddles!
     # @Todo Introduce interest rate!
@@ -470,9 +489,9 @@ if __name__ == '__main__':
     #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
     #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
     #
-    plot_performance(performance_overview, 'tau', crash_resistance)
+    plot_performance(performance_overview, 'tau', crash_resistance, plot_dir)
 
     # Per Week
-    plot_performance(performance_overview, 'nweeks', crash_resistance)
+    plot_performance(performance_overview, 'nweeks', crash_resistance, plot_dir)
 
-    testsub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05) & (performance_overview['tau'] <= 0.02)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']].describe()
+    #testsub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05) & (performance_overview['tau'] <= 0.02)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']].describe()
