@@ -1,0 +1,1156 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  12,
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Pricing Kernels and Risk Premia implied in Bitcoin Options},
+  pdfauthor={Julian Winkel; Wolfgang K. Härdle},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin = 2.5cm]{geometry}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{subfig}
+\usepackage{caption}
+\usepackage{eucal}
+\floatplacement{figure}{H}
+
+\title{Pricing Kernels and Risk Premia implied in Bitcoin Options}
+\author{Julian Winkel\footnote{International Research Training Group 1792;
+  Humboldt-Universität zu Berlin,
+  \href{mailto:julian.winkel@hu-berlin.de}{\nolinkurl{julian.winkel@hu-berlin.de}}} \and Wolfgang K. Härdle\footnote{BRC Blockchain Research Center,
+  Humboldt-Universität zu Berlin, Berlin, Germany; Sim Kee Boon
+  Institute, Singapore Management University, Singapore; WISE Wang Yanan
+  Institute for Studies in Economics, Xiamen University, Xiamen, China;
+  Dept. Information Management and Finance, National Chiao Tung
+  University, Hsinchu, Taiwan, ROC; Dept. Mathematics and Physics,
+  Charles University, Prague, Czech Republic, Grants -- DFG IRTG 1792
+  and the Czech Science Foundation's grant no. 19-28231X / CAS XDA
+  23020303 gratefully acknowledged,
+  \href{mailto:haerdle@hu-berlin.de}{\nolinkurl{haerdle@hu-berlin.de}}}}
+\date{21 November 2022}
+
+\begin{document}
+\maketitle
+
+\newcommand{\quantnet}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,}
+\newcommand{\quantinar}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/quantinar_logo.png}}\,}
+
+\definecolor{bittersweet}{rgb}{1.0, 0.44, 0.37} 
+\definecolor{ao}{rgb}{0.0, 0.5, 0.0}
+\definecolor{bananamania}{rgb}{0.98, 0.91, 0.71}
+\definecolor{bluegray}{rgb}{0.4, 0.6, 0.8}
+
+\pagenumbering{roman}
+
+\begin{abstract}
+
+\singlespacing 
+Bitcoin Pricing Kernels (PK) are estimated using a novel data set from Deribit, the leading Bitcoin options exchange. The PKs, as the ratio between risk-neutral and physical density, dynamically reflect the change of investor preferences. Thus the PKs improve the understanding of investor expectations and risk premium in a new asset class. Bootstrap-based confidence bands are estimated in order to validate the results. Investors are heterogeneous in their risk profiles and preferences with respect to volatility and investment horizon. The empirical PKs turn out to be U-shaped for short-dated instruments and W-shaped for long-dated instruments. We find that investors are willing to pay a substantial risk premium to insure themselves against short-term price movements. The risk premium is smaller for longer-dated instruments and their traders are risk averse. The shape of the empirical PKs reveals the existence of a time-varying risk-premium. The similarity between the shape of empirical PKs for Bitcoin and other markets that represent aggregate wealth shows that Bitcoin is becoming an established asset class. 
+
+
+ \medskip
+ \textbf{Keywords:} Bitcoin, Deribit, pricing kernel, risk aversion, speculation, hedging  \\
+ \indent \textbf{JEL Classification:} C14, C50, G10  \\
+ \bigskip
+
+\end{abstract}
+
+\pagenumbering{arabic}
+
+\newpage
+
+\section{Introduction}
+
+The valuation of digital currencies has been a question that predated
+its first representative, Bitcoin. Upon the creation of Bit Gold, Szabo
+(2008) envisioned its value to arise from an interplay between the
+benefits of the two entities which foremost represent value: cash and
+metal. The argument put forward was that metal bears an inherent value
+that is largely independent of trusted third parties. However, the
+unwieldiness of metal incurs a relatively high transaction cost when
+used as a means of exchange. (Unbacked) Cash, on the other hand, draws
+its value largely from the trust in a third party's acceptance. The
+combination of the two elements, coming in the form of a scarce digital
+resource that is governed in a trustless system, has been passed on to
+Bitcoin (BTC) and other Cryptocurrencies (CC).
+
+Since the inception of BTC as proposed by Nakamoto (2009), various
+arguments have been made on its valuation. Apart from the benefit of a
+trustless system, the arguments typically include the production cost of
+a block (Hayes 2019), the benefit of borderless transactions (Deng 2020;
+Stellar Development Foundation 2022), the value of an inflation hedge
+(Choi and Shin 2022), network effects (Chen and Vinogradov 2021; Gandal
+and Halaburda 2016) or expectations about future price developments
+(Blau 2017; Smaniotto and Neto 2022).
+
+In addition to the former valuation approaches, we offer new insights by
+means of the BTC derivatives market which has emerged over the course of
+the last years. Since derivatives markets are particularly rich in
+information, their evolution provides a unique opportunity to assess the
+BTC market valuation through the application of proven econometric
+techniques. Key information about preferences and forward looking
+decisions are state price densities (SPD), that can be estimated from
+option prices. SPDs yield risk-neutral probabilities, under which
+investors price derivatives. They provide the key to pricing exotic or
+illiquid options in an arbitrage-free manner (Aït-Sahalia and Lo 1998)
+and offer insight into changing expectations about future developments.
+In conjunction with the physical density (PD) of Bitcoin returns, the
+resulting pricing kernels (PK) can be calculated. The shape and
+evolution of PKs over time discloses investor expectations under
+different market circumstances and gives insight into time varying
+preferences. We present the first paper that is based on real Bitcoin
+option data, inferring and disclosing investor preferences following
+hypothesizing papers on bootstrap-based confidence bands for empirical
+PKs (Härdle et al. 2014) and cryptocurrency option pricing under an SVCJ
+model (Hou et al. 2020).
+
+BTC derivatives markets can already be regarded as efficient information
+processing mechanisms (Alexander et al. 2022). Among those markets,
+\href{https://www.deribit.com/}{Deribit} is the leading crypto option
+exchange as measured by open interest and trading volume. As of
+2022-07-25, Deribit manages more than 90\% of the BTC option volume
+which translates over a 30 day window into an average 24-hour trading
+volume of over 331.8 million USD (Skew.com 2022). The competitors
+LedgerX, OKEx, CME, bit.com and Binance are contributing respective
+averages of 1.9, 15.7, 13.2, 1.5, 0.582 million USD.
+
+A particularly interesting property of the BTC options market is its
+decentralized nature. Trading on Deribit is largely dominated by
+retailers. Despite an ongoing decline of retail market share in favor of
+institutions (Coinbase 2022), who are cautious to invest in highly
+volatile and unregulated assets, the options market on Deribit remains
+driven by retailers: As of 2022-07-25, 86.65\% of the volume is
+attributed to retail, whereas 9.16\% and 1.19\% are attributed to
+investors and whales (Deribit 2022a). Deribit classifies market
+participants according to their share of the circulating BTC supply.
+According to Deribit's classification, a ``whale'' is an entity that
+owns more than 1\% of the supply on Deribit, an ``investor'' owns
+between 0.1\% and 1\% and a ``retailer'' owns less than 0.1\%.
+Considering the retail share in trading volume in conjunction with
+Deribit's dominating market share over the competition, we figure that
+the Bitcoin price is mainly driven by retail. Analyzing a retail-driven
+marketplace renders the study of digital currencies like BTC unique and
+different from the well studied equity options markets, where retail
+only has a minor influence (Bloomberg 2021).
+
+Another interesting feature of the market under consideration is not
+just the dominating presence of retailers, but their easy access to
+leverage for speculation. Since Deribit is by design a margin-trading
+platform, levers of up to 100 are available for longs. Easy access to
+leverage could suggest the existence of the leverage effect if investors
+were risk affine. However, we cannot confrm a leverage effect to be
+present in the time frame under consideration.
+
+All underlying code is available on \href{quantlet.com}{quantlet.com}
+and a corresponding courselet is available on
+\href{quantinar.com}{quantinar.com}.
+
+\section{Pricing Kernels}
+
+Assume a risky asset with a stochastic price process
+\(\{S_t\}_{t \in \mathbb{N}}\) and a risk-free interest rate
+\(\{r_t\}_{t \in \mathbb{N}}\) in a complete market. Following the
+second Fundamental Theorem of Asset Pricing, a unique
+martingale-equivalent measure \(Q\) exists in the described setting,
+under which derivatives can be priced in an arbitrage-free manner (Huynh
+et al. 2002; Pascucci and Agliardi 2011).
+
+Let \(C_t\) be the price at time \(t\) of a contingent claim with payoff
+\(\psi(\cdot)\) on the risky asset (underlying), which has a maturity at
+\(T\) and a time-to-maturity \(\tau = T-t\). For simplicity assume a
+constant interest rate \(r_t = r\). The price of any such contingent
+claim can be expressed as the discounted value of expected future
+payoffs, weighted with their respective probabilities of occurrence. The
+expectation operator is conditional on the information set at \(t\)
+under the equivalent martingale probability \(Q\)
+
+\begin{equation}
+C_t = e^{-r \tau} \mathbb{\sf{E}}^Q[\psi(S_T)] = e^{-r, \tau}  \int_{-\infty}^\infty \psi(u) f_t^Q(u) du
+\end{equation}
+
+Transforming the risk-neutral measure \(Q\) to the physical measure
+\(P\) yields the PK by Itô's Lemma.
+
+\begin{equation}
+C_t = e^{-r, \tau}  \int_{-\infty}^\infty \psi(u) q(u) du = e^{-r, \tau}  \int_{-\infty}^\infty \psi(u) p(u) K(u) du
+\end{equation}
+
+where the PK \(K(\cdot)\) is defined as \(\frac{q(\cdot)}{p(\cdot)}\)
+and for simplicity of notation we write \(q(\cdot)\) for
+\(\frac{\partial Q}{\partial t}(\cdot)\) and drop the sequence \(r_t\).
+
+The PK can therefore be approximated by the ratio between the
+risk-neutral density and the physical density. This process is discussed
+and executed in the following sections.
+
+\section{Nonparametric Estimation of State Price Densities}
+
+\subsection{Derivation}
+
+As stated by Breeden and Litzenberger (1978), a SPD can be estimated via
+the second derivative of the call price function
+\(\psi(S_T) = \max(S_T - K, 0)\) with respect to the strike price \(K\).
+
+\begin{equation}
+\frac{\partial ^2 C_t}{\partial K^2}\bigg\rvert_{K = S_t} =  q(S_T)e^{-r \tau}
+\end{equation}
+
+A variety of call prices \(C\) with different strikes \(K\) is required
+in order to calculate the complete SPD \(q\). The present value of a
+call can be priced in implied volatility (IV). In conjunction with the
+vector (time-to-maturity \(\tau\), strike \(K\), spot \(S\), interest
+rate \(r\)), the market call price can be calculated.
+
+IV is estimated as a function of time-to-maturity and moneyness in the
+following section. Collapsing spot price \(S\) and strike \(K\) into a
+single variable \(M = \frac{K}{S}\) reduces the effect of the curse of
+dimensionality. Similarly, we collapse \(S\) and the interest rate \(r\)
+into a Futures price.
+
+\subsection{Local Polynomial Estimation of the IV Surface}
+
+Assume that the implied volatilites have some noise added (Huynh et al.
+2002; Rookley 1997).
+
+\begin{equation}
+\sigma (M, \tau) = g(M, \tau) + \sigma^{*}(M, \tau)  \varepsilon
+\end{equation}
+
+with a standardized error random variable \(\varepsilon\), moneyness
+\(M\), \(\tau\) and \(\varepsilon\) independent and
+\(\sigma^{*}(M, \tau)\) being the scaling of the error term given \(M\)
+and \(\tau\). Suppose \(g\) is smooth, i.e.~it can be approximated using
+Taylor's Theorem.
+
+Taylor expansion of \(g\) in a neighborhood of \((M_0, \tau_0)\):
+\begin{equation}
+\begin{aligned}
+g(M, \tau) = g(M_0, \tau_0) +
+\frac{\partial g}{\partial M}(M-M_0) + 
+\frac{1}{2} \frac{\partial^2 g}{\partial M^2}(M-M_0)^2 + \\
+\frac{\partial g}{\partial \tau}(\tau - \tau_0) + 
+\frac{1}{2} \frac{\partial^2 g}{\partial \tau^2}(\tau - \tau_0)^2 + \\ 
+\frac{\partial^2 g}{\partial M \partial \tau}(M-M_0)(\tau - \tau_0)
+\end{aligned}
+\end{equation}
+
+The functional relationship between the IV surface \(\sigma\) and \(M\)
+and \(\tau\) can now be approximated using a Weighted Least Squares
+Estimator (WLSE), minimizing the objective function
+
+\begin{equation}
+\operatorname{arg}\, \underset{\beta}{\operatorname{min}}{(\sigma - X\beta)^\top W (\sigma - X\beta)}
+\end{equation}
+
+where
+\(W = \text{diag}(\mathcal{K}_{h_m, h_\tau}(M_j - M_0, \tau_j - \tau_0))\)
+for a Gaussian kernel \(\mathcal{K}\) with bandwidths \(h_m\) and
+\(h_\tau\). \(\sigma\) is the \(n \times 1\) vector of observed implied
+volatilities, \(\beta\) is the vector of the local polynomial
+coefficients.
+
+\[
+X = 
+\begin{pmatrix}
+1 & (M_1 - M_0) & (M_1 - M_0)^2 & (\tau_1 - \tau_0) & (\tau_1 - \tau_0)^2 & (M_1 - M_0) (\tau_1 - \tau_0) \\
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \\
+1 & (M_n - M_0) & (M_n - M_0)^2 & (\tau_n - \tau_0) & (\tau_n - \tau_0)^2 & (M_n - M_0) (\tau_n - \tau_0) \\
+\end{pmatrix}
+\]
+
+The resulting WLSE is
+
+\begin{equation}
+\hat{\beta} = (X ^\top WX)^{-1}X ^\top W \sigma
+\end{equation}
+
+Following Härdle et al. (2014), a window of the last 500 daily returns
+(based on \(\tau\)) is used to calculate a nonparametric Kernel Density
+Estimator for the PD.\\
+\href{https://quantinar.ro/course/103/statistics-of-financial-markets}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/quantinar_logo.png}}\,Chapter 24}
+
+\section{Literature Review}
+
+Breeden and Litzenberger (1978) derive SPDs using Arrow-Debreu prices
+and Butterfly Spreads. Their paper was the cornerstone for the now
+existing vast literature on estimation of SPDs. Without requiring a
+parametric form for SPDs, Rookley (1997) who developed a nonparametric
+estimation method. IV skews are estimated by decomposing the functional
+relationship between IV, moneyness and time-to-maturity \(\tau\). In
+this manner it is possible to derive the SPD at every point in a robust
+way. Aı̈t-Sahalia et al. (2001) estimate PKs from S\&P500 options data
+and the according return series in order to assess the efficiency of the
+options market. Departures from SPD and PD are used to identify
+inefficient pricing. They design a trading strategy, exploiting the
+skewness and kurtosis of the densities. The strategy is shown to have a
+high Sharpe Ratio. Grith et al. (2009) propose a systematic modeling
+approach to study the evolution of PKs over time. With European DAX
+data, a series of empirical PKs is estimated from 2003 until 2006. While
+the risk-neutral density is inferred using Rookley's method, the PD is
+estimated with a GARCH model. A common shape is identified and
+deviations of the time varying EPKs are studied. The deviations between
+individual PKs are described using a set of parameters for horizontal
+and vertical shifts. The relationship between PKs and Arrow-Pratt
+measure of Absolute Risk Aversion (ARA) give insight into investor's
+risk aversion. In a related research, Härdle et al. (2014) derive
+bootstrap-based confidence bands for nonparametrically estimated PKs.
+
+Inverse Options, meaning options settled in kind of the underlying, are
+dominant in the crypto world. Settlement of BTC options in terms of BTC
+changes the payoff function of the option from \(\max(S_T - K; 0)\) to
+\(\max(\frac{S_T - K}{S_T}; 0)\) and thus changes the contract's net
+present value. Alexander and Imeraj (2021) adjust Black-Scholes prices
+and hedge ratios to inverse options. However, it is argued that traders
+are erroneously applying vanilla Black-Scholes valuation instead of the
+corrected prices - perhaps because of being unaware of the concept. We
+have decided to use with the standard, non-inverse Black Scholes pricing
+for multiple reasons. Alexander and Imeraj (2021) argue that traders are
+perhaps unaware of the difference. Since we are inferring investor
+expectations, we figure that it is more appropriate to infer pricing
+kernels under the same Black Scholes prices that the investors use.
+Additionally, it is likely that many traders actually hedge their
+overall Bitcoin exposure. This would negate the ``inverse'' part of the
+option. Furthermore, reviewing the differences in pricing compared to
+the adjusted prices, we find that the difference is small in the absence
+of extreme moves in the underlying. This was not the case in the time
+period under consideration.
+
+Hou et al. (2020) price BTC options under an SVCJ model. Their results
+emphasize the tail risk introduced by jumps in the underlying. Jumps in
+particular introduce market incompleteness, but anonymity of
+transactions may be relevant as well. Chen and Vinogradov (2021) derive
+PKs and the impact of market incompleteness on risk premia. They state
+that a key property of cryptocurrency valuation is the user's anonymity
+(or pseudonymity), which is simultaneously the source of value and
+incompleteness in the respective market. They argue that hedging an
+anonymous transaction would require an identity disclosure. This
+contradiction may introduce an effectively unhedgeable event.
+
+\section{Deribit}
+
+Deribit, a margin-trading platform for futures and options, has been
+launched in June 2016 in the Netherlands and is currently incorporated
+in Panama. As of time of the writing, Deribit is the largest BTC option
+exchange (Skew.com 2022). For both types of derivatives, BTC and ETH are
+the underlying as well as the currency in which settlement is conducted.
+This allows to view them as inverse options.
+
+\begin{center}
+\begin{figure}
+\includegraphics[width=0.9\textwidth]{/Users/julian/src/up/spd/plot/Skew_BTC_Open_Interest_cut.pdf}
+\caption[Open Interest in BTC Options per Exchange.]%
+{Open Interest in BTC Options per Exchange. Snapshot from \href{https://analytics.skew.com/dashboard/bitcoin-options}{skew.com} on 2022-01-16.  \color{bittersweet}{Deribit}, \color{ao}{LedgerX}, \color{bananamania}{CME}, \color{bluegray}{bit.com}. }
+\label{fig: ivtest}
+\end{figure}
+\end{center}
+
+\subsection{Bitcoin Option Contract Specifications}
+
+Deribit offers cash-settled European-style options. The underlying is a
+synthetic index, whose exact composition is described in the data
+section. Settlement is first calculated in USD and then conducted in
+kind of the underlying. E.g. a BTC call with a strike of \(10000\) and a
+settlement value of \(12000\) at maturity will result in a cashflow of
+\(2000\) USD, which is equivalent to \(\frac{1}{6}\) BTC (excluding
+transaction cost). The settlement value is defined as the average of the
+underlying BTC index for the last 30 minutes before settlement. Each
+contract has a lot size of 1 BTC and is settled at 8am UTC on the
+respective maturity date. Maturity dates have a daily, monthly,
+quarterly and annual frequency. Deribit is the only derivatives exchange
+to offer daily options. Instruments are trading 24/7 with a tick size of
+0.0005 BTC. Due to the automatic usage of margin-trading, margin-based
+liquidation of positions is possible. Initial margin and maintenance
+margins are both zero for long positions. For short positions, initial
+margin is required (Deribit 2022b). In case of liquidation, a penalty is
+applied to the defaulting party, whose proceeds are paid into the
+Deribit Insurance Fund (Deribit 2020a).
+
+Trading and deliveries on Deribit are subject to fees (Deribit 2022c).
+The applied fees generally vary depending on whether the order was a
+liquidity maker or taker. However, for Bitcoin options they are equal.
+Trading fees are 0.03\% of the underlying or 0.0003 BTC per options
+contract. The fees constitute a maximum of 12.5\% of the contract's
+value.
+
+\section{Data}
+
+\subsection{Data Structure}
+
+The dataset consists of 8,444,664 order book snapshots, which have been
+collected from Deribit in the time from 2021-04-01 until 2022-04-01. The
+snapshots were captured via the Deribit API V2. The data base is
+available on the
+\href{https://blockchain-research-center.com}{Blockchain Research Center (BRC)}.
+The full data set includes all parameters that the
+\href{https://docs.deribit.com/#deribit-api-v2-1-1}{Deribit API V2}
+returns at the time of collection under the methods
+
+\begin{itemize}
+\tightlist
+\item
+  \{\it public/get\_last\_trades\_by\_instrument\_and\_time\}
+\item
+  \{\it public/get\_order\_book\}
+\end{itemize}
+
+Most importantly the results include
+
+\begin{itemize}
+\tightlist
+\item
+  Timestamps
+\item
+  Greeks
+\item
+  Implied Volatility
+\item
+  Tick Direction
+\item
+  Order Type
+\item
+  Volume
+\item
+  Instrument Price
+\item
+  Strike
+\item
+  Spot
+\end{itemize}
+
+High-frequent order book changes and executed trades are captured for
+options and futures whose underlying is BTC. Values of the underlying
+synthetic BTC USD Index are also saved. The underlying is calculated as
+an equally-weighted BTC/USD price of eleven major crypto exchanges,
+namely Binance, Bitfinex, Bitstamp, Bittrex, Coinbase Pro, FTX, Gemini,
+Huobi, Itbit, Kraken, LMAX Digital, OKEx. Individual feeds can be
+excluded due to administrative decisions or in case if invalid data.
+Remaining feeds are sorted, truncated around the median price and
+weighted (Deribit 2020b).
+
+\subsection{Data Integrity}
+
+Data integrity plays a crucial role in crypto markets. Mark Carney, the
+chair of the Financial Stability Board and head of the Bank of England,
+warned that wash trading, pump and dumps and spoofing, known as outlawed
+manipulation techniques in equity markets, are also present in crypto
+and pose a risk to financial stability (Rodgers 2019). Wash trading is
+used to increase trading volume and thus artificially increase demand. A
+spoofer submits market non-bona fide price quotes in order to cause
+artificial price volatility (Sar 2017). Pump \& Dump is a form of
+securities fraud in which a group of traders rapidly and artificially
+inflate a price in order to offload their previously acquired inventory.
+Since Pump \& Dump schemes require low liquidity (in the underlying), we
+can exclude this possibility for Bitcoin (La Morgia et al. 2020).
+
+Aloosh and Li (2019) find evidence for exchange-driven inflated volume,
+generated by wash trades, to market themselves under the guise of
+liquidity. Cong et al. (2019) report that on average 70\% of volume on
+decentralized exchanges is fake due to the use of wash trading.
+According to Bitmex (2019), up to 95\% of trading volume on unregulated
+exchanges is generated by wash trading. In order to ensure data
+integrity, we exclusively use orderbooks instead of executed trades in
+order to filter possible cases of wash trading.
+
+To address the potential issue of spoofing, we adopt an approach related
+to Tuccella et al. (2021). They attempt to identify spoofing on
+cryptocurrency exchanges using a GRU model. Their predictors are a
+function of the amount of cancelled orders relative to the cumulative
+order size on each side of the order book. Since Bitcoin derivatives
+order books do not have the same amount of depth as spot or futures
+markets, we employ a stricter method and exclude all orders whose
+lifetime does not exceed two seconds. We find that less than 5\% of
+orders are filtered due to short order lifetime. We figure that
+traditional spoofing techniques, based on the rapid submission and
+cancellation of orders, are difficult to implement due to Deribit's rate
+limits (Deribit 2023). Users with less than 1 million USD in
+7-day-turnover can only post five matching engine requests. These
+include request for a buy or sell order or a corresponding cancellation.
+Although the limits for a market maker (who could be allowed to post 30
+requests per second given a turnover of 25 million USD in 7 days) are
+considerably higher, the market maker must still meet the quoting
+requirements for a large range of instruments. This effectively
+restricts the influence that single entities can have on certain
+instruments via the rapid submission and cancellation of orders and
+explains the rarity of such events in our dataset.
+
+\subsection{Preprocessing}
+
+Although market makers are obliged to quote most instruments for the
+majority of the time, some may not be quoted at all or only be quoted at
+the cost of a large spread (Deribit 2020c). For Far-Out-of-Money (FOTM)
+contracts, when the minimum tick size exceeds the market IV, one can
+observe bids for 0\% IV. Cases of quotes for 0\% IV and all duplicates
+are excluded from the data set. Since the majority of option trading
+volume concentrates on instruments with short or medium time-to-maturity
+\(\tau\), we restrict \(\tau\) to be smaller or equal than one quarter
+of a year. \(\tau\) is normalized on the span of a year. Instruments are
+grouped according to their time-to-maturity, over a range of 0, 1, 2, 4,
+8 weeks. We restrict moneyness \(M = \frac{K}{S}\) to the interval
+\([0.7, 1.3]\) in order to exclude the influence of high-volatility
+observations which could be unreliable (Grith et al. 2009).
+
+Call options are exclusively used in order to estimate the IV surface in
+Rookley's method. Put-Call-Parity ensures arbitrage-free call option
+prices. However, we do not use Put-Call-Parity to increase our data
+sample. Conversion of option prices via Put-Call-Parity could introduce
+errors into our dataset due to market microstructure (MMN) noise. Our
+high-frequent order book data is extracted via an API. Due to rate
+limitations and a diverse amount of instruments, order book snapshots
+cannot be taken simultaneously for all instruments. The data scraping
+application successively iterates over all instruments and captures
+changes in order books. While the resulting data base provides a clear
+picture of order book data, it does not allow for a complete
+reconstruction of all order books at all times. Without simultaneity,
+volatility of the underlying and order competition within the spread
+could change the prices of the corresponding instruments (required for
+Put-Call-Parity) between the individual snapshots. A range of futures
+may be available on Deribit, but only the perpetual futures contract is
+actually liquid. The classic (non-perpetual) futures also price in the
+settlement cost, which often causes them to trade in backwardation close
+to maturity. But in spite of this, BTC options tend to be traded more
+frequently when they are close to maturity. The combination of these
+real-world limitations challenges the simple conversion via
+Put-Call-Parity and could introduce errors into our dataset.
+Furthermore, we do not see the necessity to use such a method as we have
+sufficient call option data to compute the IV surface from which we
+sample option prices.
+
+\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Preprocessing}
+
+\section{Volatility}
+
+In accordance with Masset (2011) and Eraker (2021), the list of
+well-established stylised facts on volatility in traditional markets
+include horizontal dependence of volatility, leverage effect, the
+volatility premium and extreme events. Horizontal dependence of
+volatility describes the tendency of local volatility clusters and the
+tendence to mean-reversion. Both properties can be observed in the 7 day
+rolling volatility. Sudden spikes in realized volatility form clusters
+and are often followed by similar drops. The leverage effect can be
+measured as a negative correlation between returns and volatility.
+Phases of negative returns coincide with high volatility and vice versa.
+The Pearson correlation between the underlying and realized volatility
+is -12.59\%. The Pearson correlation between the underlying and the bid
+(ask) IV is -16.11\% (-13.05\%). Due to the low absolute values of
+correlation, the existence of a leverage effect is unlikely. However,
+the sign matches the direction of a leverage effect. Considering the
+large share of retailers with easy access to leverage, the lack of
+significance is a surprising result. It is well known that, in general,
+the IV exceeds the unconditional annualized standard deviation. This is
+displayed in Figure \ref{fig: iv_comparison}. The difference between the
+implied and realized volatility is commonly referred to as volatility
+premium. The mean 7 day rolling volatility is 70.96\%, whereas the mean
+IV at the bid and ask are 85.28\% and 93.57\%. Spikes in realized
+volatility rarely exceed the ask of the IV. Consequently, the volatility
+premium is shown to be substantial throughout the regarded time period.
+Fat-tail events are priced in due to the classic volatility skew. This
+is depicted in Figure \ref{fig: emp_ivsmile}, the empirical volatility
+skew.
+
+Since the data are high frequency order book snapshots with substantial
+bid-ask spreads, we must address the issue of Market Microstructure
+Noise (MMN). A simple estimate of realized volatility would increase
+with our sample due to order competition within the spread. We resolve
+the issue of MMN in our calculation of realized volatility by taking the
+arithmetic mean after aggregating the implied volatility of bids and
+asks on a daily base. Therefore the frequency is matching the underlying
+BTC index. The formula for annualized, realized volatility of price
+\(p\) over a window of \(w\) days is
+
+\begin{equation}
+\sigma_w = \sqrt{\frac{1}{w}\sum_{t=1}^w{(\log{p_t} - \log{p_{t-1})}^2}} \sqrt{\frac{365}{w}}
+\end{equation}
+
+Annualization is based on 365 days since Bitcoin options are traded
+continuously on Deribit.
+
+The term structure itself is easier to assess when regarding ATM-options
+in a series of dates (Figure 6). ATM-options are defined as those
+options, whose moneyness falls in the interval \([0.9, 1.1]\). A typical
+term structure of the Bitcoin options reveals a high level of implied
+volatility for shorted-dated options. For options with a
+time-to-maturity of three days or more, implied volatility drops sharply
+compared to the initial level. Naturally, IV is increasing with
+time-to-maturity.
+
+\begin{center}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/iv_comparison_up.png}
+\caption[Implied Volatiliy vs. Realized Volatility on Deribit]%
+{Implied volatility vs. realized volatility. Realized volatility is annualized and regarded in a 7 day window.
+IV is calculated as the average of observed orderbooks at the bid and ask. Described data filters apply. {\color{blue} Ask IV}, {\color{green} Bid IV}, {\color{red} 7 Day Rolling Volatility}.}
+\label{fig: iv_comparison}
+\href{https://github.com/QuantLet/BitcoinOptions/blob/master/src/vola.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Volatility}
+\end{figure}
+\end{center}
+
+\begin{centering}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/vola_2021-05-23.png}
+\caption[Empirical Volatility Surface]{Volatility Skew shown in the empirical Volatility Surface on 2021-05-23}
+\label{fig: emp_ivsmile}
+\end{figure}
+\end{centering}
+
+\begin{centering}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/vola_2021-09-08.png}
+\caption[Empirical Volatility Surface 2]{Volatility Skew shown in a calmer period on 2021-09-08}
+\label{fig: emp_ivsmile2}
+\href{https://github.com/QuantLet/BitcoinOptions/blob/master/src/vola_plots.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,IV Smile}
+\end{figure}
+\end{centering}
+
+\begin{minipage}{.5\textwidth}
+    \centering
+    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-010.08.png}
+    \centering
+    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-020.08.png}
+    \centering
+    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-030.08.png}
+    \centering
+    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-040.08.png}
+
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+    \centering
+    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-050.08.png}
+    \centering
+    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-060.08.png}
+    \centering
+    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-070.08.png}
+        \centering
+    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-080.08.png}
+
+\end{minipage}
+    \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
+
+\label{ATM Term Structure}
+\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+
+\pagebreak
+\newpage
+\section{Empirical Pricing Kernels}
+
+Instruments are grouped by time-to-maturity in order to summarize the
+findings. All instruments with less than one week to maturity are
+classified as having less than one, between one and two, between two and
+three, between three and four and between five and eight weeks to
+maturity. We typically observe U-shaped PKs for short-term maturities.
+In a similar fashion to the oil market, investors perceive short-term
+price changes in any direction as undesirable and prefer to hedge their
+risk (Christoffersen et al. 2021). For short-dated instruemnts, option
+writers are asking for substantial risk premia in order to reflect
+unhedgeable risks, such as jumps in the underlying (Hou et al. 2020).
+
+We find a differnet shape for longer-dated instruments. Typically, PKs
+in traditional markets are monotonically decreasing. This results from
+human risk aversion; investors are willing to insure themselves against
+losses and have a preference for smooth consumption curves. However, PKs
+outside of index options markets are not well studied (Cuesdeanu and
+Jackwerth 2018). Grith et al. (2009) compartmentalize a pricing kernel
+in two segments around a possible breakpoint. Testing an unrestricted
+model against GMM estimates of the restricted one, they reject
+monotonicity of the empirical PK in four out of five cases (performing a
+D-test). The phenomenon of having a decreasing slope, although with
+locally increasing sections in empirical PKs is called the pricing
+kernel puzzle. We observe a similar behavior and extend the existing
+literature on the pricing kernel puzzle to a new asset class.
+
+Since the empirical PKs for short-dated instruments are U-shaped, we
+figure that investors are willing to pay a high risk premium in order to
+insure immediate price risks. With an increasing maturity of the
+instrument, the shape of the empirical PK resembles a ``W'' or
+``tilde''. This corresponds to a a lesser willingness to pay a risk
+premium.\\
+The dynamic of the empirical PKs also reveals the existence of a
+time-varying risk premium in BTC markets. The observed PK shapes are
+closely aligned with the results reported in Cuesdeanu and Jackwerth
+(2018). However, their object of study are traditional markets, such as
+major indices which are highly correlated with aggregate wealth. We
+conclude that, due to the similarities of the empirical PKs, BTC is well
+on its way to becoming an established asset class. It may prove to be
+much rather a store of value than it is currently given credit for.
+
+Apart from the discussion of results, deviations between PD and SPD can
+be interpreted as trading opportunities. (Blaskowitz et al. 2004) design
+and evaluate trading strategies based on deviations between PD and SPD.
+Estimated PKs could be used by traders employing so-called Skewness or
+Kurtosis trades. Nevertheless, traders must recognize the hidden cost of
+employing such strategies in terms of substantial hedging cost, e.g.~in
+the form of volatility and large spreads.
+
+\begin{centering}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=0.png}
+\caption[Empirical Pricing Kernel - 0 Weeks to Expiration]{Pricing Kernels with less than one Week to Expiration}
+\end{figure}
+\end{centering}
+
+\begin{centering}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=1.png}
+\caption[Empirical Pricing Kernel - 1 Week to Expiration]{Empirical Pricing Kernel - 1 Week to Expiration}
+\end{figure}
+\end{centering}
+
+\begin{centering}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=2.png}
+\caption[Empirical Pricing Kernel - 2 Weeks to Expiration]{Empirical Pricing Kernel - 2 Weeks to Expiration}
+\end{figure}
+\end{centering}
+
+\begin{centering}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=3.png}
+\caption[Empirical Pricing Kernel - 3 Weeks to Expiration]{Empirical Pricing Kernel - 3 Weeks to Expiration}
+\end{figure}
+\end{centering}
+
+\begin{centering}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=4.png}
+\caption[Empirical Pricing Kernel - 4 Weeks to Expiration]{Empirical Pricing Kernel - 4 Weeks to Expiration}
+\end{figure}
+\end{centering}
+
+\begin{centering}
+\begin{figure}
+\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=8.png}
+\caption[Empirical Pricing Kernel - 5-8 Weeks to Expiration]{Empirical Pricing Kernel - 5-8 Weeks to Expiration}
+\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+\end{figure}
+\end{centering}
+
+\pagebreak
+\newpage
+
+\section{Bootstrap-based Confidence Bands}
+
+Having computed a large set of empirical PKs with varying maturities, it
+should be ensured that the observed features are not mere artefacts. A
+useful tool to assess the validity of our estimated PKs are
+bootstrap-based confidence bands. Following the derivation of Härdle et
+al. (2014), confidence bands at any confidence level can be derived via
+the ``wild bootstrap method''. Figure
+\ref{fig:Bootstrapped Confidence Bands - 2 Days} until Figure
+\ref{fig:Bootstrapped Confidence Bands - 84 Days} are depicted
+exemplarily for the whole set. Confidence bands are tighter around the
+PKs when time to maturity increases. PKs are also flatter with growing
+time to maturity.
+
+The concept of bootstrapping PK can be introduced by linearization of
+the PK. Stochastic deviation of the PK can be linearised into a
+stochastic part, containing the estimator of the SPD and a deterministic
+part containing the expectation of the physical density. Convergence of
+both parts can be proven separately.
+
+\[
+\widehat{K}(x) = \frac{\widehat{q}(x)}{\widehat{p}(x)} 
+\]
+
+\[
+\begin{aligned}
+\underset{x \in E}{\operatorname{sup}} \lvert \widehat{K}(x) - K(x) \rvert = \underset{x \in E}{\operatorname{sup}} \lvert \frac{\widehat{q}(x) - q(x)}{p(x)} - \frac{\widehat{p}(x) - p(x)}{p(x)} * \frac{q(x)}{p(x)} - \frac{\{\widehat{q}(x) - q(x)\} \{\widehat{p}(x) - p(x)\} }{p^2(x)} \rvert  \\
++ {\scriptstyle \mathcal{O}_p}[\operatorname{max}((n_p h_{n_p}/\log)^{-1/2} + h^2_{np},h_{n_q}^{-2} \{ n_q h_{n_q} / \log{n_q} \}^{-1/2} + h^2_{n_q})]
+\end{aligned}
+\]
+
+Consider the leading term of \[
+\underset{x \in E}{\operatorname{sup}} \lvert \frac{\widehat{q}(x) - q(x)}{p(x)} \rvert
+\]
+
+Resample data from the smoothed bivariate distribution of strike and
+moneyness (X,Y)
+
+\[
+{\widehat{f}(x,y)} = \frac{\widehat{\sigma_X}}{n_q h^2_{n_q}\widehat{\sigma_Y}} 
+\Sigma_{i=1}^{n_q} K
+\{ 
+\frac{X_i - x}{h_{n_q}}, 
+\frac{(Y_i - y)\widehat{\sigma_X}}{h_{n_q}\widehat{\sigma_Y}}
+\}
+\]
+
+Using the resampled data, calculate the bootstrap analogue
+
+\[
+\underset{x \in E}{\operatorname{sup}} \lvert \frac{\widehat{q}^*(x) - \widehat{q}(x)}{p(x)} \rvert
+\]
+
+where
+\(\underset{x \in E}{\operatorname{sup}} \lvert\widehat{q}^*(x) - \widehat{q}(x) \rvert\)
+converges to the Gumbel distribution at an unfortunately slow rate of
+\(\frac{1}{\log n_q}\) (Hall 1991).
+
+\begin{minipage}{.5\textwidth}
+    \centering
+    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0055.pdf}
+    \captionof{figure}{2 Days to Maturity.}
+    \label{fig:Bootstrapped Confidence Bands - 2 Days}
+    \centering
+    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0192.pdf}
+    \captionof{figure}{7 Days to Maturity.}
+    \label{fig:Bootstrapped Confidence Bands - 7 Days}
+    \centering
+    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0384.pdf}
+    \captionof{figure}{14 Days to Maturity.}
+    \label{fig:Bootstrapped Confidence Bands - 14 Days}
+    \centering
+    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0575.pdf}
+    \captionof{figure}{21 Days to Maturity.}
+    \label{fig:Bootstrapped Confidence Bands - 21 Days}
+
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+    \centering
+    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0767.pdf}
+    \captionof{figure}{28 Days to Maturity.}
+    \label{fig:Bootstrapped Confidence Bands - 28 Days}
+    \centering
+    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.1534.pdf}
+        \captionof{figure}{56 Days to Maturity.}
+    \label{fig:Bootstrapped Confidence Bands - 56 Days}
+    \centering
+    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.2301.pdf}
+        \captionof{figure}{84 Days to Maturity. \color{red}{Empirical Pricing Kernels} with \color{blue}{bootstrapped Confidence Bands} on 2021-12-31.}
+    \href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+    \label{fig:Bootstrapped Confidence Bands - 84 Days}
+\end{minipage}
+
+\pagebreak
+\newpage
+
+\section{Conclusion}
+
+Empirical PKs have been estimated using Rookley's Method on a dataset of
+order book snapshots from Deribit, the leading BTC options market.
+Bootstrap-based confidence bands have been estimated in order to
+validate the results.
+
+We assess the presence of well-established stylized facts of volatility
+in the BTC market. We find horizontal dependence of volatility, meaning
+that volatility tends to cluster and revert to the mean. The difference
+between implied and realized volatility, commonly referred to as the
+volatility premium, is substantial. Realized volatility rarely exceeds
+the implied volatility. The IV term structure is found to be
+traditional. Despite market participant's easy access to leverage, we
+cannot confirm the existence of a leverage effect.
+
+Our analysis extends the literature to a new asset class and contributes
+to the pricing kernel puzzle. We are able to replicate empirical results
+from the analysis of PKs in traditional markets, which are highly
+correlated with aggregate wealth. Their similarity to PKs estimated from
+BTC options indicates that BTC is becoming an established asset class.
+
+Furthermore, our analysis sheds light on the BTC valuation and
+risk-aversion of the retail traders. BTC option traders mostly consist
+of retailers who are heterogeneous in their risk profile. The price of
+short-dated instruments includes a high risk premium. Such instruments
+reflect the anticipation of jumps in the underlying. These instruments
+would be traded by either very risk-averse or risk-affine traders.
+Long-dated instruments are employed as classic hedging instruments.
+While a substantial risk premium is paid by traders in order to insure
+themselves against falling prices, they are additionally (but to a
+lesser degree) insuring themselves against sharply rising prices. Thus
+investors are also hedging their risk of being priced out of a dynamic
+market.
+
+Several extensions of the presented research are available for the
+future. Among those, we would find an extended dataset insightful, that
+could support estimation of PKs and their evolution over a longer time
+frame and possibly describe the convergence to the PKs of established
+markets. It would also be interesting to analyze the evolution of PKs
+around stress events in order to get further insights into investor risk
+aversion, anticipation of such events and trading opportunities.
+
+\section{References}
+
+\hypertarget{refs}{}
+\leavevmode\hypertarget{ref-aitsahalia01optionprice}{}%
+Aı̈t-Sahalia, Y., Wang, Y., \& Yared, F. (2001). Do option markets
+correctly price the probabilities of movement of the underlying asset?
+\emph{Journal of Econometrics}, \emph{102}(1), 67--110.
+\url{https://doi.org/https://doi.org/10.1016/S0304-4076(00)00091-9}
+
+\leavevmode\hypertarget{ref-ait_sahalia_wang1998}{}%
+Aït-Sahalia, Y., \& Lo, A. W. (1998). Nonparametric estimation of
+state-price densities implicit in financial asset prices. \emph{The
+Journal of Finance}, \emph{53}(2), 499--547.
+\url{https://doi.org/https://doi.org/10.1111/0022-1082.215228}
+
+\leavevmode\hypertarget{ref-alexander2022net}{}%
+Alexander, C., Deng, J., Feng, J., \& Wan, H. (2022). Net buying
+pressure and the information in bitcoin option trades. \emph{Journal of
+Financial Markets}, 100764.
+
+\leavevmode\hypertarget{ref-inverse_options}{}%
+Alexander, C., \& Imeraj, A. (2021, July). Inverse options in a
+black-scholes world.
+\url{https://doi.org/https://doi.org/10.48550/arXiv.2107.12041}
+
+\leavevmode\hypertarget{ref-aloosh}{}%
+Aloosh, A., \& Li, J. (2019). Direct evidence of bitcoin wash trading.
+\emph{Theory of Probability \& Its Applications, 5, 285-301}.
+\url{https://doi.org/http://dx.doi.org/10.2139/ssrn.3362153}
+
+\leavevmode\hypertarget{ref-bitmex}{}%
+Bitmex. (2019). Presentation to the u.s. Securities and exchange
+commission on wash trading.
+\url{https://www.sec.gov/comments/sr-nysearca-2019-01/srnysearca201901-5164833-183434.pdf}.
+Accessed 18 January 2022
+
+\leavevmode\hypertarget{ref-blase}{}%
+Blaskowitz, O., Härdle, W. K., \& Schmidt, P. (2004). Skewness and
+kurtosis trades. In (pp. 1--14).
+\url{https://doi.org/10.1007/978-0-8176-8180-7_1}
+
+\leavevmode\hypertarget{ref-speculation}{}%
+Blau, B. M. (2017). Price dynamics and speculative trading in bitcoin.
+\emph{Research in International Business and Finance}, \emph{41},
+493--499.
+\url{https://doi.org/https://doi.org/10.1016/j.ribaf.2017.05.010}
+
+\leavevmode\hypertarget{ref-bloomberg-retail-share}{}%
+Bloomberg. (2021, November 17). Retail traders slide back below 20\% of
+market's total volume.
+\url{https://www.bloomberg.com/news/articles/2021-11-17/retail-traders-retreat-as-choppy-markets-challenge-easy-profits}.
+Accessed 24 August 2021
+
+\leavevmode\hypertarget{ref-breeden_litzenberger78}{}%
+Breeden, D. T., \& Litzenberger, R. H. (1978). Prices of
+state-contingent claims implicit in option prices. \emph{The Journal of
+Business}, \emph{51}(4), 621--651.
+\url{http://www.jstor.org/stable/2352653}
+
+\leavevmode\hypertarget{ref-coins_with_benefits}{}%
+Chen, C. Y., \& Vinogradov, D. (2021). Coins with benefits: On
+existence, pricing kernel and risk premium of cryptocurrencies.
+\emph{Available at SSRN 3959984}.
+\url{https://doi.org/http://dx.doi.org/10.2139/ssrn.3864578}
+
+\leavevmode\hypertarget{ref-choi}{}%
+Choi, S., \& Shin, J. (2022). Bitcoin: An inflation hedge but not a safe
+haven. \emph{Finance Research Letters}, \emph{46}, 102379.
+\url{https://doi.org/https://doi.org/10.1016/j.frl.2021.102379}
+
+\leavevmode\hypertarget{ref-oil_spd}{}%
+Christoffersen, P., Jacobs, K., \& Pan, X. (. (2021). The State Price
+Density Implied by Crude Oil Futures and Option Prices. \emph{The Review
+of Financial Studies}, \emph{35}(2), 1064--1103.
+\url{https://doi.org/10.1093/rfs/hhab011}
+
+\leavevmode\hypertarget{ref-cryptonews_bitcoin_retail_share}{}%
+Coinbase, S., Cryptonews. (2022). Institutions \& retail compete for
+bitcoin - whose hands are stronger?
+\url{https://cryptonews.com/exclusives/institutions-retail-compete-for-bitcoin-which-is-the-biggest-9695.htm}.
+Accessed 22 March 2022
+
+\leavevmode\hypertarget{ref-decentralized_wash_trading}{}%
+Cong, L., Li, X., Tang, K., \& Yang, Y. (2019). Crypto wash trading.
+\emph{SSRN Electronic Journal}.
+\url{https://doi.org/10.2139/ssrn.3530220}
+
+\leavevmode\hypertarget{ref-jackwerth_pk}{}%
+Cuesdeanu, H., \& Jackwerth, J. C. (2018). The pricing kernel puzzle:
+survey and outlook. \emph{Annals of Finance}, \emph{14}(3), 289--329.
+\url{https://doi.org/10.1007/s10436-017-0317-9}
+
+\leavevmode\hypertarget{ref-cross_border_payments}{}%
+Deng, Q. (2020). Application analysis on blockchain technology in
+cross-border payment. In.
+\url{https://doi.org/10.2991/aebmr.k.200306.050}
+
+\leavevmode\hypertarget{ref-deribit-insurance-fund}{}%
+Deribit. (2020a). Deribit insurance fund.
+\url{https://www.deribit.com/main\#/insurance}. Accessed 4 January 2021
+
+\leavevmode\hypertarget{ref-synthetic-btc-index}{}%
+Deribit. (2020b). Deribit btc-usd index.
+\url{https://www.deribit.com/main\#/indexes}. Accessed 2 January 2021
+
+\leavevmode\hypertarget{ref-market-maker-obligations}{}%
+Deribit. (2020c). Deribit market maker obligations.
+\url{https://www.deribit.com/pages/docs/options}. Accessed 2 January
+2021
+
+\leavevmode\hypertarget{ref-deribit_retail_piechart}{}%
+Deribit. (2022a). Deribit volume share.
+\url{https://www.deribit.com/statistics/BTC/market-data}. Accessed 25
+July 2022
+
+\leavevmode\hypertarget{ref-deribit_margin}{}%
+Deribit. (2022b). Deribit margin requirements.
+\url{https://legacy.deribit.com/pages/docs/options}. Accessed 2 May 2022
+
+\leavevmode\hypertarget{ref-deribit_fees}{}%
+Deribit. (2022c). Deribit margin requirements.
+\url{https://www.deribit.com/kb/fees}. Accessed 2 May 2022
+
+\leavevmode\hypertarget{ref-deribit-rate-limit}{}%
+Deribit. (2023). Deribit rate limits.
+\url{https://www.deribit.com/kb/deribit-rate-limits}. Accessed 16 April
+2021
+
+\leavevmode\hypertarget{ref-vola_premium}{}%
+Eraker, B. (2021). The volatility premium. \emph{Quarterly Journal of
+Finance (QJF)}, \emph{11}(03), 1--35.
+\url{https://EconPapers.repec.org/RePEc:wsi:qjfxxx:v:11:y:2021:i:03:n:s2010139221500142}
+
+\leavevmode\hypertarget{ref-networkeffect}{}%
+Gandal, N., \& Halaburda, H. (2016). Can we predict the winner in a
+market with network effects? Competition in cryptocurrency market.
+\emph{Games}, \emph{7}(3). \url{https://doi.org/10.3390/g7030016}
+
+\leavevmode\hypertarget{ref-Grith09sim}{}%
+Grith, M., Härdle, W. K., \& Park, J. (2009). Shape invariant modelling
+pricing kernels and risk aversion.
+\url{https://doi.org/10.2139/ssrn.2894289}
+
+\leavevmode\hypertarget{ref-hall_1991}{}%
+Hall, P. (1991). Edgeworth expansions for nonparametric density
+estimators, with applications. \emph{Statistics}, \emph{22}(2),
+215--232. \url{https://doi.org/10.1080/02331889108802305}
+
+\leavevmode\hypertarget{ref-hayes}{}%
+Hayes, A. S. (2019). Bitcoin price and its marginal cost of production:
+Support for a fundamental value. \emph{Applied Economics Letters},
+\emph{26}(7), 554--560.
+\url{https://doi.org/10.1080/13504851.2018.1488040}
+
+\leavevmode\hypertarget{ref-w2yo}{}%
+Härdle, W. K., Okhrin, Y., \& Wang, W. (2014). Uniform Confidence Bands
+for Pricing Kernels. \emph{Journal of Financial Econometrics},
+\emph{13}(2), 376--413. \url{https://doi.org/10.1093/jjfinec/nbu002}
+
+\leavevmode\hypertarget{ref-pricing_cryptocurrency_options}{}%
+Hou, A. J., Wang, W., Chen, C. Y. H., \& Härdle, W. K. (2020). Pricing
+Cryptocurrency Options*. \emph{Journal of Financial Econometrics},
+\emph{18}(2), 250--279. \url{https://doi.org/10.1093/jjfinec/nbaa006}
+
+\leavevmode\hypertarget{ref-xfg_spd}{}%
+Huynh, K., Kervella, P., \& Zheng, J. (2002). \emph{Estimating
+state-price densities with nonparametric regression} (SFB 373 Discussion
+Papers No. 2002,40). Humboldt University of Berlin, Interdisciplinary
+Research Project 373: Quantification; Simulation of Economic Processes.
+\url{https://EconPapers.repec.org/RePEc:zbw:sfb373:200240}
+
+\leavevmode\hypertarget{ref-pumpndump}{}%
+La Morgia, M., Mei, A., Sassi, F., \& Stefa, J. (2020). Pump and dumps
+in the bitcoin era: Real time detection of cryptocurrency market
+manipulations. In \emph{2020 29th international conference on computer
+communications and networks (icccn)} (pp. 1--9).
+\url{https://doi.org/10.1109/ICCCN49398.2020.9209660}
+
+\leavevmode\hypertarget{ref-vola_stylized_facts}{}%
+Masset, P. (2011). Volatility stylized facts. \emph{SSRN Electronic
+Journal}. \url{https://doi.org/10.2139/ssrn.1804070}
+
+\leavevmode\hypertarget{ref-satoshi2009}{}%
+Nakamoto, S. (2009). Bitcoin: A peer-to-peer electronic cash system.
+\url{http://www.bitcoin.org/bitcoin.pdf}
+
+\leavevmode\hypertarget{ref-fundamental-theorem-of-asset-pricing}{}%
+Pascucci, A., \& Agliardi, R. (2011). PDE and martingale methods in
+option pricing. In (pp. 429--495).
+
+\leavevmode\hypertarget{ref-rodgers2019}{}%
+Rodgers, T. (2019, April 4). 95 percent of volume could be wash trading
+as bitcoin price surges.
+\url{https://www.forbes.com/sites/tomrodgers1/2019/04/04/99-of-volume-could-be-wash-trading-as-bitcoin-takes-back-5000/?sh=4640bcbc23d5}.
+Accessed 15 April 2023
+
+\leavevmode\hypertarget{ref-Rookley97}{}%
+Rookley, C. (1997). Fully exploiting the information content of intra
+day option quotes: Applications in option pricing and risk management.
+
+\leavevmode\hypertarget{ref-sar2017}{}%
+Sar, M. (2017). Dodd-frank and the spoofing prohibition in commodities
+markets.
+
+\leavevmode\hypertarget{ref-deriv_volume}{}%
+Skew.com. (2022). Open interest for bitcoin options over time. Skew is a
+leading crypto data analytics platform for institutional clients.
+\url{https://analytics.skew.com/dashboard/bitcoin-options}. Accessed 25
+July 2022
+
+\leavevmode\hypertarget{ref-brazilian_speculation}{}%
+Smaniotto, E. N., \& Neto, G. B. (2022). Speculative trading in bitcoin:
+A brazilian market evidence. \emph{The Quarterly Review of Economics and
+Finance}, \emph{85}, 47--54.
+\url{https://doi.org/https://doi.org/10.1016/j.qref.2020.10.024}
+
+\leavevmode\hypertarget{ref-cross_border_stellar}{}%
+Stellar Development Foundation. (2022). 2022 research reveals high
+awareness and growing cross-border use of cryptocurrency in four key
+markets.
+\url{https://www.prnewswire.com/news-releases/2022-research-reveals-high-awareness-and-growing-cross-border-use-of-cryptocurrency-in-four-key-markets-301512401.html}.
+Accessed 22 July 2022
+
+\leavevmode\hypertarget{ref-nickszabo}{}%
+Szabo, N. (2008). Bit gold.
+\url{https://unenumerated.blogspot.com/2005/12/bit-gold.html}. Accessed
+28 July 2022
+
+\leavevmode\hypertarget{ref-tuccella2021}{}%
+Tuccella, J.-N., Nadler, P., \& Șerban, O. (2021). Protecting retail
+investors from order book spoofing using a gru-based detection model.
+
+\end{document}
