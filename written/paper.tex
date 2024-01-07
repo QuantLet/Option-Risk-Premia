@@ -6,6 +6,7 @@
   12,
 ]{article}
 \usepackage{lmodern}
+\usepackage[table,xcdraw]{xcolor}
 \usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
@@ -37,7 +38,7 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
 \hypersetup{
-  pdftitle={Pricing Kernels and Risk Premia implied in Bitcoin Options},
+  pdftitle={Empirical Option Returns and the risk-free Rate in Crypto Asset Markets},
   pdfauthor={Julian Winkel; Wolfgang K. Härdle},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
@@ -83,7 +84,7 @@
   and the Czech Science Foundation's grant no. 19-28231X / CAS XDA
   23020303 gratefully acknowledged,
   \href{mailto:haerdle@hu-berlin.de}{\nolinkurl{haerdle@hu-berlin.de}}}}
-\date{21 November 2022}
+\date{7 January 2024}
 
 \begin{document}
 \maketitle
@@ -101,7 +102,7 @@
 \begin{abstract}
 
 \singlespacing 
-Bitcoin Pricing Kernels (PK) are estimated using a novel data set from Deribit, the leading Bitcoin options exchange. The PKs, as the ratio between risk-neutral and physical density, dynamically reflect the change of investor preferences. Thus the PKs improve the understanding of investor expectations and risk premium in a new asset class. Bootstrap-based confidence bands are estimated in order to validate the results. Investors are heterogeneous in their risk profiles and preferences with respect to volatility and investment horizon. The empirical PKs turn out to be U-shaped for short-dated instruments and W-shaped for long-dated instruments. We find that investors are willing to pay a substantial risk premium to insure themselves against short-term price movements. The risk premium is smaller for longer-dated instruments and their traders are risk averse. The shape of the empirical PKs reveals the existence of a time-varying risk-premium. The similarity between the shape of empirical PKs for Bitcoin and other markets that represent aggregate wealth shows that Bitcoin is becoming an established asset class. 
+abstract
 
 
  \medskip
@@ -117,151 +118,377 @@ Bitcoin Pricing Kernels (PK) are estimated using a novel data set from Deribit, 
 
 \section{Introduction}
 
-The valuation of digital currencies has been a question that predated
-its first representative, Bitcoin. Upon the creation of Bit Gold, Szabo
-(2008) envisioned its value to arise from an interplay between the
-benefits of the two entities which foremost represent value: cash and
-metal. The argument put forward was that metal bears an inherent value
-that is largely independent of trusted third parties. However, the
-unwieldiness of metal incurs a relatively high transaction cost when
-used as a means of exchange. (Unbacked) Cash, on the other hand, draws
-its value largely from the trust in a third party's acceptance. The
-combination of the two elements, coming in the form of a scarce digital
-resource that is governed in a trustless system, has been passed on to
-Bitcoin (BTC) and other Cryptocurrencies (CC).
+Another, so far rarely used pathway is the assessment of the risk-return characteristics of Bitcoin through the lens of the options written on it, which allow new model-free insights into the existence and degree of a leverage effect, the existence and size of risk premia, resulting market inefficiencies (measurable in economic loss / money lost) and to explore the option (pun intended)/possibility of curing named inefficiencies under transaction cost and liquidity constraints. 
 
-Since the inception of BTC as proposed by Nakamoto (2009), various
-arguments have been made on its valuation. Apart from the benefit of a
-trustless system, the arguments typically include the production cost of
-a block (Hayes 2019), the benefit of borderless transactions (Deng 2020;
-Stellar Development Foundation 2022), the value of an inflation hedge
-(Choi and Shin 2022), network effects (Chen and Vinogradov 2021; Gandal
-and Halaburda 2016) or expectations about future price developments
-(Blau 2017; Smaniotto and Neto 2022).
+This reasoning follows the insights of Shumway and Bakshi, who separately evaluated option returns in equity markets by means of delta-neutral option positions in the early 2000s. 
 
-In addition to the former valuation approaches, we offer new insights by
-means of the BTC derivatives market which has emerged over the course of
-the last years. Since derivatives markets are particularly rich in
-information, their evolution provides a unique opportunity to assess the
-BTC market valuation through the application of proven econometric
-techniques. Key information about preferences and forward looking
-decisions are state price densities (SPD), that can be estimated from
-option prices. SPDs yield risk-neutral probabilities, under which
-investors price derivatives. They provide the key to pricing exotic or
-illiquid options in an arbitrage-free manner (Aït-Sahalia and Lo 1998)
-and offer insight into changing expectations about future developments.
-In conjunction with the physical density (PD) of Bitcoin returns, the
-resulting pricing kernels (PK) can be calculated. The shape and
-evolution of PKs over time discloses investor expectations under
-different market circumstances and gives insight into time varying
-preferences. We present the first paper that is based on real Bitcoin
-option data, inferring and disclosing investor preferences following
-hypothesizing papers on bootstrap-based confidence bands for empirical
-PKs (Härdle et al. 2014) and cryptocurrency option pricing under an SVCJ
-model (Hou et al. 2020).
+Bakshi and Shumway both found that expected call returns exceed those of the underlying and that expected put returns underperform the underlying. Both also found that the effect increases (decreases) with the strike. 
+Bakshi found that zero-beta, at-the-money straddle positions produce average losses of approximately three percent per week and suggests that the reason may be a systematic volatility premium being priced in options. 
 
-BTC derivatives markets can already be regarded as efficient information
-processing mechanisms (Alexander et al. 2022). Among those markets,
-\href{https://www.deribit.com/}{Deribit} is the leading crypto option
-exchange as measured by open interest and trading volume. As of
-2022-07-25, Deribit manages more than 90\% of the BTC option volume
-which translates over a 30 day window into an average 24-hour trading
-volume of over 331.8 million USD (Skew.com 2022). The competitors
-LedgerX, OKEx, CME, bit.com and Binance are contributing respective
-averages of 1.9, 15.7, 13.2, 1.5, 0.582 million USD.
+Following Shumway, the risk-return characteristics of options can be separated in two elements, a leverage effect and a curvature effect due to the sensitivity of option payoffs to higher moments of the underlying. 
+First, the holder (buyer) of an option is subject to a leverage effect since exposure to the underlying can be obtained through the payment of a premium, which is small compared to the price of the underlying. 
+If there is a leverage effect, then (long) call options should outperform their underlying and (long) put options should underperform their underlying. Furthermore, the effect should increase (decrease) with the strike price for calls (puts).
+This reasoning allows a simple test of existence and size of the leverage effect and thus conclusions about the level of speculation associated to Bitcoin valuation. 
 
-A particularly interesting property of the BTC options market is its
-decentralized nature. Trading on Deribit is largely dominated by
-retailers. Despite an ongoing decline of retail market share in favor of
-institutions (Coinbase 2022), who are cautious to invest in highly
-volatile and unregulated assets, the options market on Deribit remains
-driven by retailers: As of 2022-07-25, 86.65\% of the volume is
-attributed to retail, whereas 9.16\% and 1.19\% are attributed to
-investors and whales (Deribit 2022a). Deribit classifies market
-participants according to their share of the circulating BTC supply.
-According to Deribit's classification, a ``whale'' is an entity that
-owns more than 1\% of the supply on Deribit, an ``investor'' owns
-between 0.1\% and 1\% and a ``retailer'' owns less than 0.1\%.
-Considering the retail share in trading volume in conjunction with
-Deribit's dominating market share over the competition, we figure that
-the Bitcoin price is mainly driven by retail. Analyzing a retail-driven
-marketplace renders the study of digital currencies like BTC unique and
-different from the well studied equity options markets, where retail
-only has a minor influence (Bloomberg 2021).
+(The second component, related to the sensitivity of options towards higher moments, implies that options are redundant assets...)
 
-Another interesting feature of the market under consideration is not
-just the dominating presence of retailers, but their easy access to
-leverage for speculation. Since Deribit is by design a margin-trading
-platform, levers of up to 100 are available for longs. Easy access to
-leverage could suggest the existence of the leverage effect if investors
-were risk affine. However, we cannot confrm a leverage effect to be
-present in the time frame under consideration.
+If options were redundant assets, then apart of the leverage effect, delta-neutral option portfolios should earn the risk-free rate (no premium) on average.
+Until now, there is no risk-free rate available in the space of crypto assets. We establish a proxy or reference rate for a possible risk-free rate, which results from the perpetual futures written on Bitcoin and Ether. 
+
+Use Deribit and Binance perpetual futures for this, equally weighted. 
+
+(This proxy is clearly not risk-free due to counterparty risk, but we argue that a carry trade involving a short position on perpetual futures on multiple platforms in conjunction with a secured, on-chain underlying position reduces the platform-induced counterparty risk (which is the residual risk in the carry trade) as far as possible.) (This also leaves liquidity risk though!!)
 
 All underlying code is available on \href{quantlet.com}{quantlet.com}
 and a corresponding courselet is available on
 \href{quantinar.com}{quantinar.com}.
 
-\section{Pricing Kernels}
+\section{A Proxy for the risk-free Rate of Bitcoin and Ether}
 
-Assume a risky asset with a stochastic price process
-\(\{S_t\}_{t \in \mathbb{N}}\) and a risk-free interest rate
-\(\{r_t\}_{t \in \mathbb{N}}\) in a complete market. Following the
-second Fundamental Theorem of Asset Pricing, a unique
-martingale-equivalent measure \(Q\) exists in the described setting,
-under which derivatives can be priced in an arbitrage-free manner (Huynh
-et al. 2002; Pascucci and Agliardi 2011).
+Evidently, there is no established risk-free rate in crypto (or digital asset) markets. In the absence of riskless bond, we refer to the next best thing as a proxy for the risk free rate, which is the replication of the market-implied yield through a position which only has liquidity risk and counterparty risk. To be fair, counterparty risk also exists for risk-free bonds. 
 
-Let \(C_t\) be the price at time \(t\) of a contingent claim with payoff
-\(\psi(\cdot)\) on the risky asset (underlying), which has a maturity at
-\(T\) and a time-to-maturity \(\tau = T-t\). For simplicity assume a
-constant interest rate \(r_t = r\). The price of any such contingent
-claim can be expressed as the discounted value of expected future
-payoffs, weighted with their respective probabilities of occurrence. The
-expectation operator is conditional on the information set at \(t\)
-under the equivalent martingale probability \(Q\)
+A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments (show both!). While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. These are the perpetual futures, which are listed on some exchanges. 
+
+As of 2024-01-07, the total Open Interest for Bitcoin Perpetual Futures contracts is \$19,343,021,437 with a total 24h Trade Volume of \$50,339,886,015.
+Open Interest for Ether Perpetual Futures contracts is Total Open Interest \$14,945,055,482 and total 24h Trade Volume is \$18,097,004,167.
+
+BTC Futures
+
+Total Open Interest $1,405,918,350
+Total 24h Trade Volume $324,820,482
+
+ETH Futures
+Total Open Interest $466,932,584
+Total 24h Trade Volume $98,238,298
+
+\begin{table}[]
+\begin{tabular}{lll}
+\textbf{Instrument}            & \textbf{Aggregate Open Interest (USD)} & \textbf{24 Hour Aggregate Trade Volume (USD)} \\
+BTC Perpetual Futures & 19,343,021,437                & 50,339,886,015                       \\
+ETH Perpetual Futures & 14,945,055,482                & 18,097,004,167                       \\
+BTC Futures           & 1,405,918,350                 & 324,820,482                          \\
+ETH Futures           & 466,932,584                   & 98,238,298                          
+\end{tabular}
+\end{table}
+
+
+
+Source for liquidity: 
+https://www.coingecko.com/en/derivatives
+https://www.coingecko.com/en/derivatives/futures
+
+% Source: https://www.tablesgenerator.com/#
+% Please add the following required packages to your document preamble:
+% \usepackage[table,xcdraw]{xcolor}
+% Beamer presentation requires \usepackage{colortbl} instead of \usepackage[table,xcdraw]{xcolor}
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% \usepackage[table,xcdraw]{xcolor}
+% Beamer presentation requires \usepackage{colortbl} instead of \usepackage[table,xcdraw]{xcolor}
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+
+As of 2024-01-07
+
+Bitcoin Perpetuals with 
+Total Open Interest \$19,343,021,437
+Total 24h Trade Volume \$50,339,886,015
+
+\begin{table}[]
+\begin{tabular}{llrrrrrrr}
+\textbf{Exchange}    & \textbf{Symbol} & \multicolumn{1}{l}{\textbf{Price}} & \multicolumn{1}{l}{\textbf{Index Price}} & \multicolumn{1}{l}{\textbf{Basis}} & \multicolumn{1}{l}{\textbf{Spread}} & \multicolumn{1}{l}{\textbf{Funding Rate}} & \multicolumn{1}{l}{\textbf{Open Interest}} & \multicolumn{1}{l}{\textbf{24h Volume}} \\
+\# Binance (Futures) & BTCUSDT         & \$43,995.06                        & 44011.67 USDT                            & +0.087\%                           & 0.01\%                              & 0.010\%                                   & \$3,214,727,375                            & \$6,822,091,229.25                      \\
+\# Binance (Futures) & BTCUSD\_PERP    & \$44,008.70                        & 44037.64 USD                             & +0.066\%                           & 0.01\%                              & 0.010\%                                   & \$808,036,100                              & \$973,585,131.72                        \\
+\# BingX (Futures)   & BTC-USDT        & \$44,042.40                        & 44046.6 USDT                             & +0.044\%                           & 0.01\%                              & 0.010\%                                   & \$909,897,901                              & \$1,867,895,422.35                      \\
+\# Bitget Futures    & BTCUSDT\_UMCBL  & \$44,049.08                        & 44033.85 USDT                            & +0.015\%                           & 0.01\%                              & 0.011\%                                   & \$1,790,553,246                            & \$5,701,072,691.79                      \\
+\# Bitmart Futures   & BTCUSDT         & \$44,015.47                        & 44003.79 USDT                            & +0.024\%                           & 0.01\%                              & 0.010\%                                   & \$641,006,203                              & \$2,917,088,729.74                      \\
+\# Bybit (Futures)   & BTCUSDT         & \$44,039.88                        & 44016.82 USDT                            & -0.003\%                           & 0.01\%                              & 0.010\%                                   & \$2,538,053,148                            & \$2,672,726,926.85                      \\
+\# Bybit (Futures)   & BTCUSD          & \$43,995.50                        & 44037.2 USD                              & +0.095\%                           & 0.01\%                              & 0.010\%                                   & \$652,512,486                              & \$283,394,472.00                        \\
+\# Deribit           & BTC-PERPETUAL   & \$44,020.00                        & 44028.17 USD                             & +0.019\%                           & 0.01\%                              & 0.004\%                                   & \$577,506,570                              & \$204,526,951.86                        \\
+\# OKX (Futures)     & BTC-USDT-SWAP   & \$44,014.07                        & 43989.3 USDT                             & -0.006\%                           & 0.01\%                              & -0.009\%                                  & \$984,130,801                              & \$2,648,725,568.71                      \\
+\# Prime XBT         & BTC/USD         & \$43,981.30                        & -                                        & -                                  & 0.02\%                              & -                                         & \$920,322,200                              & \$60,224,491.31                        
+\end{tabular}
+\end{table}
+
+Ether Perpetuals 
+
+Total Open Interest \$14,945,055,482
+Total 24h Trade Volume \$18,097,004,167
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% \usepackage[table,xcdraw]{xcolor}
+% Beamer presentation requires \usepackage{colortbl} instead of \usepackage[table,xcdraw]{xcolor}
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% \usepackage[table,xcdraw]{xcolor}
+% Beamer presentation requires \usepackage{colortbl} instead of \usepackage[table,xcdraw]{xcolor}
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+
+\begin{table}[]
+\begin{tabular}{llrrrrrrr}
+\textbf{Exchange}         & \textbf{Symbol} & \multicolumn{1}{l}{\textbf{Price}} & \multicolumn{1}{l}{\textbf{Index Price}} & \multicolumn{1}{l}{\textbf{Basis}} & \multicolumn{1}{l}{\textbf{Spread}} & \multicolumn{1}{l}{\textbf{Funding Rate}} & \multicolumn{1}{l}{\textbf{Open Interest}} & \multicolumn{1}{l}{\textbf{24h Volume}} \\
+\# Deepcoin (Derivatives) & ETHUSDT         & \$2,232.18                         & 2232.46 USDT                             & +0.047\%                           & 0.02\%                              & 0.006\%                                   & \$6,376,015,545                            & \$237,202,788.68                        \\
+\# Binance (Futures)      & ETHUSDT         & \$2,227.11                         & 2227.74 USDT                             & +0.078\%                           & 0.01\%                              & 0.010\%                                   & \$1,680,165,204                            & \$2,843,630,044.97                      \\
+\# Bybit (Futures)        & ETHUSDT         & \$2,228.15                         & 2228.15 USDT                             & +0.049\%                           & 0.01\%                              & 0.010\%                                   & \$1,027,647,498                            & \$540,402,664.24                        \\
+\# OKX (Futures)          & ETH-USDT-SWAP   & \$2,227.96                         & 2227.07 USDT                             & +0.010\%                           & 0.01\%                              & -0.003\%                                  & \$584,652,223                              & \$1,748,266,659.63                      \\
+\# Gate.io (Futures)      & ETH\_USDT       & \$2,228.62                         & 2227.03 USDT                             & -0.021\%                           & 0.01\%                              & 0.010\%                                   & \$508,608,257                              & \$189,744,908.47                        \\
+\# BingX (Futures)        & ETH-USDT        & \$2,229.64                         & 2230.26 USDT                             & +0.062\%                           & 0.02\%                              & 0.010\%                                   & \$475,301,553                              & \$609,765,117.59                        \\
+\# Prime XBT              & ETH/USD         & \$2,227.49                         & -                                        & -                                  & 0.04\%                              & -                                         & \$473,765,000                              & \$16,309,868.89                         \\
+\# Deribit                & ETH-PERPETUAL   & \$2,228.05                         & 2228.59 USD                              & +0.024\%                           & 0.01\%                              & 0.004\%                                   & \$447,911,369                              & \$82,175,344.52                         \\
+\# Binance (Futures)      & ETHUSD\_PERP    & \$2,227.69                         & 2228.74 USD                              & +0.047\%                           & 0.01\%                              & 0.010\%                                   & \$366,493,140                              & \$257,267,395.24                        \\
+\# XT.COM (Derivatives)   & ETH\_USDT       & \$2,228.19                         & 2225.55 USDT                             & +0.031\%                           & 0.01\%                              & -0.010\%                                  & \$325,480,371                              & \$1,137,587,629.30                     
+\end{tabular}
+\end{table}
+
+
+BTC Futures
+
+with 
+
+Total Open Interest $1,405,918,350
+Total 24h Trade Volume $324,820,482
+
+
+\begin{table}[]
+\begin{tabular}{llrrrrrrr}
+\textbf{Exchange}                & \textbf{Symbol}    & \multicolumn{1}{l}{\textbf{Price}} & \multicolumn{1}{l}{\textbf{Index Price}} & \multicolumn{1}{l}{\textbf{Basis}} & \multicolumn{1}{l}{\textbf{Spread}} & \multicolumn{1}{l}{\textbf{Expires in}} & \multicolumn{1}{l}{\textbf{Open Interest}} & \multicolumn{1}{l}{\textbf{24h Volume}} \\
+\# Binance (Futures)             & BTCUSD\_240329     & \$45,372.20                        & 44041.17 USD                             & -2.934\%                           & 0.01\%                              & 3 months                                & \$136,765,200                              & \$19,534,741.00                         \\
+\# Binance (Futures)             & BTCUSD\_240628     & \$46,802.20                        & 44037.64 USD                             & -5.907\%                           & 0.02\%                              & 6 months                                & \$60,673,400                               & \$11,015,730.09                         \\
+\# Binance (Futures)             & BTCUSDT\_240329    & \$45,340.32                        & 44011.62 USDT                            & -2.883\%                           & 0.04\%                              & -                                       & \$38,608,233                               & \$13,341,161.63                         \\
+\# Binance (Futures)             & BTCUSDT\_240628    & \$46,588.03                        & 44011.62 USDT                            & -5.484\%                           & 0.02\%                              & -                                       & \$7,296,676                                & \$6,727,917.37                          \\
+\# BitMEX (Derivative)           & XBTH24             & \$45,170.00                        & 44016.02 USD                             & -2.555\%                           & 0.03\%                              & 3 months                                & \$23,123,300                               & \$2,586,155.50                          \\
+\# BitMEX (Derivative)           & XBTM24             & \$46,319.00                        & 44016.02 USD                             & -4.972\%                           & 0.15\%                              & 6 months                                & \$14,701,700                               & \$899,753.13                            \\
+\# BitMEX (Derivative)           & XBTF24             & \$44,599.50                        & 44016.02 USD                             & -1.308\%                           & 0.18\%                              & 19 days                                 & \$3,686,400                                & \$42,073.68                             \\
+\# BitMEX (Derivative)           & XBTU24             & \$47,680.00                        & 44016.02 USD                             & -7.685\%                           & 0.82\%                              & 9 months                                & \$874,700                                  & \$14,332.62                             \\
+\# BitMEX (Derivative)           & XBTG24             & \$45,034.50                        & 44016.02 USD                             & -2.262\%                           & 0.2\%                               & about 2 months                          & \$149,400                                  & \$502.57                                \\
+\# BitMEX (Derivative)           & XBTUSDTH24         & \$44,913.12                        & 43991.27 USDT                            & -2.003\%                           & 22.08\%                             & 3 months                                & \$67,027                                   & \$23,309.91                             \\
+\# BTSE (Futures)                & BTC-240329         & \$45,346.20                        & 45337.26 USD                             & -0.020\%                           & 0.15\%                              & 3 months                                & \$70,779,838                               & \$70,829.75                             \\
+\# BTSE (Futures)                & BTC-240628         & \$46,578.30                        & 46774.54 USD                             & +0.421\%                           & 0.2\%                               & 6 months                                & \$68,641,915                               & \$58,755.91                             \\
+\# Bybit (Futures)               & BTCUSDH24          & \$45,515.00                        & 44050.12 USD                             & -3.218\%                           & 0.01\%                              & 3 months                                & \$31,042,370                               & \$8,992,250.00                          \\
+\# Bybit (Futures)               & BTCUSDM24          & \$46,867.50                        & 44046.87 USD                             & -6.018\%                           & 0.01\%                              & 6 months                                & \$13,200,403                               & \$932,634.00                            \\
+\# Bybit (Futures)               & BTC-29MAR24        & \$45,288.92                        & 44042.99 USDC                            & -2.786\%                           & 0.07\%                              & 3 months                                & -                                          & \$1,650,409.10                          \\
+\# Bybit (Futures)               & BTC-28JUN24        & \$46,655.43                        & 44042.83 USDC                            & -5.633\%                           & 0.07\%                              & 6 months                                & -                                          & \$636,256.66                            \\
+\# Bybit (Futures)               & BTC-12JAN24        & \$44,205.30                        & 44042.83 USDC                            & -0.403\%                           & 0.02\%                              & 5 days                                  & -                                          & \$320,758.50                            \\
+\# Bybit (Futures)               & BTC-19JAN24        & \$44,341.25                        & 44042.83 USDC                            & -0.708\%                           & 0.03\%                              & 12 days                                 & -                                          & \$117,823.82                            \\
+\# Bybit (Futures)               & BTC-27SEP24        & \$47,694.06                        & 44042.99 USDC                            & -7.688\%                           & 0.08\%                              & 9 months                                & -                                          & \$66,406.59                             \\
+\# Bybit (Futures)               & BTC-26JAN24        & \$44,370.24                        & 44042.75 USDC                            & -0.773\%                           & 0.02\%                              & 19 days                                 & -                                          & \$47,245.15                             \\
+\# Bybit (Futures)               & BTC-23FEB24        & \$44,806.59                        & 44042.99 USDC                            & -1.739\%                           & 0.03\%                              & about 2 months                          & -                                          & \$8,650.36                              \\
+\# Crypto.com Exchange (Futures) & BTCUSD-240628      & \$46,384.20                        & 44003.38 USD                             & -5.133\%                           & 0.41\%                              & -                                       & \$24,557,224                               & \$15,659.31                             \\
+\# Crypto.com Exchange (Futures) & BTCUSD-240329      & \$45,024.60                        & 44003.38 USD                             & -2.268\%                           & 0.46\%                              & -                                       & \$1,118,289                                & \$17,244.42                             \\
+\# Crypto.com Exchange (Futures) & BTCUSD-240126      & \$44,215.10                        & 44003.38 USD                             & -0.479\%                           & 0.29\%                              & -                                       & \$9,701                                    & \$18,428.85                             \\
+\# Crypto.com Exchange (Futures) & BTCUSD-240223      & \$44,624.00                        & 44003.38 USD                             & -1.391\%                           & 0.43\%                              & -                                       & \$3,539                                    & \$14,931.19                             \\
+\# Deribit                       & BTC-29MAR24        & \$45,300.00                        & 44026.9 USD                              & -2.810\%                           & 0.02\%                              & 3 months                                & \$208,084,190                              & \$15,282,281.56                         \\
+\# Deribit                       & BTC-26JAN24        & \$44,475.00                        & 44026.9 USD                              & -1.008\%                           & 0.1\%                               & 19 days                                 & \$89,621,140                               & \$3,132,087.87                          \\
+\# Deribit                       & BTC-28JUN24        & \$46,577.50                        & 44026.9 USD                              & -5.476\%                           & 0.02\%                              & 6 months                                & \$79,314,230                               & \$7,916,251.72                          \\
+\# Deribit                       & BTC-27SEP24        & \$47,715.00                        & 44026.9 USD                              & -7.729\%                           & 0.09\%                              & 9 months                                & \$32,099,570                               & \$1,034,939.35                          \\
+\# Deribit                       & BTC-12JAN24        & \$44,110.00                        & 44026.9 USD                              & -0.188\%                           & 0.03\%                              & 5 days                                  & \$25,884,930                               & \$7,230,738.10                          \\
+\# Deribit                       & BTC-23FEB24        & \$44,767.50                        & 44026.9 USD                              & -1.654\%                           & 0.03\%                              & about 2 months                          & \$22,571,940                               & \$744,850.73                            \\
+\# Deribit                       & BTC-27DEC24        & \$49,247.50                        & 44026.9 USD                              & -10.601\%                          & 0.13\%                              & 12 months                               & \$11,398,600                               & \$600,503.46                            \\
+\# Deribit                       & BTC-19JAN24        & \$44,222.50                        & 44026.9 USD                              & -0.442\%                           & 0.04\%                              & 12 days                                 & \$5,538,440                                & \$2,799,269.71                          \\
+\# HTX Futures                   & BTC\_CQ            & \$45,297.68                        & 44023.11 USD                             & -2.814\%                           & 0.38\%                              & 3 months                                & \$1,002,200                                & \$1,602,716.03                          \\
+\# HTX Futures                   & BTC\_CW            & \$44,095.65                        & 44030.71 USD                             & -0.147\%                           & 0.45\%                              & 4 days                                  & \$47,100                                   & \$1,011,419.90                          \\
+\# HTX Futures                   & BTC\_NW            & \$44,211.45                        & 44023.11 USD                             & -0.426\%                           & 0.4\%                               & 11 days                                 & \$9,000                                    & \$967,082.71                            \\
+\# Kraken (Futures)              & FI\_XBTUSD\_240329 & \$45,520.50                        & 44013.38 USD                             & -3.311\%                           & 0.08\%                              & 3 months                                & \$6,608,999                                & \$112,442.00                            \\
+\# Kraken (Futures)              & FI\_XBTUSD\_240628 & \$46,571.50                        & 44013.38 USD                             & -5.493\%                           & 0.24\%                              & 6 months                                & \$1,929,982                                & \$275,529.00                            \\
+\# Kraken (Futures)              & FI\_XBTUSD\_240126 & \$44,191.50                        & 44013.38 USD                             & -0.403\%                           & 0.4\%                               & 19 days                                 & \$300,856                                  & \$3.00                                  \\
+\# Kraken (Futures)              & FF\_XBTUSD\_240329 & \$45,284.00                        & 44013.38 USD                             & -2.806\%                           & 0.11\%                              & 3 months                                & \$87                                       & \$22.68                                 \\
+\# Kraken (Futures)              & FF\_XBTUSD\_240126 & \$44,307.00                        & 44013.38 USD                             & -0.663\%                           & 0.08\%                              & 19 days                                 & \$32                                       & \$4.61                                  \\
+\# KuCoin Futures                & XBTMH24            & \$45,444.00                        & 44072.8 USD                              & -3.017\%                           & 0.19\%                              & 3 months                                & \$11,251,580                               & \$86,193.00                             \\
+\# OKX (Futures)                 & BTC-USD-240329     & \$45,322.90                        & 44016.1 USD                              & -2.883\%                           & 0.01\%                              & 3 months                                & \$175,555,100                              & \$42,597,534.31                         \\
+\# OKX (Futures)                 & BTC-USD-240628     & \$46,744.90                        & 44016.1 USD                              & -5.838\%                           & 0.03\%                              & 6 months                                & \$67,199,400                               & \$13,281,039.45                         \\
+\# OKX (Futures)                 & BTC-USDT-240329    & \$45,345.34                        & 43989.3 USDT                             & -2.942\%                           & 0.02\%                              & 3 months                                & \$54,809,841                               & \$32,494,014.76                         \\
+\# OKX (Futures)                 & BTC-USDT-240628    & \$46,824.58                        & 43989.3 USDT                             & -6.008\%                           & 0.02\%                              & 6 months                                & \$49,096,426                               & \$8,216,309.33                          \\
+\# OKX (Futures)                 & BTC-USD-240126     & \$44,235.20                        & 44016.1 USD                              & -0.495\%                           & 0.04\%                              & 19 days                                 & \$20,945,300                               & \$1,424,116.88                          \\
+\# OKX (Futures)                 & BTC-USD-240112     & \$44,085.20                        & 44016.1 USD                              & -0.157\%                           & 0.01\%                              & 5 days                                  & \$15,394,800                               & \$11,575,786.01                         \\
+\# OKX (Futures)                 & BTC-USDT-240126    & \$44,284.50                        & 43989.3 USDT                             & -0.617\%                           & 0.06\%                              & 19 days                                 & \$8,573,427                                & \$1,552,614.65                          \\
+\# OKX (Futures)                 & BTC-USD-240223     & \$44,719.10                        & 44016.1 USD                              & -1.572\%                           & 0.04\%                              & about 2 months                          & \$8,046,700                                & \$3,603,630.54                          \\
+\# OKX (Futures)                 & BTC-USD-240119     & \$44,198.90                        & 44016.1 USD                              & -0.414\%                           & 0.01\%                              & 12 days                                 & \$4,957,200                                & \$6,247,231.64                          \\
+\# OKX (Futures)                 & BTC-USDT-240112    & \$44,080.50                        & 43989.3 USDT                             & -0.157\%                           & 0.03\%                              & 5 days                                  & \$3,560,036                                & \$12,798,332.26                         \\
+\# OKX (Futures)                 & BTC-USDT-240223    & \$44,781.65                        & 43989.3 USDT                             & -1.720\%                           & 0.08\%                              & about 2 months                          & \$2,960,896                                & \$711,132.65                            \\
+\# OKX (Futures)                 & BTC-USDT-240119    & \$44,192.36                        & 43989.3 USDT                             & -0.409\%                           & 0.04\%                              & 12 days                                 & \$975,364                                  & \$4,235,395.39                          \\
+\# OKX (Futures)                 & BTC-USDC-240628    & \$46,788.02                        & 44015.4 USDC                             & -5.958\%                           & 0.39\%                              & 6 months                                & -                                          & \$17,320.92                             \\
+\# OKX (Futures)                 & BTC-USDC-240119    & \$44,137.13                        & 44020.7 USDC                             & -0.298\%                           & 0.1\%                               & 12 days                                 & -                                          & \$6,285.13                              \\
+\# OKX (Futures)                 & BTC-USDC-240329    & \$45,832.15                        & 44020.7 USDC                             & -3.985\%                           & 0.31\%                              & 3 months                                & -                                          & \$1,874.53                              \\
+\# OKX (Futures)                 & BTC-USDC-240112    & \$44,107.04                        & 44015.4 USDC                             & -0.242\%                           & 0.13\%                              & 5 days                                  & -                                          & \$9,765.30                              \\
+\# XT.COM (Derivatives)          & BTC\_USD\_240329   & \$45,380.70                        & -                                        & -3.586\%                           & 0.01\%                              & 3 months                                & -                                          & \$33,113,000.00                         \\
+\# XT.COM (Derivatives)          & BTC\_USD\_240628   & \$46,797.20                        & -                                        & -                                  & 0.01\%                              & 6 months                                & -                                          & \$31,000,200.00                         \\
+\# XT.COM (Derivatives)          & BTC\_USDT\_240329  & \$45,369.50                        & -                                        & -                                  & 0.06\%                              & 3 months                                & -                                          & \$20,870,477.00                        
+\end{tabular}
+\end{table}
+
+
+
+
+
+ETH Futures
+
+with 
+Total Open Interest $466,932,584
+Total 24h Trade Volume $98,238,298
+
+
+
+\begin{table}[]
+\begin{tabular}{llrrrrrrr}
+\textbf{Exchange}                & \textbf{Symbol}    & \multicolumn{1}{l}{\textbf{Price}} & \multicolumn{1}{l}{\textbf{Index Price}} & \multicolumn{1}{l}{\textbf{Basis}} & \multicolumn{1}{l}{\textbf{Spread}} & \multicolumn{1}{l}{\textbf{Expires in}} & \multicolumn{1}{l}{\textbf{Open Interest}} & \multicolumn{1}{l}{\textbf{24h Volume}} \\
+\# Binance (Futures)             & ETHUSD\_240329     & \$2,300.60                         & 2228.81 USD                              & -3.121\%                           & 0.01\%                              & 3 months                                & \$72,215,240                               & \$16,326,927.83                         \\
+\# Binance (Futures)             & ETHUSD\_240628     & \$2,368.79                         & 2229.03 USD                              & -5.900\%                           & 0.02\%                              & 6 months                                & \$11,183,360                               & \$4,224,925.26                          \\
+\# Binance (Futures)             & ETHUSDT\_240329    & \$2,300.46                         & 2227.81 USDT                             & -3.110\%                           & 0.02\%                              & -                                       & \$35,040                                   & \$6,902,127.72                          \\
+\# Binance (Futures)             & ETHUSDT\_240628    & \$2,360.43                         & 2227.81 USDT                             & -5.572\%                           & 0.03\%                              & -                                       & \$4,604                                    & \$4,303,853.27                          \\
+\# BitMEX (Derivative)           & ETHUSDH24          & \$2,452.60                         & 2228.01 USD                              & -9.157\%                           & 0.02\%                              & 3 months                                & \$4,341,286                                & \$537,210.05                            \\
+\# BitMEX (Derivative)           & ETHH24             & \$2,217.23                         & 0.05 XBT                                 & +0.457\%                           & 0.37\%                              & 3 months                                & \$1,575,478                                & \$69,244.08                             \\
+\# BTSE (Futures)                & ETH-240628         & \$2,350.05                         & 2367.26 USD                              & +0.732\%                           & 0.75\%                              & 6 months                                & \$2,517,764                                & \$49,845.75                             \\
+\# BTSE (Futures)                & ETH-240329         & \$2,297.48                         & 2298.78 USD                              & +0.057\%                           & 0.23\%                              & 3 months                                & \$2,081,180                                & \$49,130.96                             \\
+\# Bybit (Futures)               & ETHUSDM24          & \$2,357.45                         & 2229.63 USD                              & -5.422\%                           & 0.05\%                              & 6 months                                & -                                          & \$448,716.00                            \\
+\# Bybit (Futures)               & ETHUSDH24          & \$2,287.90                         & 2229.53 USD                              & -2.551\%                           & 0.06\%                              & 3 months                                & -                                          & \$294,007.00                            \\
+\# Bybit (Futures)               & ETH-26JAN24        & \$2,243.65                         & 2229.46 USDC                             & -0.668\%                           & 0.05\%                              & 19 days                                 & -                                          & \$286,245.77                            \\
+\# Bybit (Futures)               & ETH-12JAN24        & \$2,231.66                         & 2229.51 USDC                             & -0.132\%                           & 0.03\%                              & 5 days                                  & -                                          & \$99,683.25                             \\
+\# Bybit (Futures)               & ETH-28JUN24        & \$2,368.66                         & 2229.46 USDC                             & -5.910\%                           & 0.1\%                               & 6 months                                & -                                          & \$97,357.35                             \\
+\# Bybit (Futures)               & ETH-19JAN24        & \$2,238.21                         & 2229.51 USDC                             & -0.424\%                           & 0.06\%                              & 12 days                                 & -                                          & \$92,957.40                             \\
+\# Bybit (Futures)               & ETH-23FEB24        & \$2,274.64                         & 2229.51 USDC                             & -2.019\%                           & 0.03\%                              & about 2 months                          & -                                          & \$68,610.65                             \\
+\# Bybit (Futures)               & ETH-29MAR24        & \$2,297.48                         & 2229.51 USDC                             & -2.993\%                           & 0.03\%                              & 3 months                                & -                                          & \$36,926.81                             \\
+\# Bybit (Futures)               & ETH-27SEP24        & \$2,420.24                         & 2229.46 USDC                             & -7.915\%                           & 0.12\%                              & 9 months                                & -                                          & \$30,008.99                             \\
+\# Crypto.com Exchange (Futures) & ETHUSD-240628      & \$2,347.68                         & 2224.96 USD                              & -5.227\%                           & 0.24\%                              & -                                       & \$24,573,170                               & \$822.63                                \\
+\# Crypto.com Exchange (Futures) & ETHUSD-240126      & \$2,234.13                         & 2224.96 USD                              & -0.410\%                           & 0.14\%                              & -                                       & \$79,732                                   & \$742.18                                \\
+\# Crypto.com Exchange (Futures) & ETHUSD-240329      & \$2,286.18                         & 2224.96 USD                              & -2.678\%                           & 0.29\%                              & -                                       & \$58,845                                   & \$895.27                                \\
+\# Crypto.com Exchange (Futures) & ETHUSD-240223      & \$2,249.95                         & 2224.92 USD                              & -1.112\%                           & 0.17\%                              & -                                       & \$27,557                                   & \$1,247.37                              \\
+\# Deribit                       & ETH-29MAR24        & \$2,296.00                         & 2228.59 USD                              & -2.936\%                           & 0.02\%                              & 3 months                                & \$88,364,731                               & \$2,438,537.07                          \\
+\# Deribit                       & ETH-28JUN24        & \$2,363.75                         & 2228.59 USD                              & -5.718\%                           & 0.01\%                              & 6 months                                & \$35,776,949                               & \$1,152,627.40                          \\
+\# Deribit                       & ETH-26JAN24        & \$2,247.75                         & 2228.59 USD                              & -0.852\%                           & 0.02\%                              & 19 days                                 & \$34,172,788                               & \$2,694,255.34                          \\
+\# Deribit                       & ETH-27SEP24        & \$2,414.50                         & 2228.59 USD                              & -7.700\%                           & 0.02\%                              & 9 months                                & \$22,332,082                               & \$781,745.26                            \\
+\# Deribit                       & ETH-12JAN24        & \$2,232.25                         & 2228.59 USD                              & -0.164\%                           & 0.01\%                              & 5 days                                  & \$10,281,174                               & \$1,626,945.44                          \\
+\# Deribit                       & ETH-23FEB24        & \$2,273.25                         & 2228.59 USD                              & -1.965\%                           & 0.08\%                              & about 2 months                          & \$10,187,446                               & \$484,690.68                            \\
+\# Deribit                       & ETH-27DEC24        & \$2,463.00                         & 2228.59 USD                              & -9.517\%                           & 0.21\%                              & 12 months                               & \$6,513,788                                & \$630,519.38                            \\
+\# Deribit                       & ETH-19JAN24        & \$2,235.50                         & 2228.59 USD                              & -0.309\%                           & 0.03\%                              & 12 days                                 & \$1,564,812                                & \$1,319,273.13                          \\
+\# HTX Futures                   & ETH\_CQ            & \$2,298.00                         & 2228.66 USD                              & -3.018\%                           & 0.01\%                              & 3 months                                & \$1,130,370                                & \$562,732.95                            \\
+\# HTX Futures                   & ETH\_CW            & \$2,233.11                         & 2228.54 USD                              & -0.205\%                           & 0.01\%                              & 4 days                                  & \$49,870                                   & \$481,669.51                            \\
+\# HTX Futures                   & ETH\_NW            & \$2,242.45                         & 2228.66 USD                              & -0.615\%                           & 0.35\%                              & 11 days                                 & \$31,200                                   & \$302,572.28                            \\
+\# Kraken (Futures)              & FI\_ETHUSD\_240329 & \$2,300.00                         & 2228 USD                                 & -3.130\%                           & 0.11\%                              & 3 months                                & \$4,415,821                                & \$29,062.00                             \\
+\# Kraken (Futures)              & FI\_ETHUSD\_240628 & \$2,366.30                         & 2228 USD                                 & -5.845\%                           & 0.25\%                              & 6 months                                & \$3,541,749                                & \$40,752.00                             \\
+\# Kraken (Futures)              & FF\_ETHUSD\_240329 & \$2,314.00                         & 2228 USD                                 & -3.717\%                           & 0.13\%                              & 3 months                                & \$1,584                                    & \$0.45                                  \\
+\# Kraken (Futures)              & FF\_ETHUSD\_240126 & \$2,254.90                         & 2228 USD                                 & -1.193\%                           & 0.09\%                              & 19 days                                 & \$299                                      & \$36.69                                 \\
+\# Kraken (Futures)              & FI\_ETHUSD\_240126 & \$2,254.15                         & 2228 USD                                 & -1.160\%                           & 0.24\%                              & 19 days                                 & \$48,594                                   & \$10,184.00                             \\
+\# OKX (Futures)                 & ETH-USD-240329     & \$2,296.78                         & 2228.71 USD                              & -2.964\%                           & 0.01\%                              & 3 months                                & \$61,638,000                               & \$13,362,284.32                         \\
+\# OKX (Futures)                 & ETH-USD-240628     & \$2,370.47                         & 2228.67 USD                              & -5.982\%                           & 0.03\%                              & 6 months                                & \$29,831,250                               & \$8,793,848.00                          \\
+\# OKX (Futures)                 & ETH-USDT-240329    & \$2,296.43                         & 2226.75 USDT                             & -2.985\%                           & 0.02\%                              & 3 months                                & \$20,412,503                               & \$5,701,567.75                          \\
+\# OKX (Futures)                 & ETH-USD-240112     & \$2,231.34                         & 2228.71 USD                              & -0.118\%                           & 0.01\%                              & 5 days                                  & \$7,456,500                                & \$8,340,344.15                          \\
+\# OKX (Futures)                 & ETH-USDT-240628    & \$2,366.59                         & 2227.15 USDT                             & -5.845\%                           & 0.02\%                              & 6 months                                & \$3,885,976                                & \$3,157,980.17                          \\
+\# OKX (Futures)                 & ETH-USD-240119     & \$2,233.42                         & 2228.71 USD                              & -0.211\%                           & 0.03\%                              & 12 days                                 & \$3,212,320                                & \$3,467,988.47                          \\
+\# OKX (Futures)                 & ETH-USDT-240112    & \$2,229.86                         & 2226.75 USDT                             & -0.089\%                           & 0.01\%                              & 5 days                                  & \$2,298,019                                & \$3,571,348.57                          \\
+\# OKX (Futures)                 & ETH-USDT-240119    & \$2,235.50                         & 2226.75 USDT                             & -0.341\%                           & 0.01\%                              & 12 days                                 & \$690,474                                  & \$2,364,707.49                          \\
+\# OKX (Futures)                 & ETH-USDC-240329    & \$2,296.52                         & 2227.93 USDC                             & -3.020\%                           & 0.38\%                              & 3 months                                & -                                          & \$55,373.71                             \\
+\# OKX (Futures)                 & ETH-USDC-240112    & \$2,251.63                         & 2227.89 USDC                             & -1.088\%                           & 0.09\%                              & 5 days                                  & -                                          & \$5,770.92                              \\
+\# OKX (Futures)                 & ETH-USDC-240119    & \$2,251.87                         & 2227.93 USDC                             & -1.037\%                           & 0.14\%                              & 12 days                                 & -                                          & \$9.01                                  \\
+\# XT.COM (Derivatives)          & ETH\_USD\_240628   & \$2,368.07                         & -                                        & -                                  & 0.04\%                              & 6 months                                & -                                          & \$2,929,170.00                          \\
+\# XT.COM (Derivatives)          & ETH\_USD\_240329   & \$2,299.63                         & -                                        & -2.350\%                           & 0.01\%                              & 3 months                                & -                                          & \$2,698,030.00                          \\
+\# XT.COM (Derivatives)          & ETH\_USDT\_240329  & \$2,301.93                         & -                                        & -                                  & 0.03\%                              & 3 months                                & -                                          & \$124,645.12                            \\
+\# OKX (Futures)                 & BTC-USDT-240112    & \$44,080.50                        & -0.157\%                                 & 0.03\%                             & 5 days                              & \$3,560,036                             & \$12,798,332.26                            & \multicolumn{1}{l}{}                    \\
+\# OKX (Futures)                 & BTC-USDT-240223    & \$44,781.65                        & -1.720\%                                 & 0.08\%                             & about 2 months                      & \$2,960,896                             & \$711,132.65                               & \multicolumn{1}{l}{}                    \\
+\# OKX (Futures)                 & BTC-USDT-240119    & \$44,192.36                        & -0.409\%                                 & 0.04\%                             & 12 days                             & \$975,364                               & \$4,235,395.39                             & \multicolumn{1}{l}{}                    \\
+\# OKX (Futures)                 & BTC-USDC-240628    & \$46,788.02                        & -5.958\%                                 & 0.39\%                             & 6 months                            & -                                       & \$17,320.92                                & \multicolumn{1}{l}{}                    \\
+\# OKX (Futures)                 & BTC-USDC-240119    & \$44,137.13                        & -0.298\%                                 & 0.1\%                              & 12 days                             & -                                       & \$6,285.13                                 & \multicolumn{1}{l}{}                    \\
+\# OKX (Futures)                 & BTC-USDC-240329    & \$45,832.15                        & -3.985\%                                 & 0.31\%                             & 3 months                            & -                                       & \$1,874.53                                 & \multicolumn{1}{l}{}                    \\
+\# OKX (Futures)                 & BTC-USDC-240112    & \$44,107.04                        & -0.242\%                                 & 0.13\%                             & 5 days                              & -                                       & \$9,765.30                                 & \multicolumn{1}{l}{}                    \\
+\# XT.COM (Derivatives)          & BTC\_USD\_240329   & \$45,380.70                        & -3.586\%                                 & 0.01\%                             & 3 months                            & -                                       & \$33,113,000.00                            & \multicolumn{1}{l}{}                    \\
+\# XT.COM (Derivatives)          & BTC\_USD\_240628   & \$46,797.20                        & -                                        & 0.01\%                             & 6 months                            & -                                       & \$31,000,200.00                            & \multicolumn{1}{l}{}                    \\
+\# XT.COM (Derivatives)          & BTC\_USDT\_240329  & \$45,369.50                        & -                                        & 0.06\%                             & 3 months                            & -                                       & \$20,870,477.00                            & \multicolumn{1}{l}{}                   
+\end{tabular}
+\end{table}
+
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+
+
+Crypto exchanges often provide a so-called perpetual future, which is a synthetic (typically cash-settled instrument) whose return is tied to the underlying via a funding rate. Most exchanges (quote here) provide perpetual futures for Bitcoin and Ethereum. 
+The price of each perpetual future is linked to the underlying by adjusting a variable interest rate, called the funding rate, that fluctuates depending on the deviation between the price of the perpetual future and the underlying. The funding rate increases the cost of holding positions against the deviation, meaning that if the price of the perpetual future is higher than the underlying, the funding rate is positive which causes the market participants who are long to pay the short side in a contractually predefined frequency. Broadly said, the more extreme the deviation, the higher the funding rate and thus the higher the incentive to trade against the deviation and thus converge the price of the perpetual future towards its underlying. 
+The risk-free rate is approximated using the simplest and most liquid way of realising the funding rate, a carry trade. In such a trade, the trader shorts (longs) the perpetual future if the funding rate is positive (negative) and simulateously buys (sells) the underlying such that the market delta of the combined position is zero. 
+
+The funding rate on \href{https://www.deribit.com/kb/deribit-linear-perpetual}{Deribit} is calculated as follows:
+
+Deribit perpetual contracts are a derivative product similar to a future, however, they do not have an expiry date. The perpetual contract features funding payments. These payments have been introduced to keep the perpetual contract price as close as possible to the underlying crypto price - the relevant Deribit Index. If the perpetual contract trades at a higher price than the index, traders that have long positions need to make funding payments to the traders that have short positions. This will make the product less attractive to the long position holders and more attractive to the short position holders. This subsequently will cause a perpetual price to trade in line with the price of the index. If the perpetual trades at a price lower than the index, the short position holders will have to pay the long position holders instead.
+
+The Deribit perpetual contract features a continuous measurement of the difference between the mark price of the contract and the relevant Deribit Index. The percentage difference between these two price levels is the basis for the 8-hourly funding rate that is applied to all outstanding perpetual contracts.
+
+Funding payments are calculated every millisecond. The funding payments will be added to or subtracted from the realized PNL, which is also part of the available trading balance. At each daily settlement, the realized PNL will be moved to or from the cash balance, from which withdrawals can be made.
+
+The total funding paid will show up in the transaction log in the "funding" column. This column shows the funding amount that is applied to the trader's entire net position in the period between the relevant trade and the trade before that. Put differently: the trader can see the funding paid or received on the position between position changes.
+
+Funding Rate
+When the funding rate is positive, long position holders pay funding to the short position holders; when the funding rate is negative, short position holders pay funding to the long position holders. The funding rate is expressed as an 8-hour interest rate, and is calculated at any given time as follows:
+
+Premium Rate
+Premium Rate = ((Mark Price - Deribit Index) / Deribit Index) * 100%
+
+Funding Rate
+Sequentially, the funding rate is derived from the premium rate by applying a damper.
+
+If the premium rate is within -0.025\% and 0.025\% range, the actual funding rate will be reduced to 0.00\%.
+If the premium rate is lower than -0.025\%, then the actual funding rate will be the premium rate + 0.025\%.
+If the premium rate is higher than 0.025\%, then the actual funding rate will be the premium rate - 0.025\%.
+Additionally, the funding rate is capped at +/ - 5\% for all linear USDC perpetuals.
+Funding Rate = Maximum (0.025\%, Premium Rate) + Minimum (-0.025\%, Premium Rate)
+
+Time Fraction
+Time Fraction = Funding Rate Time Period / 8 hours
+
+The actual funding payment is calculated by multiplying the funding rate by the position size and the time fraction.
+
+Funding Payment = Funding Rate * Position Size * Time Fraction
+
+In reality, the spread of the Deribit Index and the mark price changes continuously, and all changes are taken into account. Therefore, the examples above are extreme simplifications of the actual calculations. The funding paid or received is continuously added to the realized PNL and is moved to or from the cash balance at the daily settlement, at 08:00 UTC.
+
+Fees on Funding
+Deribit does not charge any fees on funding. All the funding payments are transferred between the holders of the perpetual contracts. This makes the funding a zero-sum game, where longs receive all funding from shorts, or shorts receive all funding from longs.
+
+Mark Price
+It is essential to understand how the mark price is calculated. We start by determining the "Fair Price". The fair price is calculated as the average of the fair impact bid and the fair impact ask.
+
+Fair Impact Bid Price is an average price at which 100,000 USDC worth of contracts can be bought.
+
+Fair Impact Ask Price is an average price at which 100,000 USDC worth of contracts can be sold.
+
+Fair Price can never be higher than 0.1 % of best ask or lower than best bid
+
+Fair Price = (Fair Impact Bid + Fair Impact Ask) / 2
+The mark price is derived using both the Deribit Index and the fair price, by adding to the Deribit Index the 30 second exponential moving average (EMA) of the Fair Price - Deribit Index.
+
+Mark Price = Deribit Index + 30 second EMA (Fair Price - Deribit Index)
+We implement a safety setting on our mark price to not deviate by more than a certain percentage of Index. This is to prevent manipulation or to curb the impact of panic trading. When a deviation from index is genuine, then we would increase the possible deviation.
+
+Trading outside of this bandwidth is still allowed.
+
+The 30 second EMA is recalculated every second, so in total, there are 30 time periods in which the measurement of the latest second has a weight of 2 / (30 + 1) = 0.0645 or (6.45%).
+
+Allowed Trading Bandwidth
+Two parameters act as a boundary to the allowed trading range:
+
+Perpetual trades are limited by Deribit Index + 1 minute EMA (Fair Price - Index) +/- 1.5%, and a fixed bandwidth of the Deribit Index of +/- 7.5%.
+
+If the market circumstances require so, bandwidth parameters can be adjusted at the sole discretion of Deribit.
+
+
+
+Insert Plot Funding Rate!!
+
 
 \begin{equation}
 C_t = e^{-r \tau} \mathbb{\sf{E}}^Q[\psi(S_T)] = e^{-r, \tau}  \int_{-\infty}^\infty \psi(u) f_t^Q(u) du
-\end{equation}
-
-Transforming the risk-neutral measure \(Q\) to the physical measure
-\(P\) yields the PK by Itô's Lemma.
-
-\begin{equation}
-C_t = e^{-r, \tau}  \int_{-\infty}^\infty \psi(u) q(u) du = e^{-r, \tau}  \int_{-\infty}^\infty \psi(u) p(u) K(u) du
 \end{equation}
 
 where the PK \(K(\cdot)\) is defined as \(\frac{q(\cdot)}{p(\cdot)}\)
 and for simplicity of notation we write \(q(\cdot)\) for
 \(\frac{\partial Q}{\partial t}(\cdot)\) and drop the sequence \(r_t\).
 
-The PK can therefore be approximated by the ratio between the
-risk-neutral density and the physical density. This process is discussed
-and executed in the following sections.
 
 \section{Nonparametric Estimation of State Price Densities}
 
 \subsection{Derivation}
-
-As stated by Breeden and Litzenberger (1978), a SPD can be estimated via
-the second derivative of the call price function
-\(\psi(S_T) = \max(S_T - K, 0)\) with respect to the strike price \(K\).
-
-\begin{equation}
-\frac{\partial ^2 C_t}{\partial K^2}\bigg\rvert_{K = S_t} =  q(S_T)e^{-r \tau}
-\end{equation}
-
-A variety of call prices \(C\) with different strikes \(K\) is required
-in order to calculate the complete SPD \(q\). The present value of a
-call can be priced in implied volatility (IV). In conjunction with the
-vector (time-to-maturity \(\tau\), strike \(K\), spot \(S\), interest
-rate \(r\)), the market call price can be calculated.
-
-IV is estimated as a function of time-to-maturity and moneyness in the
-following section. Collapsing spot price \(S\) and strike \(K\) into a
-single variable \(M = \frac{K}{S}\) reduces the effect of the curse of
-dimensionality. Similarly, we collapse \(S\) and the interest rate \(r\)
-into a Futures price.
 
 \subsection{Local Polynomial Estimation of the IV Surface}
 
