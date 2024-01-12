@@ -195,9 +195,13 @@ Bitcoin Perpetuals with
 Total Open Interest \$19,343,021,437
 Total 24h Trade Volume \$50,339,886,015
 
-\begin{table}[]
-\begin{tabular}{llrrrrrrr}
+\begin{table}[ht]
+\centering
+\resizebox{\textwidth}{!}{\begin{tabular}{llrrrrrrr}
+\hline
 \textbf{Exchange}    & \textbf{Symbol} & \multicolumn{1}{l}{\textbf{Price}} & \multicolumn{1}{l}{\textbf{Index Price}} & \multicolumn{1}{l}{\textbf{Basis}} & \multicolumn{1}{l}{\textbf{Spread}} & \multicolumn{1}{l}{\textbf{Funding Rate}} & \multicolumn{1}{l}{\textbf{Open Interest}} & \multicolumn{1}{l}{\textbf{24h Volume}} \\
+\hline
+\hline
 \# Binance (Futures) & BTCUSDT         & \$43,995.06                        & 44011.67 USDT                            & +0.087\%                           & 0.01\%                              & 0.010\%                                   & \$3,214,727,375                            & \$6,822,091,229.25                      \\
 \# Binance (Futures) & BTCUSD\_PERP    & \$44,008.70                        & 44037.64 USD                             & +0.066\%                           & 0.01\%                              & 0.010\%                                   & \$808,036,100                              & \$973,585,131.72                        \\
 \# BingX (Futures)   & BTC-USDT        & \$44,042.40                        & 44046.6 USDT                             & +0.044\%                           & 0.01\%                              & 0.010\%                                   & \$909,897,901                              & \$1,867,895,422.35                      \\
@@ -208,7 +212,7 @@ Total 24h Trade Volume \$50,339,886,015
 \# Deribit           & BTC-PERPETUAL   & \$44,020.00                        & 44028.17 USD                             & +0.019\%                           & 0.01\%                              & 0.004\%                                   & \$577,506,570                              & \$204,526,951.86                        \\
 \# OKX (Futures)     & BTC-USDT-SWAP   & \$44,014.07                        & 43989.3 USDT                             & -0.006\%                           & 0.01\%                              & -0.009\%                                  & \$984,130,801                              & \$2,648,725,568.71                      \\
 \# Prime XBT         & BTC/USD         & \$43,981.30                        & -                                        & -                                  & 0.02\%                              & -                                         & \$920,322,200                              & \$60,224,491.31                        
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 Ether Perpetuals 
@@ -229,9 +233,12 @@ Total 24h Trade Volume \$18,097,004,167
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 
-\begin{table}[]
+\begin{table}[ht]
 \begin{tabular}{llrrrrrrr}
+\hline
 \textbf{Exchange}         & \textbf{Symbol} & \multicolumn{1}{l}{\textbf{Price}} & \multicolumn{1}{l}{\textbf{Index Price}} & \multicolumn{1}{l}{\textbf{Basis}} & \multicolumn{1}{l}{\textbf{Spread}} & \multicolumn{1}{l}{\textbf{Funding Rate}} & \multicolumn{1}{l}{\textbf{Open Interest}} & \multicolumn{1}{l}{\textbf{24h Volume}} \\
+\hline
+\hline
 \# Deepcoin (Derivatives) & ETHUSDT         & \$2,232.18                         & 2232.46 USDT                             & +0.047\%                           & 0.02\%                              & 0.006\%                                   & \$6,376,015,545                            & \$237,202,788.68                        \\
 \# Binance (Futures)      & ETHUSDT         & \$2,227.11                         & 2227.74 USDT                             & +0.078\%                           & 0.01\%                              & 0.010\%                                   & \$1,680,165,204                            & \$2,843,630,044.97                      \\
 \# Bybit (Futures)        & ETHUSDT         & \$2,228.15                         & 2228.15 USDT                             & +0.049\%                           & 0.01\%                              & 0.010\%                                   & \$1,027,647,498                            & \$540,402,664.24                        \\
@@ -507,6 +514,38 @@ funding_btc_vs_eth_annualized_zoom.pngfunding_btc_vs_eth_zoom.pngfunding_btc_v
 
 
 
+
+
+
+\begin{minipage}{\textwidth}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/vanilla/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{Performance - Vanilla - No Fees}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/vanilla/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{Performance - Vanilla - Fees}
+
+\end{minipage}
+\begin{minipage}{\textwidth}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/crash_resistant/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{Performance - Crash Resistant - No Fees}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/crash_resistant/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{Performance - Crash Resistant - Fees}
+
+\end{minipage}
+   % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
+
+\label{ATM Term Structure}
+\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+
+\pagebreak
+\newpage
+
+
+NOTE: 
+USE THE TRADED VOLUME * INSTRUMENT PRICE TO FIND THE AMOUNT OF VALUE LOST DUE TO THE VOLA PREMIUM
 
 
 
