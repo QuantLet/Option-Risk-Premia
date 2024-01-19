@@ -71,7 +71,7 @@
 \usepackage{eucal}
 \floatplacement{figure}{H}
 
-\title{Expected Option Returns and the risk-free Rate in Crypto Asset Markets}
+\title{Empirical Option Returns and the risk-free Rate in Crypto Asset Markets}
 \author{Julian Winkel\footnote{International Research Training Group 1792;
   Humboldt-Universität zu Berlin,
   \href{mailto:julian.winkel@hu-berlin.de}{\nolinkurl{julian.winkel@hu-berlin.de}}} \and Wolfgang K. Härdle\footnote{BRC Blockchain Research Center,
@@ -125,10 +125,7 @@ The common key behind the employed methods is the precise and bespoke tailoring 
 
 We discuss the existence of a risk-free rate in crypto asset markets and derive a proxy. We use it as a benchmark that beta-neutral portfolios should yield. 
 We construct and evaluate the performance of beta-neutral portfolios and find that they do not generate their theoretical returns for particular levels of moneyness. We compare the risk-return characteristics to the late 90s equity markets and find, in a similar fashion as the results reported by Bakshi et al and Shumway et al., severe overpricings of at-the-money options. The effect holds after compensating for market crash insurance and transaction cost. 
-We assess the deadeweight loss due to overpricings and propose a simple trading strategy that exploits this partciular inefficiency. 
-
-Evidence for leverage effect?
-
+We assess the deadweight loss due to overpricings and propose a simple trading strategy that exploits this partciular inefficiency. 
 
 
 We constructs and evaluate the empirical performance of option portfolios, written on crypto assets such as Bitcoin and Ether, to allow model-free insights into the existence and degree of a leverage effect, the existence and size of risk premia, resulting market inefficiencies (measurable in economic loss / money lost) and to explore the option (pun intended)/possibility of curing named inefficiencies under transaction cost and liquidity constraints. 
@@ -179,6 +176,18 @@ and a corresponding courselet is available on
 
 \section{Methodology}
 
+- scrape 8h funding rate continuously and use as market-interest rate
+
+- scrape all BTC, ETH transactions from Deribit 
+- load data, clean
+- center on settlement date for each day (10am UTC)
+- for each option, find the pendant via put-call-parity
+- calculate the beta of each put, call
+- build zero-beta straddles by finding weights such that the sum of weights is zero
+- assess empirical, daily returns of the straddle
+- build boxplots over levels of moneyness
+- KDE --> t-distribution
+- perform t-test for population mean of 0
 
 
 \section{Data}
@@ -551,6 +560,18 @@ funding_btc_vs_eth_annualized.png
 funding_btc_vs_eth.png
 
 
+\section{Results}
+
+We find the returns of the zero-beta-straddles to be t-distributed and conduct a left-sided t-test under the null hypothesis of a population mean greater or equal to zero. 
+The null hypothesis is not rejected for all models, vanilla and crash-resistant, for ITM and OTM options. Conversely, the null hypothesis is firmly rejected on a high significance level for ATM options. 
+Therefore, we accept the alternative hypothesis of an underperformance for ATM options. Consequently, we find a similar result to Shumway and Bakshi - that is the existence of a premium for ATM contracts. 
+We figure the premium to be a volatility premium since a straddle's payoff depends on the relationship of Implied Volatility to Realized Volatility. 
+Unsurprisingly, the size of the premium in crypto markets is higher than the counterpart in equity markets - we figure that the reason is the higher risk in crypto markets, particularly via volatility and counterparty risk. 
+Furthermore, there are mostly retailers present in the crypto option market. Some professional liquidity providers exist, but they remain few and therefore another reason for the premium's size could be illiquidity. 
+
+- the premium is larger when tau is small. 
+
+
 
 
 
@@ -615,9 +636,44 @@ funding_btc_vs_eth.png
 We conduct a left-sided t-test to test for a population mean of zero. Values are rounded to 4 digits.
 
 
-\begin{table}[]
-\begin{tabular}{lllll}
-     & Vanilla ex Fee & Vanilla cum Fee & Crash Resistant ex Fee & Crash Resistant cum Fee \\
+
+\section{Conclusion}
+
+Further research: 
+- Evidence for leverage effect
+
+
+
+%\begin{minipage}{\textwidth}
+%    \centering
+  %  \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/out/vanilla/no_fees/density/moneyness_between_95_and_105.png}
+    %\captionof{figure}{Performance - Vanilla - No Fees}
+    %\centering
+    %\includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/out/vanilla/no_fees/density/moneyness_between_95_and_105.png}
+     %\captionof{figure}{Performance - Vanilla - Fees}
+
+%\end{minipage}
+%\begin{minipage}{\textwidth}
+%    \centering
+%    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/out/crash_resistant/no_fees/moneyness_between_95_and_105.png}
+%    \captionof{figure}{Performance - Crash Resistant - No Fees}
+ %   \centering
+ %   \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/out/crash_resistant/no_fees/moneyness_between_95_and_105.png}
+ %    \captionof{figure}{Performance - Crash Resistant - Fees}
+
+%\end{minipage}
+   % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
+
+%\label{ATM Term Structure}
+%\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+
+
+\begin{table}[ht]
+\hline
+\resizebox{\textwidth}{!}{\begin{tabular}{lllll}
+  Moneyness    & Vanilla ex Fee & Vanilla cum Fee & Crash Resistant ex Fee & Crash Resistant cum Fee \\
+\hline
+\hline
 0.7  & 0.6088         & 0.5854          & 0.5845                 & 0.6078                  \\
 0.71 & 0.7993         & 0.7769          & 0.7762                 & 0.7987                  \\
 0.72 & 0.9943         & 0.9925          & 0.9925                 & 0.9943                  \\
@@ -679,7 +735,7 @@ We conduct a left-sided t-test to test for a population mean of zero. Values are
 1.28 & 0.9996         & 0.9995          & 0.9993                 & 0.9995                  \\
 1.29 & 0.9939         & 0.9932          & 0.9919                 & 0.9927                  \\
 1.3  & 0.9436         & 0.9403          & 0.9334                 & 0.937                  
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 
@@ -692,139 +748,6 @@ We conduct a left-sided t-test to test for a population mean of zero. Values are
 NOTE: 
 USE THE TRADED VOLUME * INSTRUMENT PRICE TO FIND THE AMOUNT OF VALUE LOST DUE TO THE VOLA PREMIUM
 
-
-
-\begin{equation}
-C_t = e^{-r \tau} \mathbb{\sf{E}}^Q[\psi(S_T)] = e^{-r, \tau}  \int_{-\infty}^\infty \psi(u) f_t^Q(u) du
-\end{equation}
-
-where the PK \(K(\cdot)\) is defined as \(\frac{q(\cdot)}{p(\cdot)}\)
-and for simplicity of notation we write \(q(\cdot)\) for
-\(\frac{\partial Q}{\partial t}(\cdot)\) and drop the sequence \(r_t\).
-
-
-\section{Nonparametric Estimation of State Price Densities}
-
-\subsection{Derivation}
-
-\subsection{Local Polynomial Estimation of the IV Surface}
-
-Assume that the implied volatilites have some noise added (Huynh et al.
-2002; Rookley 1997).
-
-\begin{equation}
-\sigma (M, \tau) = g(M, \tau) + \sigma^{*}(M, \tau)  \varepsilon
-\end{equation}
-
-with a standardized error random variable \(\varepsilon\), moneyness
-\(M\), \(\tau\) and \(\varepsilon\) independent and
-\(\sigma^{*}(M, \tau)\) being the scaling of the error term given \(M\)
-and \(\tau\). Suppose \(g\) is smooth, i.e.~it can be approximated using
-Taylor's Theorem.
-
-Taylor expansion of \(g\) in a neighborhood of \((M_0, \tau_0)\):
-\begin{equation}
-\begin{aligned}
-g(M, \tau) = g(M_0, \tau_0) +
-\frac{\partial g}{\partial M}(M-M_0) + 
-\frac{1}{2} \frac{\partial^2 g}{\partial M^2}(M-M_0)^2 + \\
-\frac{\partial g}{\partial \tau}(\tau - \tau_0) + 
-\frac{1}{2} \frac{\partial^2 g}{\partial \tau^2}(\tau - \tau_0)^2 + \\ 
-\frac{\partial^2 g}{\partial M \partial \tau}(M-M_0)(\tau - \tau_0)
-\end{aligned}
-\end{equation}
-
-The functional relationship between the IV surface \(\sigma\) and \(M\)
-and \(\tau\) can now be approximated using a Weighted Least Squares
-Estimator (WLSE), minimizing the objective function
-
-\begin{equation}
-\operatorname{arg}\, \underset{\beta}{\operatorname{min}}{(\sigma - X\beta)^\top W (\sigma - X\beta)}
-\end{equation}
-
-where
-\(W = \text{diag}(\mathcal{K}_{h_m, h_\tau}(M_j - M_0, \tau_j - \tau_0))\)
-for a Gaussian kernel \(\mathcal{K}\) with bandwidths \(h_m\) and
-\(h_\tau\). \(\sigma\) is the \(n \times 1\) vector of observed implied
-volatilities, \(\beta\) is the vector of the local polynomial
-coefficients.
-
-\[
-X = 
-\begin{pmatrix}
-1 & (M_1 - M_0) & (M_1 - M_0)^2 & (\tau_1 - \tau_0) & (\tau_1 - \tau_0)^2 & (M_1 - M_0) (\tau_1 - \tau_0) \\
-\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \\
-1 & (M_n - M_0) & (M_n - M_0)^2 & (\tau_n - \tau_0) & (\tau_n - \tau_0)^2 & (M_n - M_0) (\tau_n - \tau_0) \\
-\end{pmatrix}
-\]
-
-The resulting WLSE is
-
-\begin{equation}
-\hat{\beta} = (X ^\top WX)^{-1}X ^\top W \sigma
-\end{equation}
-
-Following Härdle et al. (2014), a window of the last 500 daily returns
-(based on \(\tau\)) is used to calculate a nonparametric Kernel Density
-Estimator for the PD.\\
-\href{https://quantinar.ro/course/103/statistics-of-financial-markets}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/quantinar_logo.png}}\,Chapter 24}
-
-\section{Literature Review}
-
-Breeden and Litzenberger (1978) derive SPDs using Arrow-Debreu prices
-and Butterfly Spreads. Their paper was the cornerstone for the now
-existing vast literature on estimation of SPDs. Without requiring a
-parametric form for SPDs, Rookley (1997) who developed a nonparametric
-estimation method. IV skews are estimated by decomposing the functional
-relationship between IV, moneyness and time-to-maturity \(\tau\). In
-this manner it is possible to derive the SPD at every point in a robust
-way. Aı̈t-Sahalia et al. (2001) estimate PKs from S\&P500 options data
-and the according return series in order to assess the efficiency of the
-options market. Departures from SPD and PD are used to identify
-inefficient pricing. They design a trading strategy, exploiting the
-skewness and kurtosis of the densities. The strategy is shown to have a
-high Sharpe Ratio. Grith et al. (2009) propose a systematic modeling
-approach to study the evolution of PKs over time. With European DAX
-data, a series of empirical PKs is estimated from 2003 until 2006. While
-the risk-neutral density is inferred using Rookley's method, the PD is
-estimated with a GARCH model. A common shape is identified and
-deviations of the time varying EPKs are studied. The deviations between
-individual PKs are described using a set of parameters for horizontal
-and vertical shifts. The relationship between PKs and Arrow-Pratt
-measure of Absolute Risk Aversion (ARA) give insight into investor's
-risk aversion. In a related research, Härdle et al. (2014) derive
-bootstrap-based confidence bands for nonparametrically estimated PKs.
-
-Inverse Options, meaning options settled in kind of the underlying, are
-dominant in the crypto world. Settlement of BTC options in terms of BTC
-changes the payoff function of the option from \(\max(S_T - K; 0)\) to
-\(\max(\frac{S_T - K}{S_T}; 0)\) and thus changes the contract's net
-present value. Alexander and Imeraj (2021) adjust Black-Scholes prices
-and hedge ratios to inverse options. However, it is argued that traders
-are erroneously applying vanilla Black-Scholes valuation instead of the
-corrected prices - perhaps because of being unaware of the concept. We
-have decided to use with the standard, non-inverse Black Scholes pricing
-for multiple reasons. Alexander and Imeraj (2021) argue that traders are
-perhaps unaware of the difference. Since we are inferring investor
-expectations, we figure that it is more appropriate to infer pricing
-kernels under the same Black Scholes prices that the investors use.
-Additionally, it is likely that many traders actually hedge their
-overall Bitcoin exposure. This would negate the ``inverse'' part of the
-option. Furthermore, reviewing the differences in pricing compared to
-the adjusted prices, we find that the difference is small in the absence
-of extreme moves in the underlying. This was not the case in the time
-period under consideration.
-
-Hou et al. (2020) price BTC options under an SVCJ model. Their results
-emphasize the tail risk introduced by jumps in the underlying. Jumps in
-particular introduce market incompleteness, but anonymity of
-transactions may be relevant as well. Chen and Vinogradov (2021) derive
-PKs and the impact of market incompleteness on risk premia. They state
-that a key property of cryptocurrency valuation is the user's anonymity
-(or pseudonymity), which is simultaneously the source of value and
-incompleteness in the respective market. They argue that hedging an
-anonymous transaction would require an identity disclosure. This
-contradiction may introduce an effectively unhedgeable event.
 
 \section{Deribit}
 
@@ -1016,354 +939,6 @@ sufficient call option data to compute the IV surface from which we
 sample option prices.
 
 \href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Preprocessing}
-
-\section{Volatility}
-
-In accordance with Masset (2011) and Eraker (2021), the list of
-well-established stylised facts on volatility in traditional markets
-include horizontal dependence of volatility, leverage effect, the
-volatility premium and extreme events. Horizontal dependence of
-volatility describes the tendency of local volatility clusters and the
-tendence to mean-reversion. Both properties can be observed in the 7 day
-rolling volatility. Sudden spikes in realized volatility form clusters
-and are often followed by similar drops. The leverage effect can be
-measured as a negative correlation between returns and volatility.
-Phases of negative returns coincide with high volatility and vice versa.
-The Pearson correlation between the underlying and realized volatility
-is -12.59\%. The Pearson correlation between the underlying and the bid
-(ask) IV is -16.11\% (-13.05\%). Due to the low absolute values of
-correlation, the existence of a leverage effect is unlikely. However,
-the sign matches the direction of a leverage effect. Considering the
-large share of retailers with easy access to leverage, the lack of
-significance is a surprising result. It is well known that, in general,
-the IV exceeds the unconditional annualized standard deviation. This is
-displayed in Figure \ref{fig: iv_comparison}. The difference between the
-implied and realized volatility is commonly referred to as volatility
-premium. The mean 7 day rolling volatility is 70.96\%, whereas the mean
-IV at the bid and ask are 85.28\% and 93.57\%. Spikes in realized
-volatility rarely exceed the ask of the IV. Consequently, the volatility
-premium is shown to be substantial throughout the regarded time period.
-Fat-tail events are priced in due to the classic volatility skew. This
-is depicted in Figure \ref{fig: emp_ivsmile}, the empirical volatility
-skew.
-
-Since the data are high frequency order book snapshots with substantial
-bid-ask spreads, we must address the issue of Market Microstructure
-Noise (MMN). A simple estimate of realized volatility would increase
-with our sample due to order competition within the spread. We resolve
-the issue of MMN in our calculation of realized volatility by taking the
-arithmetic mean after aggregating the implied volatility of bids and
-asks on a daily base. Therefore the frequency is matching the underlying
-BTC index. The formula for annualized, realized volatility of price
-\(p\) over a window of \(w\) days is
-
-\begin{equation}
-\sigma_w = \sqrt{\frac{1}{w}\sum_{t=1}^w{(\log{p_t} - \log{p_{t-1})}^2}} \sqrt{\frac{365}{w}}
-\end{equation}
-
-Annualization is based on 365 days since Bitcoin options are traded
-continuously on Deribit.
-
-The term structure itself is easier to assess when regarding ATM-options
-in a series of dates (Figure 6). ATM-options are defined as those
-options, whose moneyness falls in the interval \([0.9, 1.1]\). A typical
-term structure of the Bitcoin options reveals a high level of implied
-volatility for shorted-dated options. For options with a
-time-to-maturity of three days or more, implied volatility drops sharply
-compared to the initial level. Naturally, IV is increasing with
-time-to-maturity.
-
-\begin{center}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/iv_comparison_up.png}
-\caption[Implied Volatiliy vs. Realized Volatility on Deribit]%
-{Implied volatility vs. realized volatility. Realized volatility is annualized and regarded in a 7 day window.
-IV is calculated as the average of observed orderbooks at the bid and ask. Described data filters apply. {\color{blue} Ask IV}, {\color{green} Bid IV}, {\color{red} 7 Day Rolling Volatility}.}
-\label{fig: iv_comparison}
-\href{https://github.com/QuantLet/BitcoinOptions/blob/master/src/vola.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Volatility}
-\end{figure}
-\end{center}
-
-\begin{centering}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/vola_2021-05-23.png}
-\caption[Empirical Volatility Surface]{Volatility Skew shown in the empirical Volatility Surface on 2021-05-23}
-\label{fig: emp_ivsmile}
-\end{figure}
-\end{centering}
-
-\begin{centering}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/vola_2021-09-08.png}
-\caption[Empirical Volatility Surface 2]{Volatility Skew shown in a calmer period on 2021-09-08}
-\label{fig: emp_ivsmile2}
-\href{https://github.com/QuantLet/BitcoinOptions/blob/master/src/vola_plots.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,IV Smile}
-\end{figure}
-\end{centering}
-
-\begin{minipage}{.5\textwidth}
-    \centering
-    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-010.08.png}
-    \centering
-    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-020.08.png}
-    \centering
-    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-030.08.png}
-    \centering
-    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-040.08.png}
-
-\end{minipage}
-\begin{minipage}{0.5\textwidth}
-    \centering
-    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-050.08.png}
-    \centering
-    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-060.08.png}
-    \centering
-    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-070.08.png}
-        \centering
-    \includegraphics[width=2.8in]{/Users/julian/src/up/spd/plot/term_structure_atm_options_on_-2022-01-080.08.png}
-
-\end{minipage}
-    \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
-
-\label{ATM Term Structure}
-\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
-
-\pagebreak
-\newpage
-\section{Empirical Pricing Kernels}
-
-Instruments are grouped by time-to-maturity in order to summarize the
-findings. All instruments with less than one week to maturity are
-classified as having less than one, between one and two, between two and
-three, between three and four and between five and eight weeks to
-maturity. We typically observe U-shaped PKs for short-term maturities.
-In a similar fashion to the oil market, investors perceive short-term
-price changes in any direction as undesirable and prefer to hedge their
-risk (Christoffersen et al. 2021). For short-dated instruemnts, option
-writers are asking for substantial risk premia in order to reflect
-unhedgeable risks, such as jumps in the underlying (Hou et al. 2020).
-
-We find a differnet shape for longer-dated instruments. Typically, PKs
-in traditional markets are monotonically decreasing. This results from
-human risk aversion; investors are willing to insure themselves against
-losses and have a preference for smooth consumption curves. However, PKs
-outside of index options markets are not well studied (Cuesdeanu and
-Jackwerth 2018). Grith et al. (2009) compartmentalize a pricing kernel
-in two segments around a possible breakpoint. Testing an unrestricted
-model against GMM estimates of the restricted one, they reject
-monotonicity of the empirical PK in four out of five cases (performing a
-D-test). The phenomenon of having a decreasing slope, although with
-locally increasing sections in empirical PKs is called the pricing
-kernel puzzle. We observe a similar behavior and extend the existing
-literature on the pricing kernel puzzle to a new asset class.
-
-Since the empirical PKs for short-dated instruments are U-shaped, we
-figure that investors are willing to pay a high risk premium in order to
-insure immediate price risks. With an increasing maturity of the
-instrument, the shape of the empirical PK resembles a ``W'' or
-``tilde''. This corresponds to a a lesser willingness to pay a risk
-premium.\\
-The dynamic of the empirical PKs also reveals the existence of a
-time-varying risk premium in BTC markets. The observed PK shapes are
-closely aligned with the results reported in Cuesdeanu and Jackwerth
-(2018). However, their object of study are traditional markets, such as
-major indices which are highly correlated with aggregate wealth. We
-conclude that, due to the similarities of the empirical PKs, BTC is well
-on its way to becoming an established asset class. It may prove to be
-much rather a store of value than it is currently given credit for.
-
-Apart from the discussion of results, deviations between PD and SPD can
-be interpreted as trading opportunities. (Blaskowitz et al. 2004) design
-and evaluate trading strategies based on deviations between PD and SPD.
-Estimated PKs could be used by traders employing so-called Skewness or
-Kurtosis trades. Nevertheless, traders must recognize the hidden cost of
-employing such strategies in terms of substantial hedging cost, e.g.~in
-the form of volatility and large spreads.
-
-\begin{centering}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=0.png}
-\caption[Empirical Pricing Kernel - 0 Weeks to Expiration]{Pricing Kernels with less than one Week to Expiration}
-\end{figure}
-\end{centering}
-
-\begin{centering}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=1.png}
-\caption[Empirical Pricing Kernel - 1 Week to Expiration]{Empirical Pricing Kernel - 1 Week to Expiration}
-\end{figure}
-\end{centering}
-
-\begin{centering}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=2.png}
-\caption[Empirical Pricing Kernel - 2 Weeks to Expiration]{Empirical Pricing Kernel - 2 Weeks to Expiration}
-\end{figure}
-\end{centering}
-
-\begin{centering}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=3.png}
-\caption[Empirical Pricing Kernel - 3 Weeks to Expiration]{Empirical Pricing Kernel - 3 Weeks to Expiration}
-\end{figure}
-\end{centering}
-
-\begin{centering}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=4.png}
-\caption[Empirical Pricing Kernel - 4 Weeks to Expiration]{Empirical Pricing Kernel - 4 Weeks to Expiration}
-\end{figure}
-\end{centering}
-
-\begin{centering}
-\begin{figure}
-\includegraphics[width=1\textwidth]{/Users/julian/src/up/spd/plot/Pricing Kernel_over_time_nweeks=8.png}
-\caption[Empirical Pricing Kernel - 5-8 Weeks to Expiration]{Empirical Pricing Kernel - 5-8 Weeks to Expiration}
-\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
-\end{figure}
-\end{centering}
-
-\pagebreak
-\newpage
-
-\section{Bootstrap-based Confidence Bands}
-
-Having computed a large set of empirical PKs with varying maturities, it
-should be ensured that the observed features are not mere artefacts. A
-useful tool to assess the validity of our estimated PKs are
-bootstrap-based confidence bands. Following the derivation of Härdle et
-al. (2014), confidence bands at any confidence level can be derived via
-the ``wild bootstrap method''. Figure
-\ref{fig:Bootstrapped Confidence Bands - 2 Days} until Figure
-\ref{fig:Bootstrapped Confidence Bands - 84 Days} are depicted
-exemplarily for the whole set. Confidence bands are tighter around the
-PKs when time to maturity increases. PKs are also flatter with growing
-time to maturity.
-
-The concept of bootstrapping PK can be introduced by linearization of
-the PK. Stochastic deviation of the PK can be linearised into a
-stochastic part, containing the estimator of the SPD and a deterministic
-part containing the expectation of the physical density. Convergence of
-both parts can be proven separately.
-
-\[
-\widehat{K}(x) = \frac{\widehat{q}(x)}{\widehat{p}(x)} 
-\]
-
-\[
-\begin{aligned}
-\underset{x \in E}{\operatorname{sup}} \lvert \widehat{K}(x) - K(x) \rvert = \underset{x \in E}{\operatorname{sup}} \lvert \frac{\widehat{q}(x) - q(x)}{p(x)} - \frac{\widehat{p}(x) - p(x)}{p(x)} * \frac{q(x)}{p(x)} - \frac{\{\widehat{q}(x) - q(x)\} \{\widehat{p}(x) - p(x)\} }{p^2(x)} \rvert  \\
-+ {\scriptstyle \mathcal{O}_p}[\operatorname{max}((n_p h_{n_p}/\log)^{-1/2} + h^2_{np},h_{n_q}^{-2} \{ n_q h_{n_q} / \log{n_q} \}^{-1/2} + h^2_{n_q})]
-\end{aligned}
-\]
-
-Consider the leading term of \[
-\underset{x \in E}{\operatorname{sup}} \lvert \frac{\widehat{q}(x) - q(x)}{p(x)} \rvert
-\]
-
-Resample data from the smoothed bivariate distribution of strike and
-moneyness (X,Y)
-
-\[
-{\widehat{f}(x,y)} = \frac{\widehat{\sigma_X}}{n_q h^2_{n_q}\widehat{\sigma_Y}} 
-\Sigma_{i=1}^{n_q} K
-\{ 
-\frac{X_i - x}{h_{n_q}}, 
-\frac{(Y_i - y)\widehat{\sigma_X}}{h_{n_q}\widehat{\sigma_Y}}
-\}
-\]
-
-Using the resampled data, calculate the bootstrap analogue
-
-\[
-\underset{x \in E}{\operatorname{sup}} \lvert \frac{\widehat{q}^*(x) - \widehat{q}(x)}{p(x)} \rvert
-\]
-
-where
-\(\underset{x \in E}{\operatorname{sup}} \lvert\widehat{q}^*(x) - \widehat{q}(x) \rvert\)
-converges to the Gumbel distribution at an unfortunately slow rate of
-\(\frac{1}{\log n_q}\) (Hall 1991).
-
-\begin{minipage}{.5\textwidth}
-    \centering
-    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0055.pdf}
-    \captionof{figure}{2 Days to Maturity.}
-    \label{fig:Bootstrapped Confidence Bands - 2 Days}
-    \centering
-    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0192.pdf}
-    \captionof{figure}{7 Days to Maturity.}
-    \label{fig:Bootstrapped Confidence Bands - 7 Days}
-    \centering
-    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0384.pdf}
-    \captionof{figure}{14 Days to Maturity.}
-    \label{fig:Bootstrapped Confidence Bands - 14 Days}
-    \centering
-    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0575.pdf}
-    \captionof{figure}{21 Days to Maturity.}
-    \label{fig:Bootstrapped Confidence Bands - 21 Days}
-
-\end{minipage}
-\begin{minipage}{0.5\textwidth}
-    \centering
-    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.0767.pdf}
-    \captionof{figure}{28 Days to Maturity.}
-    \label{fig:Bootstrapped Confidence Bands - 28 Days}
-    \centering
-    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.1534.pdf}
-        \captionof{figure}{56 Days to Maturity.}
-    \label{fig:Bootstrapped Confidence Bands - 56 Days}
-    \centering
-    \includegraphics[width=3.0in]{/Users/julian/src/up/spd/plot/EPK_2021-12-31_0.2301.pdf}
-        \captionof{figure}{84 Days to Maturity. \color{red}{Empirical Pricing Kernels} with \color{blue}{bootstrapped Confidence Bands} on 2021-12-31.}
-    \href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
-    \label{fig:Bootstrapped Confidence Bands - 84 Days}
-\end{minipage}
-
-\pagebreak
-\newpage
-
-\section{Conclusion}
-
-Empirical PKs have been estimated using Rookley's Method on a dataset of
-order book snapshots from Deribit, the leading BTC options market.
-Bootstrap-based confidence bands have been estimated in order to
-validate the results.
-
-We assess the presence of well-established stylized facts of volatility
-in the BTC market. We find horizontal dependence of volatility, meaning
-that volatility tends to cluster and revert to the mean. The difference
-between implied and realized volatility, commonly referred to as the
-volatility premium, is substantial. Realized volatility rarely exceeds
-the implied volatility. The IV term structure is found to be
-traditional. Despite market participant's easy access to leverage, we
-cannot confirm the existence of a leverage effect.
-
-Our analysis extends the literature to a new asset class and contributes
-to the pricing kernel puzzle. We are able to replicate empirical results
-from the analysis of PKs in traditional markets, which are highly
-correlated with aggregate wealth. Their similarity to PKs estimated from
-BTC options indicates that BTC is becoming an established asset class.
-
-Furthermore, our analysis sheds light on the BTC valuation and
-risk-aversion of the retail traders. BTC option traders mostly consist
-of retailers who are heterogeneous in their risk profile. The price of
-short-dated instruments includes a high risk premium. Such instruments
-reflect the anticipation of jumps in the underlying. These instruments
-would be traded by either very risk-averse or risk-affine traders.
-Long-dated instruments are employed as classic hedging instruments.
-While a substantial risk premium is paid by traders in order to insure
-themselves against falling prices, they are additionally (but to a
-lesser degree) insuring themselves against sharply rising prices. Thus
-investors are also hedging their risk of being priced out of a dynamic
-market.
-
-Several extensions of the presented research are available for the
-future. Among those, we would find an extended dataset insightful, that
-could support estimation of PKs and their evolution over a longer time
-frame and possibly describe the convergence to the PKs of established
-markets. It would also be interesting to analyze the evolution of PKs
-around stress events in order to get further insights into investor risk
-aversion, anticipation of such events and trading opportunities.
 
 \section{References}
 
