@@ -106,7 +106,7 @@ abstract
 
 
  \medskip
- \textbf{Keywords:} Bitcoin, Deribit, pricing kernel, risk aversion, speculation, hedging  \\
+ \textbf{Keywords:} Bitcoin, Ether, Deribit, risk, risk premium, volatility premium, option, hedging  \\
  \indent \textbf{JEL Classification:} C14, C50, G10  \\
  \bigskip
 
@@ -117,31 +117,18 @@ abstract
 \newpage
 
 \section{Introduction}
-Despite the ongoing attention that crypto assets receive and despite their ongoing integration into traditional markets, whereas the last example would be the SEC's approval of a range of Bitcoin Spot ETFs, fundamental questions about crypto asset markets remain unclear:
+Despite the ongoing integration into established markets (whereas the last example would be the SEC's approval of a range of Bitcoin Spot ETFs), fundamental questions about crypto asset markets remain unclear:
 How efficient are crypto asset markets relative to established, traditional markets such as equities? 
-Does a risk-free rate exist and if yes, how does it relate to the risk-free rate in established markets? Are derivatives, written on crypto assets, fairly priced or at least fairly priced relative to other derivatives? What do we know about the risk-return characteristics of crypto assets?
-We assess these fundamental questions and find that the methods required to conduct our analysis have been out in the open for long; in fact we are employing similar methods to those, under which the efficiency of equity option markets had been assessed in their "youth" in the early 2000s. 
+Does a risk-free rate exist and if yes, how does it relate to the risk-free rate in established markets? Are derivatives, written on crypto assets, fairly priced or at least fairly priced relative to other derivatives? 
+We assess these fundamental questions and find that the methods required to conduct our analysis have been readily available; in fact we are employing similar methods to those, under which the efficiency of equity option markets had been assessed in their "youth" in the early 2000s. 
 The common key behind the employed methods is the precise and bespoke tailoring of risk-return characteristics through the use of options, as proposed by Shumway and Bakshi et al in XZY year. 
 
 We discuss the existence of a risk-free rate in crypto asset markets and derive a proxy. We use it as a benchmark that beta-neutral portfolios should yield. 
-We construct and evaluate the performance of beta-neutral portfolios and find that they do not generate their theoretical returns for particular levels of moneyness. We compare the risk-return characteristics to the late 90s equity markets and find, in a similar fashion as the results reported by Bakshi et al and Shumway et al., severe overpricings of at-the-money options. The effect holds after compensating for market crash insurance and transaction cost. 
-We assess the deadweight loss due to overpricings and propose a simple trading strategy that exploits this partciular inefficiency. 
-
+We construct and evaluate the performance of beta-neutral portfolios and find that they do not generate their theoretical returns for particular levels of moneyness. We compare the risk-return characteristics to the late 90s equity markets and find, in a similar fashion as the results reported by Bakshi et al and Shumway et al., high premia.of at-the-money options. The effect holds after compensating for market crash insurance and transaction cost. 
+We assess the deadweight loss due to observed risk premia and propose a simple trading strategy that exploits this particular inefficiency. 
 
 We constructs and evaluate the empirical performance of option portfolios, written on crypto assets such as Bitcoin and Ether, to allow model-free insights into the existence and degree of a leverage effect, the existence and size of risk premia, resulting market inefficiencies (measurable in economic loss / money lost) and to explore the option (pun intended)/possibility of curing named inefficiencies under transaction cost and liquidity constraints. 
 
-
-
-What evidence or contradictions can we find?
-The precise and bespoke tailoring of risk-return characteristics through the use of options allows promising insights into the risk-return characteristics of crypto assets, such as Bitcoin and Ether. 
-
-From our point of view, the primary question leading such research is the question of market efficiency. 
-
-
-Due to the youth of the crypto asset option markets, the primary question foregoing such research is that of the efficiency of named market. Do the laws that govern equity option markets also apply to crypto asset option markets? Can we find empirical evidence or contradictions? 
-
-- Is there a risk-free rate in crypto markets?
-- How efficient is the crypto (option) market compared to equity option markets?
 
 
 
@@ -170,9 +157,6 @@ All underlying code is available on \href{quantlet.com}{quantlet.com}
 and a corresponding courselet is available on
 \href{quantinar.com}{quantinar.com}.
 
-\section{Literature Review}
-
-
 
 \section{Methodology}
 
@@ -189,6 +173,10 @@ and a corresponding courselet is available on
 - KDE --> t-distribution
 - perform t-test for population mean of 0
 
+In accordance with Shumway, we follow the argument that any beta-neutral portfolio should yield the risk-free rate. We construct zero-beta portfolios by pairing a call option and a put option to a straddle and adjusting the weights so, that the sum of option betas yields zero. 
+The underlying data are executed transactions. All option greeks remain constant except time-to-maturity. Any transaction has a time-to-maturity (tau) "reset"/synced to settlement time. All options are bought and held until settlement at 10am UTC. To match always a call and a put with an equal strike price for a straddle, we use Put-Call-Parity to ensure the existence of each straddle.  
+The empirical performance of the resulting zero-beta straddles is assessed on a daily base. 
+
 
 \section{Data}
 
@@ -202,6 +190,8 @@ Furthermore, we use Deribits API V2 to retrieve a complete set of funding rates 
 
 
 \section{A Proxy for the risk-free Rate of Bitcoin and Ether}
+
+Another possibility: Staking
 
 Evidently, there is no established risk-free rate in crypto (or digital asset) markets. In the absence of riskless bond, we refer to the next best thing as a proxy for the risk free rate, which is the replication of the market-implied yield through a position which only has liquidity risk and counterparty risk. To be fair, counterparty risk also exists for risk-free bonds. 
 
@@ -571,7 +561,7 @@ Furthermore, there are mostly retailers present in the crypto option market. Som
 
 - the premium is larger when tau is small. 
 
-
+- report average returns for options grouped per strike (and overall)
 
 
 
