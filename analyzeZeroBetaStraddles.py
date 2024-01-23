@@ -74,7 +74,7 @@ def get_synthetic_options(existing_options, fotm, move_strike_call = 1.2, move_s
     return missing_options
 
 
-def portfolio_calculations(pf_df, weight, long):
+def portfolio_calculations(pf_df, weight, is_long):
     """
     pf_df: call_df, put_df
     weight from straddle_weight
@@ -85,7 +85,7 @@ def portfolio_calculations(pf_df, weight, long):
     pf_df['weight'] = weight
     
     pf_df['cost_base'] = pf_df['weight'] * (pf_df['instrument_price'])
-    if long:
+    if is_long:
         pf_df['payoff'] = pf_df['instrument_price_on_expiration'] - pf_df['instrument_price'] 
         pf_df['direction'] = 'long'
     else:
@@ -263,12 +263,14 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             # Restrict max Payoff with the FOTM Strike (e.g. 2000)
             # Consider Cost of FOTM Option
 
-            call_df = portfolio_calculations(call_df, call_weight, False)            
-            put_df = portfolio_calculations(put_df, put_weight, False)
+            # Change to accept parent parameter of is_long
+            not_long = not long
 
-            fotm_call_df = portfolio_calculations(fotm_call, call_weight, True)
-            fotm_put_df = portfolio_calculations(fotm_put, put_weight, True)
+            call_df = portfolio_calculations(call_df, call_weight, long)            
+            put_df = portfolio_calculations(put_df, put_weight, long)
 
+            fotm_call_df = portfolio_calculations(fotm_call, call_weight, not_long)
+            fotm_put_df = portfolio_calculations(fotm_put, put_weight, not_long)
             
             cols = ['instrument_name', 'index_change_rel', 'spot', 'strike', 'moneyness', 'tau', 'instrument_price', 'instrument_price_on_expiration', 'direction', 'beta', 'cost_base','payoff', 'weight', 'weighted_payoff', 'ret', 'weighted_ret']
             call_sub = call_df[cols]
@@ -281,6 +283,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
                 n_options = 2
                 btc_fee_per_option = 0.0003
                 fees_abs = n_options * btc_fee_per_option * index_price
+                print("make sure that fees are max 12.5% of option price!")
             else:
                 fees_abs = 0
             print('Fees: ', fees_abs)
@@ -288,13 +291,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             if long == False: #  and counter == 0
                 counter += 1
                 # Use Cash if we are Short
-
                 collected_premia = out['instrument_price'].sum()
                 profit_on_cash = index_change_rel * collected_premia
             else:
                 profit_on_cash = 0
-            #print('Profit on Cash:', profit_on_cash)
-        
             
             # Test
             #out = call_sub.to_frame().join(put_sub.to_frame(), lsuffix = '_call', rsuffix = '_put', how = 'outer').T
@@ -302,10 +302,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             out['days_to_maturity'] = opt['days_to_maturity']
             
             out['combined_payoff'] = out['weighted_payoff'].sum() + profit_on_cash - fees_abs
-            #if not np.isfinite(out['combined_payoff']):
-            #    print('not finite')
-            #    pdb.set_trace()
-            out['combined_ret'] = out['combined_payoff'] / (out['cost_base'].sum()) #(out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
+            out['combined_ret'] = out['combined_payoff'] / (abs(out['cost_base'].sum())) #(out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
 
             # If we center on expiration price, then we are resetting the time value of a call to the beginning of a day. 
             if center_on_expiration_price:
@@ -347,151 +344,139 @@ if __name__ == '__main__':
                       'out/vanilla/no_fees', 
                       'out/crash_resistant/fees',
                       'out/crash_resistant/no_fees']
-                      
+
     for req_path in required_paths:
         Path(req_path).mkdir(parents=True, exist_ok=True)
 
     # Params
     center_on_expiration_price = True
+
+    # Iterate over crash resistance and fees:
     crash_resistance = False
     apply_fees = True
 
-    # Output Directories
-    if crash_resistance:
-        out_dir_start = 'out/crash_resistant/'
-        plot_dir_start = 'plots/crash_resistant/'
-    else:
-        out_dir_start = 'out/vanilla/'
-        plot_dir_start = 'plots/vanilla/'
-    if apply_fees:
-        out_dir = out_dir_start + 'fees/'
-        plot_dir = plot_dir_start + 'fees/'
-    else:
-        out_dir = out_dir_start + 'no_fees/'
-        plot_dir = plot_dir_start + 'no_fees/'
+    for crash_resistance, apply_fees in zip([True, True, False, False], [True, False, True, False]):
 
-    # Load Expiration Price History
-    expiration_price_history = load_expiration_price_history()
+        # Output Directories
+        if crash_resistance:
+            out_dir_start = 'out/crash_resistant/'
+            plot_dir_start = 'plots/crash_resistant/'
+        else:
+            out_dir_start = 'out/vanilla/'
+            plot_dir_start = 'plots/vanilla/'
+        if apply_fees:
+            out_dir = out_dir_start + 'fees/'
+            plot_dir = plot_dir_start + 'fees/'
+        else:
+            out_dir = out_dir_start + 'no_fees/'
+            plot_dir = plot_dir_start + 'no_fees/'
 
-    # Load Fitted Data from main.py
-    print('Loading BTC Data')
-    dat = pd.read_csv('out/raw_deribit_transactions.csv') # deribit_transactions_eth for Ethereum
-    dat['date'] = pd.to_datetime(dat['day'])
-    
-    if not 'nweeks' in dat.columns:
+        # Load Expiration Price History
+        expiration_price_history = load_expiration_price_history()
+
+        # Load Fitted Data from main.py
+        print('Loading BTC Data')
+        dat = pd.read_csv('out/raw_deribit_transactions.csv') # deribit_transactions_eth for Ethereum
+        dat['date'] = pd.to_datetime(dat['day'])
+        dat = dat.loc[dat['day'] >= '2019-05-01']
+        print('Using data past 2019-05-01 because its the inception point of the perpetual futures.')
+        
+        if not 'nweeks' in dat.columns:
+            pdb.set_trace()
+            dat = assign_groups(dat)
+        
+        dat.sort_values('day', inplace = True)
+
+        # Merge Expiration Prices to Transactions
+        dat['maturitydate'] = dat['maturitydate_trading'].apply(lambda x: str(x)[:10])
+        dat = dat.merge(expiration_price_history, left_on ='maturitydate', right_on = 'Date')
+        dat.rename(columns = {'Date_x': 'Date'}, inplace=True)
+        
+        if center_on_expiration_price:
+            # Use expiration date also as spot for each day ('trade around spot")
+            dat = dat.merge(expiration_price_history.rename(columns={'expiration_price':'spot'}), left_on = 'day', right_on = 'Date')
+
+            print('WARNING: CHECK IF THIS IS A CORRECT OVERWRITE!!')
+
+        # Daily Returns of the Index. Required for Cash Investment on short side. Drop last observation where the return would be NaN.
+        dat['index_change_abs'] = dat['expiration_price'] - dat['index_price'] #dat['index_price'].diff().shift(-1)
+        dat['index_change_rel'] = dat['index_change_abs'] / dat['index_price']
+
+        vola_df = dat.copy(deep=True)
+        
+        # Find Outliers
+        print(dat['iv'].describe())
+
+        # Get average premium on IV if we go to a moneyness of 1.3 (or 0.7)
         pdb.set_trace()
-        dat = assign_groups(dat)
+        print('Summary of 30% OTM IV for Text:')
+        print(dat.loc[dat['moneyness'] == 1.3]['iv'].describe())
+        print(dat.loc[dat['moneyness'] == 0.7]['iv'].describe())
+
+        max_iv = 2.5
+        min_iv = 0
+        iv_vars = ['iv']
+
+        for iv_var in iv_vars:
+            dat.loc[dat[iv_var] >= max_iv, iv_var] = max_iv 
+            dat.loc[dat[iv_var] <= min_iv, iv_var] = min_iv
+
+        # Run Analysis for Rookley and Regression
+        #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
+        performance_overview_l = analyze_portfolio(dat, week = 'all', iv_var_name = 'iv', center_on_expiration_price = center_on_expiration_price, 
+                            first_occurrence_only = True, long = True, crash_resistant = crash_resistance, fees = apply_fees)
+        
+        collected = []
+        for key, val in performance_overview_l.items():
+            # First row summarizes results
+            collected.append(val.iloc[0])
+        performance_overview = pd.DataFrame(collected)
+        performance_overview.to_csv(out_dir + 'performance_overview.csv')
+
+        # We are not just dropping bad performers here. For some instruments, beta-neutral weights are not possible. 
+        # For these, we will have NaN weights, which then translate into NaN payoff and consequently inf or -inf returns.
+        # Drop those cases.
+        # Ensure range limits.
+        performance_overview.replace([np.inf, -np.inf], np.nan, inplace=True)
+        performance_overview.dropna(subset=["combined_payoff_daily", "combined_ret_daily"], how="all", inplace=True)
+
+        atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']]
+        grouped_boxplot(atm_sub, 'combined_ret', 'tau', -2, 2, plot_dir, 'atm', crash_resistance)
+        grouped_boxplot(atm_sub, 'combined_payoff', 'tau', -5000, 5000, plot_dir, 'atm', crash_resistance)
+        grouped_boxplot(atm_sub, 'combined_ret_daily', 'tau', -2, 2, plot_dir, 'atm', crash_resistance)
+        grouped_boxplot(atm_sub, 'combined_payoff_daily', 'tau', -5000, 5000, plot_dir, 'atm', crash_resistance)
+
+        des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'tau','moneyness']].groupby(['tau', 'moneyness']).describe()
+        print(des.to_string())
+        des.to_csv(out_dir + 'Zero_Beta_Performance_Overview_Summary_Statistics.csv')
+        performance_overview.to_csv(out_dir + 'PerformanceOverview.csv')
     
-    dat.sort_values('day', inplace = True)
+        # Prepare Performance Plots
+        performance_overview = assign_groups(performance_overview)
+        performance_overview['day'] = pd.to_datetime(performance_overview['day'])
+            
+        # Add Boxplots for Performance Overview per Tau!!!
+        grouped_boxplot(performance_overview, 'combined_payoff_daily', 'tau', -5000, 5000, plot_dir, '', crash_resistance)
+        grouped_boxplot(performance_overview, 'combined_ret_daily', 'tau', -2, 2, plot_dir, '', crash_resistance)
+        grouped_boxplot(performance_overview, 'combined_payoff_daily', 'nweeks', -5000, 5000, plot_dir, '', crash_resistance)
+        grouped_boxplot(performance_overview, 'combined_ret_daily', 'nweeks', -2, 2, plot_dir, '', crash_resistance)
+        
+        # If we don't round here, then it gets too messy. Adjust the X Axis otherwise...
+        grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff', 'moneyness', -5000, 5000, plot_dir, '', crash_resistance)
+        grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret', 'moneyness', -2, 2, plot_dir, '', crash_resistance)
+        grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff_daily', 'moneyness', -5000, 5000, plot_dir, '', crash_resistance)
+        grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret_daily', 'moneyness', -2, 2, plot_dir, '', crash_resistance)
+        
+        # Make Plot for the Variable Interest Rate!
 
-    # Merge Expiration Prices to Transactions
-    dat['maturitydate'] = dat['maturitydate_trading'].apply(lambda x: str(x)[:10])
-    dat = dat.merge(expiration_price_history, left_on ='maturitydate', right_on = 'Date')
-    dat.rename(columns = {'Date_x': 'Date'}, inplace=True)
-    
-    if center_on_expiration_price:
-        # Use expiration date also as spot for each day ('trade around spot")
-        dat = dat.merge(expiration_price_history.rename(columns={'expiration_price':'spot'}), left_on = 'day', right_on = 'Date')
 
-        print('WARNING: CHECK IF THIS IS A CORRECT OVERWRITE!!')
+        # Make PNL plot over Tau and Moneyness
+        #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
+        #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
+        #
+        #plot_performance(performance_overview, 'tau', crash_resistance, plot_dir)
 
-    # Daily Returns of the Index. Required for Cash Investment on short side. Drop last observation where the return would be NaN.
-    dat['index_change_abs'] = dat['expiration_price'] - dat['index_price'] #dat['index_price'].diff().shift(-1)
-    dat['index_change_rel'] = dat['index_change_abs'] / dat['index_price']
-    #dat = dat[dat['index_change_abs'].notna()]
-    #pdb.set_trace()
-    # Drop all mentionings of 'Date', since it is only associated to expiration
-    #dat.drop(columns = ['Date_x', 'Date_y'], inplace = True)
+        # Per Week
+        #plot_performance(performance_overview, 'nweeks', crash_resistance, plot_dir)
 
-    vola_df = dat.copy(deep=True)
-    
-    # Find Outliers
-    print(dat['iv'].describe())
-
-    max_iv = 2.5
-    min_iv = 0
-    iv_vars = ['iv']
-
-    for iv_var in iv_vars:
-        dat.loc[dat[iv_var] >= max_iv, iv_var] = max_iv 
-        dat.loc[dat[iv_var] <= min_iv, iv_var] = min_iv
-
-    # Run Analysis for Rookley and Regression
-    #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
-    performance_overview_l = analyze_portfolio(dat, week = 'all', iv_var_name = 'iv', center_on_expiration_price = center_on_expiration_price, 
-                        first_occurrence_only = True, long = False, crash_resistant = crash_resistance, fees = apply_fees)
-
-    
-    collected = []
-    for key, val in performance_overview_l.items():
-        # First row summarizes results
-        collected.append(val.iloc[0])
-    performance_overview = pd.DataFrame(collected)
-
-    performance_overview.to_csv(out_dir + 'performance_overview.csv')
-    #pdb.set_trace()
-    # Plot Straddle Returns for inspection
-    # @Todo: Should also do this for each day and instrument only once!
-    #performance_overview['combined_ret'].plot.kde()
-    #plt.show()
-
-    # We are not just dropping bad performers here. For some instruments, beta-neutral weights are not possible. 
-    # For these, we will have NaN weights, which then translate into NaN payoff and consequently inf or -inf returns.
-    # Drop those cases.
-    # Ensure range limits.
-    performance_overview.replace([np.inf, -np.inf], np.nan, inplace=True)
-    performance_overview.dropna(subset=["combined_payoff_daily", "combined_ret_daily"], how="all", inplace=True)
-
-    # Invert 
-    #print('Invert Payoff and Returns!!')
-    #performance_overview['combined_ret'] = performance_overview['combined_ret'] * (-1)
-    #performance_overview['combined_payoff'] = performance_overview['combined_payoff'] * (-1)
-    #performance_overview['combined_ret_daily'] = performance_overview['combined_ret_daily'] * (-1)
-    #performance_overview['combined_payoff'] = performance_overview['combined_payoff_daily'] * (-1)
-
-    #atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['tau', 'moneyness', 'combined_payoff', 'combined_ret', 'combined_payoff_daily','combined_ret_daily']]
-    atm_sub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']]
-    pdb.set_trace()
-    grouped_boxplot(atm_sub, 'combined_ret', 'tau', -2, 2, plot_dir, 'atm', crash_resistance)
-    grouped_boxplot(atm_sub, 'combined_payoff', 'tau', -5000, 5000, plot_dir, 'atm', crash_resistance)
-    grouped_boxplot(atm_sub, 'combined_ret_daily', 'tau', -2, 2, plot_dir, 'atm', crash_resistance)
-    grouped_boxplot(atm_sub, 'combined_payoff_daily', 'tau', -5000, 5000, plot_dir, 'atm', crash_resistance)
-
-    des = performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)][['combined_payoff', 'combined_ret', 'tau','moneyness']].groupby(['tau', 'moneyness']).describe()
-    print(des.to_string())
-    des.to_csv('out/Zero_Beta_Performance_Overview_Summary_Statistics.csv')
-    performance_overview.to_csv('out/PerformanceOverview.csv')
-  
-    
-    # Prepare Performance Plots
-    performance_overview = assign_groups(performance_overview)
-    performance_overview['day'] = pd.to_datetime(performance_overview['day'])
-    
-    
-    # Add Boxplots for Performance Overview per Tau!!!
-    grouped_boxplot(performance_overview, 'combined_payoff_daily', 'tau', -5000, 5000, plot_dir, '', crash_resistance)
-    grouped_boxplot(performance_overview, 'combined_ret_daily', 'tau', -2, 2, plot_dir, '', crash_resistance)
-    grouped_boxplot(performance_overview, 'combined_payoff_daily', 'nweeks', -5000, 5000, plot_dir, '', crash_resistance)
-    grouped_boxplot(performance_overview, 'combined_ret_daily', 'nweeks', -2, 2, plot_dir, '', crash_resistance)
-    
-    # If we don't round here, then it gets too messy. Adjust the X Axis otherwise...
-    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff', 'moneyness', -5000, 5000, plot_dir, '', crash_resistance)
-    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret', 'moneyness', -2, 2, plot_dir, '', crash_resistance)
-    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff_daily', 'moneyness', -5000, 5000, plot_dir, '', crash_resistance)
-    grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret_daily', 'moneyness', -2, 2, plot_dir, '', crash_resistance)
-    #@Todo: Ensure that x axis is date! its too tight!
-    #@Todo: Invert Returns and Combined Payoff for long straddles!
-    # @Todo Introduce interest rate!
-    #@Todo: Color Moneyness ranges in plots!
-    #pdb.set_trace()
-    
-    # Make PNL plot over Tau and Moneyness
-    #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
-    #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
-    #
-    plot_performance(performance_overview, 'tau', crash_resistance, plot_dir)
-
-    # Per Week
-    plot_performance(performance_overview, 'nweeks', crash_resistance, plot_dir)
-
-    #testsub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05) & (performance_overview['tau'] <= 0.02)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']].describe()
+        #testsub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05) & (performance_overview['tau'] <= 0.02)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']].describe()
