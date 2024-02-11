@@ -216,24 +216,52 @@ Consequently, the trading fee for one option spread would be the lesser of 0.000
 
 We use the \href{blockchain-research-center.de}{Blockchain Research Center} to retrieve a complete set of all transactions conducted on Deribit's options written on Bitcoin and Ether. 
 The exchange started operations in July 2017. 
-Furthermore, we use Deribits API V2 to retrieve a complete set of funding rates since (approx.) July 2019. 
+Furthermore, we use Deribits API V2 to retrieve a complete set of funding rates for the perpetual future of Bitcoin and Ether since (approx.) July 2019. 
+
+Two conditions are imposed on the option data:
+1) The maximum IV is 2.5 and the minimum IV is 0.1.
+2) In case of multiple occurrences of an instrument per day, we exclusively use the first one. 
+3) Furthermore, we restrict our analysis to the interval of Moneyness in [0.7, 1.3]
+4) We use data exlusively past 2019-05-01, the date of first observations for the Bitcoin Perpetual Future
+
+The purpose of the first restriction is to impose a fair bound to the options that is independent of liquidity levels. For illiquid options, occurrences of bid prices at 0\% IV and ask prices of 500\% may occur.  
+The purpose the second restriction of unique usage is to prevent a bias due to the possible more frequent trading of certain options. Generally, we observe that instruments with short maturity are traded more frequently. Yet, this could also be understood as cheaper instruments trading more frequently since (Black-Scholes) option prices increase with time-to-maturity.
+
+Bitcoin only:
+We drop 0.9\% of observations due to restriction 1)
+We drop 17\% of observations due to restriction 3)
+Overall, we have 5,028,945 observations. Post filtering, 4,150,778 observations remain in the set.
+
+Ethereum: 
+?!
+Todo
+
+
+Regarding data authenticity, we refer to our previous paper Risk Premia and Pricing Kernels for Bitcoin. 
+Indeed, using actual transaction data instead of orderbook data removes the threat of wash trading (etc) to our data. The most likely negative factor that could affect our data quality is wash trading. 
+We assess the risk of wash trading as follows: 
+
+"A wash trade occurs when there is an act of entering into, or purporting to enter into, transactions with no intent to obtain a bona fide market position or activity that gives the false appearance of an executed transaction(s), but does not subject the Principal to any market risk or change in position or aid in price discovery." (from: https://www.ice.com/publicdocs/futures_us/Wash_Sale_FAQ.pdf)
+
+We asses the risk of wash trading contaminating our data set as low. The reasoning behind the low risk assessment is that we are solely dealing with actual transactions associated with transaction cost. At the time of the writing, the transaction cost is 0.0003 BTC which is per current spot 12 USD. Such fees, even without consideration of spreads, make wash trading from a trader's perspective entirely infeasible. 
+
+
 
 - table of amount of transactions per group
 - plot: amount of transactions over time per group (crypto)
 
-We impose a maximum IV of 2.5
+
 
 
 \section{A Proxy for the risk-free Rate of Bitcoin and Ether}
 
 Another possibility: Staking
 
-Evidently, there is no established risk-free rate in crypto (or digital asset) markets. In the absence of riskless bond, we refer to the next best thing as a proxy for the risk free rate, which is the replication of the market-implied yield through a position which only has liquidity risk and counterparty risk. To be fair, counterparty risk also exists for risk-free bonds. 
-
-A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments (show both!). While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. These are the perpetual futures, which are listed on some exchanges. 
+Evidently, there is no established risk-free rate in crypto (or digital asset) markets. In the absence of riskless bond, we construct as a proxy for the risk free rate, which is the replication of the market-implied yield through a position which only has liquidity risk and counterparty risk. 
+A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments. While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. 
 
 As of 2024-01-07, the total Open Interest for Bitcoin Perpetual Futures contracts is \$19,343,021,437 with a total 24h Trade Volume of \$50,339,886,015.
-Open Interest for Ether Perpetual Futurews contracts is Total Open Interest \$14,945,055,482 and total 24h Trade Volume is \$18,097,004,167.
+Open Interest for Ether Perpetual Futures contracts is Total Open Interest \$14,945,055,482 and total 24h Trade Volume is \$18,097,004,167.
 
 BTC Futures
 
@@ -501,87 +529,53 @@ Total 24h Trade Volume $98,238,298
 % \usepackage{booktabs}
 
 
-Crypto exchanges often provide a so-called perpetual future, which is a synthetic (typically cash-settled instrument) whose return is tied to the underlying via a funding rate. Most exchanges (quote here) provide perpetual futures for Bitcoin and Ethereum. 
-The price of each perpetual future is linked to the underlying by adjusting a variable interest rate, called the funding rate, that fluctuates depending on the deviation between the price of the perpetual future and the underlying. The funding rate increases the cost of holding positions against the deviation, meaning that if the price of the perpetual future is higher than the underlying, the funding rate is positive which causes the market participants who are long to pay the short side in a contractually predefined frequency. Broadly said, the more extreme the deviation, the higher the funding rate and thus the higher the incentive to trade against the deviation and thus converge the price of the perpetual future towards its underlying. 
+Crypto exchanges often provide a so-called perpetual future, which is a synthetic (typically cash-settled instrument) whose return is tied to the underlying via a funding rate. Most exchanges (quote here) provide perpetual futures for Bitcoin and Ether. 
+The price of each perpetual future is linked to the underlying by adjusting a variable interest rate, called the funding rate, that fluctuates depending on the deviation between the price of the perpetual future and the underlying. The funding rate increases the cost of holding positions against the deviation, meaning that if the price of the perpetual future is higher than the underlying, the funding rate is positive which causes the market participants who are long to pay the short side in a predefined frequency. Broadly said, the more extreme the deviation, the higher the funding rate and thus the higher the incentive to trade against the deviation and thus converge the price of the perpetual future towards its underlying. 
 The risk-free rate is approximated using the simplest and most liquid way of realising the funding rate, a carry trade. In such a trade, the trader shorts (longs) the perpetual future if the funding rate is positive (negative) and simulateously buys (sells) the underlying such that the market delta of the combined position is zero. 
 
 The funding rate on \href{https://www.deribit.com/kb/deribit-linear-perpetual}{Deribit} is calculated as follows:
 
-Deribit perpetual contracts are a derivative product similar to a future, however, they do not have an expiry date. The perpetual contract features funding payments. These payments have been introduced to keep the perpetual contract price as close as possible to the underlying crypto price - the relevant Deribit Index. If the perpetual contract trades at a higher price than the index, traders that have long positions need to make funding payments to the traders that have short positions. This will make the product less attractive to the long position holders and more attractive to the short position holders. This subsequently will cause a perpetual price to trade in line with the price of the index. If the perpetual trades at a price lower than the index, the short position holders will have to pay the long position holders instead.
+Instruments, such as inverse options, futures and perpetual futures, have a Mark Price $M$. The Mark Price at a time is defined as the average of the highest bid and lowest ask price within an unspecified bandwidth (quote: 
+Mark price of an options contract is the current value of the option as calculated by the Deribit risk management system. Usually, this is the average of the best bid and best ask price. However, for risk management purposes, there is price bandwidth in place.
+). The Deribit Index $D$, which is a Lasperes Index of BTC/USD pairs across different exchanges, is used in conjunction with the Mark Price to calculate the Premium Rate $P$ of the Perpetual Future $F$ over the Deribit Index. 
 
-The Deribit perpetual contract features a continuous measurement of the difference between the mark price of the contract and the relevant Deribit Index. The percentage difference between these two price levels is the basis for the 8-hourly funding rate that is applied to all outstanding perpetual contracts.
+\begin{equation}
+P = \frac{M - D}{D}
+\end{equation}
 
-Funding payments are calculated every millisecond. The funding payments will be added to or subtracted from the realized PNL, which is also part of the available trading balance. At each daily settlement, the realized PNL will be moved to or from the cash balance, from which withdrawals can be made.
+The Funding Rate results as an 8-hour interest rate from the interval in which the Premium Rate falls. 
 
-The total funding paid will show up in the transaction log in the "funding" column. This column shows the funding amount that is applied to the trader's entire net position in the period between the relevant trade and the trade before that. Put differently: the trader can see the funding paid or received on the position between position changes.
+\begin{equation}
+F = \max{0.025\%, P} + \min{-0.025\%, P}
+\end{equation}
 
-Funding Rate
-When the funding rate is positive, long position holders pay funding to the short position holders; when the funding rate is negative, short position holders pay funding to the long position holders. The funding rate is expressed as an 8-hour interest rate, and is calculated at any given time as follows:
+The actual funding payment results $f$ from the product of the Funding Rate, Position Size and Holding Time. It is continuously added to the PnL account and settled daily at 8:00 UTC.
 
-Premium Rate
-Premium Rate = ((Mark Price - Deribit Index) / Deribit Index) * 100%
 
-Funding Rate
-Sequentially, the funding rate is derived from the premium rate by applying a damper.
-
-If the premium rate is within -0.025\% and 0.025\% range, the actual funding rate will be reduced to 0.00\%.
-If the premium rate is lower than -0.025\%, then the actual funding rate will be the premium rate + 0.025\%.
-If the premium rate is higher than 0.025\%, then the actual funding rate will be the premium rate - 0.025\%.
-Additionally, the funding rate is capped at +/ - 5\% for all linear USDC perpetuals.
-Funding Rate = Maximum (0.025\%, Premium Rate) + Minimum (-0.025\%, Premium Rate)
-
-Time Fraction
-Time Fraction = Funding Rate Time Period / 8 hours
-
-The actual funding payment is calculated by multiplying the funding rate by the position size and the time fraction.
-
-Funding Payment = Funding Rate * Position Size * Time Fraction
-
-In reality, the spread of the Deribit Index and the mark price changes continuously, and all changes are taken into account. Therefore, the examples above are extreme simplifications of the actual calculations. The funding paid or received is continuously added to the realized PNL and is moved to or from the cash balance at the daily settlement, at 08:00 UTC.
-
-Fees on Funding
-Deribit does not charge any fees on funding. All the funding payments are transferred between the holders of the perpetual contracts. This makes the funding a zero-sum game, where longs receive all funding from shorts, or shorts receive all funding from longs.
-
+@Todo: Summarize!
 Mark Price
 It is essential to understand how the mark price is calculated. We start by determining the "Fair Price". The fair price is calculated as the average of the fair impact bid and the fair impact ask.
-
-Fair Impact Bid Price is an average price at which 100,000 USDC worth of contracts can be bought.
-
+Fair Impact Bid Price is an average price at which 100,000 USDC worth of contracts can be bought.=
 Fair Impact Ask Price is an average price at which 100,000 USDC worth of contracts can be sold.
-
-Fair Price can never be higher than 0.1 % of best ask or lower than best bid
-
+Fair Price can never be higher than 0.1\% of best ask or lower than best bid
 Fair Price = (Fair Impact Bid + Fair Impact Ask) / 2
 The mark price is derived using both the Deribit Index and the fair price, by adding to the Deribit Index the 30 second exponential moving average (EMA) of the Fair Price - Deribit Index.
 
 Mark Price = Deribit Index + 30 second EMA (Fair Price - Deribit Index)
 We implement a safety setting on our mark price to not deviate by more than a certain percentage of Index. This is to prevent manipulation or to curb the impact of panic trading. When a deviation from index is genuine, then we would increase the possible deviation.
 
-Trading outside of this bandwidth is still allowed.
-
-The 30 second EMA is recalculated every second, so in total, there are 30 time periods in which the measurement of the latest second has a weight of 2 / (30 + 1) = 0.0645 or (6.45%).
-
-Allowed Trading Bandwidth
-Two parameters act as a boundary to the allowed trading range:
-
-Perpetual trades are limited by Deribit Index + 1 minute EMA (Fair Price - Index) +/- 1.5%, and a fixed bandwidth of the Deribit Index of +/- 7.5%.
-
-If the market circumstances require so, bandwidth parameters can be adjusted at the sole discretion of Deribit.
-
-
-Solve for interest rates from
+Solve for interest rates from Futures price $F$ Spot price $S$ at time $t$ and time-to-maturity $\tau$.
 
 \begin{equation}
 F_t = e^{r \tau} S_t
 \end{equation}
 
 
-The actual annualized returns of such a carry trade would be
+The actual annualized returns of such a carry trade are summarized in the table below.
 
 Table:
 
 Year, Currency, Exchange, Annual Return
-
 
 funding_btc_vs_eth_annualized_zoom.png
 funding_btc_vs_eth_zoom.png
@@ -970,6 +964,40 @@ sufficient call option data to compute the IV surface from which we
 sample option prices.
 
 \href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Preprocessing}
+
+%Deribit perpetual contracts are a derivative product similar to a future, however, they do not have an expiry date. The perpetual contract features funding payments. These payments have been introduced to keep the perpetual contract price as close as possible to the underlying crypto price - the relevant Deribit Index. If the perpetual contract trades at a higher price than the index, traders that have long positions need to make funding payments to the traders that have short positions. This will make the product less attractive to the long position holders and more attractive to the short position holders. This subsequently will cause a perpetual price to trade in line with the price of the index. If the perpetual trades at a price lower than the index, the short position holders will have to pay the long position holders instead.
+%
+%The Deribit perpetual contract features a continuous measurement of the difference between the mark price of the contract and the relevant Deribit Index. The percentage difference between these two price levels is the basis for the 8-hourly funding rate that is applied to all outstanding perpetual contracts.
+%
+%Funding payments are calculated every millisecond. The funding payments will be added to or subtracted from the realized PNL, which is also part of the available trading balance. At each daily settlement, the realized PNL will be moved to or from the cash balance, from which withdrawals can be made.
+%
+%The total funding paid will show up in the transaction log in the "funding" column. This column shows the funding amount that is applied to the trader's entire net position in the period between the relevant trade and the trade before that. Put differently: the trader can see the funding paid or received on the position between position changes.
+%
+%Funding Rate
+%When the funding rate is positive, long position holders pay funding to the short position holders; when the funding rate is negative, short position holders pay funding to the long position holders. The funding rate is expressed as an 8-hour interest rate, and is calculated at any given time as follows:
+%
+%Premium Rate
+%Premium Rate = ((Mark Price - Deribit Index) / Deribit Index) * 100%
+%
+%Funding Rate
+%Sequentially, the funding rate is derived from the premium rate by applying a damper.
+%
+%If the premium rate is within -0.025\% and 0.025\% range, the actual funding rate will be reduced to 0.00\%.
+%If the premium rate is lower than -0.025\%, then the actual funding rate will be the premium rate + 0.025\%.
+%If the premium rate is higher than 0.025\%, then the actual funding rate will be the premium rate - 0.025\%.
+%Additionally, the funding rate is capped at +/ - 5\% for all linear USDC perpetuals.
+%Funding Rate = Maximum (0.025\%, Premium Rate) + Minimum (-0.025\%, Premium Rate)
+%
+%Time Fraction
+%Time Fraction = Funding Rate Time Period / 8 hours
+%
+%The actual funding payment is calculated by multiplying the funding rate by the position size and the time fraction.
+%
+%Funding Payment = Funding Rate * Position Size * Time Fraction
+%
+%In reality, the spread of the Deribit Index and the mark price changes continuously, and all changes are taken into account. Therefore, the examples above are extreme simplifications of the actual calculations. The funding paid or received is continuously added to the realized PNL and is moved to or from the cash balance at the daily settlement, at 08:00 UTC.
+
+
 
 \section{References}
 
