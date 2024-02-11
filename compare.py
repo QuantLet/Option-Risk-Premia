@@ -41,8 +41,13 @@ def ttest(dat, out_path):
     print(pdct)
 
     # Cool! 
+    fig = plt.figure(figsize = (20, 14))
     sub = df.loc[(df['moneyness'] >= 0.95) & (df['moneyness'] <= 1.05)]
     t_stat, p_value = ttest_1samp(sub['combined_ret_daily'], popmean=0, alternative = 'less', nan_policy = 'omit') #, alternative = 'less'
+    sub['combined_ret_daily'].plot.kde()
+    plt.title('n = ' + str(sub.shape[0]))
+    plt.xlim((-1, 1))
+    plt.savefig(out_path + '/moneyness_between_95_and_105' + '.png')
 
     with open(out_path + '/t-tests.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
         w = csv.DictWriter(f, pdct.keys())
@@ -83,7 +88,7 @@ p3_values = ttest(crash_resistant_fee, out_path = 'out/crash_resistant/fees/dens
 p4_values = ttest(crash_resistant_no_fee, out_path = 'out/crash_resistant/no_fees/density')
 
 pv = pd.DataFrame({'Vanilla ex Fee': p1_values, 'Vanilla cum Fee': p2_values, 'Crash Resistant ex Fee': p3_values, 'Crash Resistant cum Fee': p4_values})
-pv.to_csv('out/pvalues.csv')
+pv.round(4).to_csv('out/pvalues.csv')
 
 pdb.set_trace()
 vanilla_fee.loc[vanilla_fee['days_to_maturity'] <= 20].groupby('days_to_maturity')['combined_payoff'].describe()
@@ -92,5 +97,3 @@ vanilla_no_fee.loc[vanilla_fee['days_to_maturity'] <= 20].groupby('days_to_matur
 vanilla_fee.loc[vanilla_fee['days_to_maturity'] <= 20].groupby('days_to_maturity')['combined_ret'].describe()
 vanilla_no_fee.loc[vanilla_fee['days_to_maturity'] <= 20].groupby('days_to_maturity')['combined_ret'].describe()
 
-# Get average option returns etc. 
-# average index returns
