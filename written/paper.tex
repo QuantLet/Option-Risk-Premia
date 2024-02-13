@@ -158,99 +158,6 @@ and a corresponding courselet is available on
 \href{quantinar.com}{quantinar.com}.
 
 
-\section{Methodology}
-
-- scrape 8h funding rate continuously and use as market-interest rate
-
-- scrape all BTC, ETH transactions from Deribit 
-- load data, clean
-- center on settlement date for each day (10am UTC)
-- for each option, find the pendant via put-call-parity
-- calculate the beta of each put, call
-- build zero-beta straddles by finding weights such that the sum of weights is zero
-- assess empirical, daily returns of the straddle
-- build boxplots over levels of moneyness
-- KDE --> t-distribution
-- perform t-test for population mean of 0
-
-We follow the argument that any beta-neutral portfolio should yield the risk-free rate. We construct zero-beta portfolios by pairing a call option and a put option to a straddle and adjusting the weights so that the sum of option betas yields zero. The straddle's payoff $r_v$ is depicted in Equation 1, consisting of the payoff of the call $r_c$ and the payoff of the put $r_p$. The weight $\theta$ is found by solving Equation 2 through Equation 3. The (market) beta of a call (put) can be calculated through knowledge of the spot price $s$, the option delta $\delta$, the Black-Scholes option price $C$ and the market beta $\beta_m (=1)$ as depicted in Equation 4. 
-The underlying data are executed transactions. All option greeks remain constant except time-to-maturity. Any transaction has a time-to-maturity (tau) "reset"/synced to settlement time. All options are bought and held until settlement at 10am UTC. 
-We match our universe of straddles as follows:
-Per definition, a straddle exists of a call and a put with similar strike and maturity. We construct the set of empirical straddles by iterating over our list of executed calls and puts. For each call (put), we use Put-Call-Parity to complete the straddle. 
-The empirical performance of the resulting zero-beta straddles is assessed on a daily base. We inspect the densities (via Kernel Density Estimation) of the daily returns and argue that they are t-distributed. For each level of moneyness m, we construct an interval $[m, m + 0.05]$. We condition daily returns on over levels of the interval and we conduct a left-sided t-test on the null hypothesis of a population mean greater or equal to zero. We define a structural (or significant?) non-zero return of the zero-beta straddle returns as (volatility risk) premium. 
-
-
-- Formulas for the weights!
-
-Straddle Return $r_v$￼, Share of Straddle’s value in Call Options ￼$\theta$,
-Call and Put market Beta ￼$\beta_c$, $\beta_p$.
-
-\begin{equation}
-r_v = \theta r_c + (1-\theta)r_p
-\end{equation}
-
-\begin{equation}
-\theta \beta_c + (1-\theta)\beta_p = 0\\
-\end{equation}
-
-\begin{equation}
-\theta = \frac{-\beta_p}{\beta_c - \beta_p}\\
-\end{equation}
-
-\begin{equation}
-\beta_c = \frac{s}{C} \Delta \beta_s\\
-\end{equation}
-
-We consider the possibility that if a volatility premium is found in the vanilla Zero-Beta-Straddles, then it may attributed to the risk of Black Swan events. Therefore we repeat the analysis for a set of "crash-resistant" zero-beta straddles. 
-Hedge Straddle with FOTM Option in order to exclude influence of Fat Tail Events
-Close Call (Put) leg 20\% away from Strike. We suppose that a such a leg would come at a 30\% premium compared to the ATM volatility (which is more than empirically justified.)
-Maybe make a summary of the relationship between ATM and 20\% OTM premium.
-
-The performance of the vanilla and crash-resistant straddles is evaluated with and without fees. Clearly, application of the fees constitutes simply a linear shift, which is well-visible in the graphs. 
-The return of the straddles until settlement is re-scaled on a daily level. It is plotted as a boxplot of daily returns for each level of moneyness in the interval [0.7, 1.3]. 
-Fees are standard option fees on Deribit. We assume using an option combo fee, which makes the a spread's cheaper leg free of charge. 
-Consequently, the trading fee for one option spread would be the lesser of 0.0003 Bitcoin or 12.5\% of the more expensive option price. All fees are converted into USD based on the BTC/USDT exchange rate around settlement time.
-
-
-\section{Data}
-
-We use the \href{blockchain-research-center.de}{Blockchain Research Center} to retrieve a complete set of all transactions conducted on Deribit's options written on Bitcoin and Ether. 
-The exchange started operations in July 2017. 
-Furthermore, we use Deribits API V2 to retrieve a complete set of funding rates for the perpetual future of Bitcoin and Ether since (approx.) July 2019. 
-
-Two conditions are imposed on the option data:
-1) The maximum IV is 2.5 and the minimum IV is 0.1.
-2) In case of multiple occurrences of an instrument per day, we exclusively use the first one. 
-3) Furthermore, we restrict our analysis to the interval of Moneyness in [0.7, 1.3]
-4) We use data exlusively past 2019-05-01, the date of first observations for the Bitcoin Perpetual Future
-
-The purpose of the first restriction is to impose a fair bound to the options that is independent of liquidity levels. For illiquid options, occurrences of bid prices at 0\% IV and ask prices of 500\% may occur.  
-The purpose the second restriction of unique usage is to prevent a bias due to the possible more frequent trading of certain options. Generally, we observe that instruments with short maturity are traded more frequently. Yet, this could also be understood as cheaper instruments trading more frequently since (Black-Scholes) option prices increase with time-to-maturity.
-
-Bitcoin only:
-We drop 0.9\% of observations due to restriction 1)
-We drop 17\% of observations due to restriction 3)
-Overall, we have 5,028,945 observations. Post filtering, 4,150,778 observations remain in the set.
-
-Ethereum: 
-?!
-Todo
-
-
-Regarding data authenticity, we refer to our previous paper Risk Premia and Pricing Kernels for Bitcoin. 
-Indeed, using actual transaction data instead of orderbook data removes the threat of wash trading (etc) to our data. The most likely negative factor that could affect our data quality is wash trading. 
-We assess the risk of wash trading as follows: 
-
-"A wash trade occurs when there is an act of entering into, or purporting to enter into, transactions with no intent to obtain a bona fide market position or activity that gives the false appearance of an executed transaction(s), but does not subject the Principal to any market risk or change in position or aid in price discovery." (from: https://www.ice.com/publicdocs/futures_us/Wash_Sale_FAQ.pdf)
-
-We asses the risk of wash trading contaminating our data set as low. The reasoning behind the low risk assessment is that we are solely dealing with actual transactions associated with transaction cost. At the time of the writing, the transaction cost is 0.0003 BTC which is per current spot 12 USD. Such fees, even without consideration of spreads, make wash trading from a trader's perspective entirely infeasible. 
-
-
-
-- table of amount of transactions per group
-- plot: amount of transactions over time per group (crypto)
-
-
 
 
 \section{A Proxy for the risk-free Rate of Bitcoin and Ether}
@@ -537,7 +444,7 @@ The funding rate on \href{https://www.deribit.com/kb/deribit-linear-perpetual}{D
 
 Instruments, such as inverse options, futures and perpetual futures, have a Mark Price $M$. The Mark Price at a time is defined as the average of the highest bid and lowest ask price within an unspecified bandwidth (quote: 
 Mark price of an options contract is the current value of the option as calculated by the Deribit risk management system. Usually, this is the average of the best bid and best ask price. However, for risk management purposes, there is price bandwidth in place.
-). The Deribit Index $D$, which is a Lasperes Index of BTC/USD pairs across different exchanges, is used in conjunction with the Mark Price to calculate the Premium Rate $P$ of the Perpetual Future $F$ over the Deribit Index. 
+). The Deribit Index $D$, which is an equally weighted Index of BTC/USD pairs across different exchanges, is used in conjunction with the Mark Price to calculate the Premium Rate $P$ of the Perpetual Future $F$ over the Deribit Index. 
 
 \begin{equation}
 P = \frac{M - D}{D}
@@ -583,6 +490,86 @@ funding_btc_vs_eth_annualized.png
 funding_btc_vs_eth.png
 
 
+
+\section{Methodology}
+
+We follow the argument that any beta-neutral portfolio should yield the risk-free rate. We construct zero-beta portfolios by pairing a call option and a put option to a straddle and adjusting the weights so that the sum of option betas yields zero. The straddle's payoff $r_v$ is depicted in Equation 1, consisting of the payoff of the call $r_c$ and the payoff of the put $r_p$. The weight $\theta$ is found by solving Equation 2 through Equation 3. The (market) beta of a call (put) can be calculated through knowledge of the spot price $s$, the option delta $\delta$, the Black-Scholes option price $C$ and the market beta $\beta_m (=1)$ as depicted in Equation 4. 
+The underlying data are executed transactions. All option greeks remain constant except time-to-maturity. Any transaction has a time-to-maturity (tau) "reset"/synced to settlement time. All options are bought and held until settlement at 10am UTC. 
+We match our universe of straddles as follows:
+Per definition, a straddle exists of a call and a put with similar strike and maturity. We construct the set of empirical straddles by iterating over our list of executed calls and puts. For each call (put), we use Put-Call-Parity to complete the straddle. 
+The empirical performance of the resulting zero-beta straddles is assessed on a daily base. We inspect the densities (via Kernel Density Estimation) of the daily returns and argue that they are t-distributed. For each level of moneyness m, we construct an interval $[m, m + 0.05]$. We condition daily returns on over levels of the interval and we conduct a left-sided t-test on the null hypothesis of a population mean greater or equal to zero. We define a structural (or significant?) non-zero return of the zero-beta straddle returns as (volatility risk) premium. 
+
+Straddle Return $r_v$￼, Share of Straddle’s value in Call Options ￼$\theta$, Call and Put market Beta ￼$\beta_c$, $\beta_p$.
+
+\begin{equation}
+r_v = \theta r_c + (1-\theta)r_p
+\end{equation}
+
+\begin{equation}
+\theta \beta_c + (1-\theta)\beta_p = 0\\
+\end{equation}
+
+\begin{equation}
+\theta = \frac{-\beta_p}{\beta_c - \beta_p}\\
+\end{equation}
+
+\begin{equation}
+\beta_c = \frac{s}{C} \Delta \beta_s\\
+\end{equation}
+
+We consider the possibility that if a volatility premium is found in the vanilla Zero-Beta-Straddles, then it may attributed to the risk of Black Swan events. Therefore we repeat the analysis for a set of "crash-resistant" zero-beta straddles. 
+Hedge Straddle with FOTM Option in order to exclude influence of Fat Tail Events
+Close Call (Put) leg 20\% away from Strike. We suppose that a such a leg would come at a 30\% premium compared to the ATM volatility (which is more than empirically justified.)
+Maybe make a summary of the relationship between ATM and 20\% OTM premium.
+
+The performance of the vanilla and crash-resistant straddles is evaluated with and without fees. Clearly, application of the fees constitutes simply a linear shift, which is well-visible in the graphs. 
+The return of the straddles until settlement is re-scaled on a daily level. It is plotted as a boxplot of daily returns for each level of moneyness in the interval [0.7, 1.3]. 
+Fees are standard option fees on Deribit. We assume using an option combo fee, which makes the a spread's cheaper leg free of charge. 
+Consequently, the trading fee for one option spread would be the lesser of 0.0003 Bitcoin or 12.5\% of the more expensive option price. All fees are converted into USD based on the BTC/USDT exchange rate around settlement time.
+
+
+\section{Data}
+
+We use the \href{blockchain-research-center.de}{Blockchain Research Center} to retrieve a complete set of all transactions conducted on Deribit's options written on Bitcoin and Ether. 
+The exchange started operations in July 2017. 
+Furthermore, we use Deribits API V2 to retrieve a complete set of funding rates for the perpetual future of Bitcoin and Ether since (approx.) July 2019. 
+
+Two conditions are imposed on the option data:
+1) The maximum IV is 2.5 and the minimum IV is 0.1.
+2) In case of multiple occurrences of an instrument per day, we exclusively use the first one. 
+3) Furthermore, we restrict our analysis to the interval of Moneyness in [0.7, 1.3]
+4) We use data exlusively past 2019-05-01, the date of first observations for the Bitcoin Perpetual Future
+
+The purpose of the first restriction is to impose a fair bound to the options that is independent of liquidity levels. For illiquid options, occurrences of bid prices at 0\% IV and ask prices of 500\% may occur.  
+The purpose the second restriction of unique usage is to prevent a bias due to the possible more frequent trading of certain options. Generally, we observe that instruments with short maturity are traded more frequently. Yet, this could also be understood as cheaper instruments trading more frequently since (Black-Scholes) option prices increase with time-to-maturity.
+
+Bitcoin only:
+We drop 0.9\% of observations due to restriction 1)
+We drop 17\% of observations due to restriction 3)
+Overall, we have 5,028,945 observations. Post filtering, 4,150,778 observations remain in the set.
+
+Ethereum: 
+Amount of Observations outside of allowed IV range:  0.017042133327261764
+Amount of Observations outside of allowed Tau range:  0.20172172747210984
+Overall Observations: 2283869
+Amount of Observations in our set post filtering:  1809762
+
+Regarding data authenticity, we refer to our previous paper Risk Premia and Pricing Kernels for Bitcoin. 
+Indeed, using actual transaction data instead of orderbook data removes the threat of wash trading (etc) to our data. The most likely negative factor that could affect our data quality is wash trading. 
+We assess the risk of wash trading as follows: 
+
+"A wash trade occurs when there is an act of entering into, or purporting to enter into, transactions with no intent to obtain a bona fide market position or activity that gives the false appearance of an executed transaction(s), but does not subject the Principal to any market risk or change in position or aid in price discovery." (from: https://www.ice.com/publicdocs/futures_us/Wash_Sale_FAQ.pdf)
+
+We asses the risk of wash trading contaminating our data set as low. The reasoning behind the low risk assessment is that we are solely dealing with actual transactions associated with transaction cost. At the time of the writing, the transaction cost is 0.0003 BTC which is per current spot 12 USD. Such fees, even without consideration of spreads, make wash trading from a trader's perspective entirely infeasible. 
+
+
+
+- table of amount of transactions per group
+- plot: amount of transactions over time per group (crypto)
+
+
+
+
 \section{Results}
 
 We find the returns of the zero-beta-straddles to be t-distributed and conduct a left-sided t-test under the null hypothesis of a population mean greater or equal to zero. 
@@ -600,20 +587,20 @@ Furthermore, there are mostly retailers present in the crypto option market. Som
 
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/funding_btc_vs_eth_annualized.png}
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_annualized.png}
     \captionof{figure}{Annualized Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/funding_btc_vs_eth_annualized_zoom.png}
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_annualized_zoom.png}
     
      \captionof{figure}{(Zoomed) Annualized Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
 
 \end{minipage}
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/funding_btc_vs_eth.png}
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth.png}
     \captionof{figure}{Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/funding_btc_vs_eth_zoom.png}
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_zoom.png}
     \captionof{figure}{(Zoomed) Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
 
 \end{minipage}
@@ -633,26 +620,53 @@ Furthermore, there are mostly retailers present in the crypto option market. Som
 
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/vanilla/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
-    \captionof{figure}{Performance - Vanilla - No Fees}
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/vanilla/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{BTC - Performance - Vanilla - No Fees}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/vanilla/fees/boxplot_combined_ret_daily_over_moneyness_.png}
-     \captionof{figure}{Performance - Vanilla - Fees}
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/vanilla/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{BTC - Performance - Vanilla - Fees}
 
 \end{minipage}
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/crash_resistant/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
-    \captionof{figure}{Performance - Crash Resistant - No Fees}
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/crash_resistant/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{BTC - Performance - Crash Resistant - No Fees}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/plots/crash_resistant/fees/boxplot_combined_ret_daily_over_moneyness_.png}
-     \captionof{figure}{Performance - Crash Resistant - Fees}
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/crash_resistant/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{BTC - Performance - Crash Resistant - Fees}
 
 \end{minipage}
    % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
 
 \label{ATM Term Structure}
 \href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+
+
+
+
+\begin{minipage}{\textwidth}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/vanilla/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{ETH - Performance - Vanilla - No Fees}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/vanilla/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{ETH - Performance - Vanilla - Fees}
+
+\end{minipage}
+\begin{minipage}{\textwidth}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/crash_resistant/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{ETH - Performance - Crash Resistant - No Fees}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/crash_resistant/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{ETH - Performance - Crash Resistant - Fees}
+
+\end{minipage}
+   % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
+
+\label{ATM Term Structure}
+\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+
 
 
 
