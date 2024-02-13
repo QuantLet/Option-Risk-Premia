@@ -84,7 +84,7 @@
   and the Czech Science Foundation's grant no. 19-28231X / CAS XDA
   23020303 gratefully acknowledged,
   \href{mailto:haerdle@hu-berlin.de}{\nolinkurl{haerdle@hu-berlin.de}}}}
-\date{7 January 2024}
+\date{12 February 2024}
 
 \begin{document}
 \maketitle
@@ -121,51 +121,118 @@ Despite the ongoing integration into established markets (whereas the last examp
 How efficient are crypto asset markets relative to established, traditional markets such as equities? 
 Does a risk-free rate exist and if yes, how does it relate to the risk-free rate in established markets? Are derivatives, written on crypto assets, fairly priced or at least fairly priced relative to other derivatives? 
 We assess these fundamental questions and find that the methods required to conduct our analysis have been readily available; in fact we are employing similar methods to those, under which the efficiency of equity option markets had been assessed in their "youth" in the early 2000s. 
-The common key behind the employed methods is the precise and bespoke tailoring of risk-return characteristics through the use of options, as proposed by Shumway and Bakshi et al in XZY year. 
+The common key behind the employed methods is the precise and bespoke tailoring of risk-return characteristics through the use of options, as proposed by Shumway and Bakshi et al in (@quote). 
 
-We discuss the existence of a risk-free rate in crypto asset markets and derive a proxy. We use it as a benchmark that beta-neutral portfolios should yield. 
-We construct and evaluate the performance of beta-neutral portfolios and find that they do not generate their theoretical returns for at-the-money instruments. We compare the risk-return characteristics to the late 90s equity markets and find, in a similar fashion as the results reported by Bakshi et al and Shumway et al., high premia.of at-the-money options. The effect holds after compensating for market crash insurance and transaction cost. 
-We assess the deadweight loss due to observed risk premia and propose a simple trading strategy that exploits this particular inefficiency. 
+We discuss the existence of a risk-free rate in crypto asset markets and derive a proxy. The proxy serves as a benchmark that beta-neutral portfolios should yield. 
+Subsequently, we construct and evaluate the performance of beta-neutral option portfolios using a unique data set of executed transactions from Derbit, the largest Crypto Options Exchange.  We find that the beta-neutral option portfolios, written on Bitcoin and Ether, are fairly priced for most levels of moneyness. However, the portfolios do not generate the appropriate theoretical returns for at-the-money instruments. We compare the risk-return characteristics to the late 90s equity markets and find, in a similar fashion as the results reported by Bakshi et al and Shumway et al., the existence of high premia.for at-the-money options. The effect holds after compensating for tail risk (market crash insurance) and transaction cost. 
 
-We constructs and evaluate the empirical performance of option portfolios, written on crypto assets such as Bitcoin and Ether, to allow model-free insights into the existence and degree of a leverage effect, the existence and size of risk premia, resulting market inefficiencies (measurable in economic loss / money lost) and to explore the option (pun intended)/possibility of curing named inefficiencies under transaction cost and liquidity constraints. 
-
-
-
-
-Another, so far rarely used pathway is the assessment of the risk-return characteristics of Bitcoin through the lens of the options written on it, which allow new model-free insights into the existence and degree of a leverage effect, the existence and size of risk premia, resulting market inefficiencies (measurable in economic loss / money lost) and to explore the option (pun intended)/possibility of curing named inefficiencies under transaction cost and liquidity constraints. 
-
-This reasoning follows the insights of Shumway and Bakshi, who separately evaluated option returns in equity markets by means of delta-neutral option portfolios in the early 2000s. 
-
-Bakshi and Shumway both found that expected call returns exceed those of the underlying and that expected put returns underperform the underlying. Both also found that the effect increases (decreases) with the strike. 
-Bakshi found that zero-beta, at-the-money straddle positions produce average losses of approximately three percent per week and suggests that the reason may be a systematic volatility premium being priced in options. 
-
-Following Shumway, the risk-return characteristics of options can be separated in two elements, a leverage effect and a curvature effect due to the sensitivity of option payoffs to higher moments of the underlying. 
-First, the holder (buyer) of an option is subject to a leverage effect since exposure to the underlying can be obtained through the payment of a premium, which is small compared to the price of the underlying. 
-If there is a leverage effect, then (long) call options should outperform their underlying and (long) put options should underperform their underlying. Furthermore, the effect should increase (decrease) with the strike price for calls (puts).
-This reasoning allows a simple test of existence and size of the leverage effect and thus conclusions about the level of speculation associated to Bitcoin valuation. 
-
-(The second component, related to the sensitivity of options towards higher moments, implies that options are redundant assets...)
-
-If options were redundant assets, then apart of the leverage effect, delta-neutral option portfolios should earn the risk-free rate (no premium) on average.
-Until now, there is no risk-free rate available in the space of crypto assets. We establish a proxy or reference rate for a possible risk-free rate, which results from the perpetual futures written on Bitcoin and Ether. 
-
-Use Deribit and Binance perpetual futures for this, equally weighted. 
-
-(This proxy is clearly not risk-free due to counterparty risk, but we argue that a carry trade involving a short position on perpetual futures on multiple platforms in conjunction with a secured, on-chain underlying position reduces the platform-induced counterparty risk (which is the residual risk in the carry trade) as far as possible.) (This also leaves liquidity risk though!!)
-
-All underlying code is available on \href{quantlet.com}{quantlet.com}
-and a corresponding courselet is available on
-\href{quantinar.com}{quantinar.com}.
+%
+%We construct and evaluate the empirical performance of option portfolios, written on crypto assets such as Bitcoin and Ether, to allow model-free insights into the existence and degree of a leverage effect, the existence and size of risk premia, resulting market inefficiencies (measurable in economic loss / money lost) and to explore the option (pun intended)/possibility of curing named inefficiencies under transaction cost and liquidity constraints. 
+%
+%Another, so far rarely used pathway is the assessment of the risk-return characteristics of Bitcoin through the lens of the options written on it, which allow new model-free insights into the existence and degree of a leverage effect, the existence and size of risk premia, resulting market inefficiencies (measurable in economic loss / money lost) and to explore the option (pun intended)/possibility of curing named inefficiencies under transaction cost and liquidity constraints. 
+%
+%This reasoning follows the insights of Shumway and Bakshi, who separately evaluated option returns in equity markets by means of delta-neutral option portfolios in the early 2000s. 
+%
+%Bakshi and Shumway both found that expected call returns exceed those of the underlying and that expected put returns underperform the underlying. Both also found that the effect increases (decreases) with the strike. 
+%Bakshi found that zero-beta, at-the-money straddle positions produce average losses of approximately three percent per week and suggests that the reason may be a systematic volatility premium being priced in options. 
+%
+%Following Shumway, the risk-return characteristics of options can be separated in two elements, a leverage effect and a curvature effect due to the sensitivity of option payoffs to higher moments of the underlying. 
+%First, the holder (buyer) of an option is subject to a leverage effect since exposure to the underlying can be obtained through the payment of a premium, which is small compared to the price of the underlying. 
+%If there is a leverage effect, then (long) call options should outperform their underlying and (long) put options should underperform their underlying. Furthermore, the effect should increase (decrease) with the strike price for calls (puts).
+%This reasoning allows a simple test of existence and size of the leverage effect and thus conclusions about the level of speculation associated to Bitcoin valuation. 
+%
+%(The second component, related to the sensitivity of options towards higher moments, implies that options are redundant assets...)
+%
+%If options were redundant assets, then apart of the leverage effect, delta-neutral option portfolios should earn the risk-free rate (no premium) on average.
+%Until now, there is no risk-free rate available in the space of crypto assets. We establish a proxy or reference rate for a possible risk-free rate, which results from the perpetual futures written on Bitcoin and Ether. 
+%
+%Use Deribit and Binance perpetual futures for this, equally weighted. 
+%
+%(This proxy is clearly not risk-free due to counterparty risk, but we argue that a carry trade involving a short position on perpetual futures on multiple platforms in conjunction with a secured, on-chain underlying position reduces the platform-induced counterparty risk (which is the residual risk in the carry trade) as far as possible.) (This also leaves liquidity risk though!!)
+%
+%All underlying code is available on \href{quantlet.com}{quantlet.com}
+%and a corresponding courselet is available on
+%\href{quantinar.com}{quantinar.com}.
+%
 
 
 
 
 \section{A Proxy for the risk-free Rate of Bitcoin and Ether}
 
-Another possibility: Staking
+One of the most fundamental concepts in mathematical finance is the existence of a risk-free rate and a risky asset. 
+While crypto assets are well-known for their riskiness, the existence of a risk-free rate has not been established in this new market. 
+The risk-free rate in established markets derives from the practice of lending out money to low-risk, typically government institutions which owe an interest rate on top of the principal to the lender. Despite the naming convention, government issued bonds are not entirely risk-free due to the possibility of default.
+Although default risk is commonly mitigated by a government's possibility to create money, the chance of a sovereign debt default is non-zero and hence not entirely risk-free. 
 
-Evidently, there is no established risk-free rate in crypto (or digital asset) markets. In the absence of riskless bond, we construct as a proxy for the risk free rate, which is the replication of the market-implied yield through a position which only has liquidity risk and counterparty risk. 
+In order to apply concepts of mathematical finance onto crypto assets, it is paramount to develop a risk-free rate - or at least a low-risk rate whose residual risk may converge to zero in time. 
+An interesting candidate for a low-risk bond in the crypto asset space would be staking, which is the validation of transactions under the risk of losing a principal (the stake). Evidently, only crypto assets which follow a Proof-of-Stake (PoS) consensus mechanism instead of a Proof-of-Work (PoW) consensus mechanism can be used for staking. At the time, this is still a minor amount of cryptocurrencies. We include one of those, Ether, in our experiment. However, we figure that a multitude of risks is still present in staking, such as the risk of hacks, software bugs, slashing or blockchain congestions and subsequent reduction of stakes.
+Another approach to develop a risk-free rate would be lending in the DeFi space. Yet, this space may be vulnerable to similar risks as staking through hacks or software bugs in smart contracts.
+
+In the absence of riskless bond, we construct as a proxy for the risk free rate via the replication of the market-implied yield through a position in futures contracts, whose risks mainly arise due to liquidity risk and counterparty risk.
 A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments. While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. 
+
+Solve for interest rates from Futures price $F$ Spot price $S$ at time $t$ and time-to-maturity $\tau$:
+
+\begin{equation}
+F_t = e^{r \tau} S_t
+\end{equation}
+
+
+Crypto exchanges often provide a so-called perpetual future, which is a synthetic (typically cash-settled instrument) whose return is tied to the underlying via a funding rate. Most exchanges (quote here) provide perpetual futures for Bitcoin and Ether. 
+The price of each perpetual future is linked to the underlying by adjusting a variable interest rate, called the funding rate, that fluctuates depending on the deviation between the price of the perpetual future and the underlying. The funding rate increases the cost of holding positions against the deviation, meaning that if the price of the perpetual future is higher than the underlying, the funding rate is positive which causes the market participants who are long to pay the short side in a predefined frequency. Broadly said, the more extreme the deviation, the higher the funding rate and thus the higher the incentive to trade against the deviation and thus converge the price of the perpetual future towards its underlying. 
+The risk-free rate is approximated using the simplest and most liquid way of realising the funding rate, a carry trade. In such a trade, the trader shorts (longs) the perpetual future if the funding rate is positive (negative) and simulateously buys (sells) the underlying such that the market delta of the combined position is zero. 
+
+The funding rate on \href{https://www.deribit.com/kb/deribit-linear-perpetual}{Deribit} is calculated as follows:
+
+Instruments, such as inverse options, futures and perpetual futures, have a Mark Price $M$. The Mark Price at a time is defined as the average of the highest bid and lowest ask price within an unspecified bandwidth (quote: 
+Mark price of an options contract is the current value of the option as calculated by the Deribit risk management system. Usually, this is the average of the best bid and best ask price. However, for risk management purposes, there is price bandwidth in place.
+). The Deribit Index $D$, which is an equally weighted Index of BTC/USD pairs across different exchanges, is used in conjunction with the Mark Price to calculate the Premium Rate $P$ of the Perpetual Future $F$ over the Deribit Index. 
+
+\begin{equation}
+P = \frac{M - D}{D}
+\end{equation}
+
+The Funding Rate results as an 8-hour interest rate from the interval in which the Premium Rate falls. 
+
+\begin{equation}
+F = \max{0.025\%, P} + \min{-0.025\%, P}
+\end{equation}
+
+The actual funding payment results $f$ from the product of the Funding Rate, Position Size and Holding Time. It is continuously added to the PnL account and settled daily at 8:00 UTC.
+
+
+%@Todo: Summarize!
+%Mark Price
+%It is essential to understand how the mark price is calculated. We start by determining the "Fair Price". The fair price is calculated as the average of the fair impact bid and the fair impact ask.
+%Fair Impact Bid Price is an average price at which 100,000 USDC worth of contracts can be bought.=
+%Fair Impact Ask Price is an average price at which 100,000 USDC worth of contracts can be sold.
+%Fair Price can never be higher than 0.1\% of best ask or lower than best bid
+%Fair Price = (Fair Impact Bid + Fair Impact Ask) / 2
+%The mark price is derived using both the Deribit Index and the fair price, by adding to the Deribit Index the 30 second exponential moving average (EMA) of the Fair Price - Deribit Index.
+%
+%Mark Price = Deribit Index + 30 second EMA (Fair Price - Deribit Index)
+%We implement a safety setting on our mark price to not deviate by more than a certain percentage of Index. This is to prevent manipulation or to curb the impact of panic trading. When a deviation from index is genuine, then we would increase the possible deviation.
+
+
+
+
+
+The actual annualized returns of such a carry trade are summarized in the table below.
+
+Table:
+
+Year, Currency, Exchange, Annual Return
+
+funding_btc_vs_eth_annualized_zoom.png
+funding_btc_vs_eth_zoom.png
+funding_btc_vs_eth_annualized.png
+funding_btc_vs_eth.png
+
+
+
+
+
 
 As of 2024-01-07, the total Open Interest for Bitcoin Perpetual Futures contracts is \$19,343,021,437 with a total 24h Trade Volume of \$50,339,886,015.
 Open Interest for Ether Perpetual Futures contracts is Total Open Interest \$14,945,055,482 and total 24h Trade Volume is \$18,097,004,167.
@@ -434,60 +501,6 @@ Total 24h Trade Volume $98,238,298
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
-
-
-Crypto exchanges often provide a so-called perpetual future, which is a synthetic (typically cash-settled instrument) whose return is tied to the underlying via a funding rate. Most exchanges (quote here) provide perpetual futures for Bitcoin and Ether. 
-The price of each perpetual future is linked to the underlying by adjusting a variable interest rate, called the funding rate, that fluctuates depending on the deviation between the price of the perpetual future and the underlying. The funding rate increases the cost of holding positions against the deviation, meaning that if the price of the perpetual future is higher than the underlying, the funding rate is positive which causes the market participants who are long to pay the short side in a predefined frequency. Broadly said, the more extreme the deviation, the higher the funding rate and thus the higher the incentive to trade against the deviation and thus converge the price of the perpetual future towards its underlying. 
-The risk-free rate is approximated using the simplest and most liquid way of realising the funding rate, a carry trade. In such a trade, the trader shorts (longs) the perpetual future if the funding rate is positive (negative) and simulateously buys (sells) the underlying such that the market delta of the combined position is zero. 
-
-The funding rate on \href{https://www.deribit.com/kb/deribit-linear-perpetual}{Deribit} is calculated as follows:
-
-Instruments, such as inverse options, futures and perpetual futures, have a Mark Price $M$. The Mark Price at a time is defined as the average of the highest bid and lowest ask price within an unspecified bandwidth (quote: 
-Mark price of an options contract is the current value of the option as calculated by the Deribit risk management system. Usually, this is the average of the best bid and best ask price. However, for risk management purposes, there is price bandwidth in place.
-). The Deribit Index $D$, which is an equally weighted Index of BTC/USD pairs across different exchanges, is used in conjunction with the Mark Price to calculate the Premium Rate $P$ of the Perpetual Future $F$ over the Deribit Index. 
-
-\begin{equation}
-P = \frac{M - D}{D}
-\end{equation}
-
-The Funding Rate results as an 8-hour interest rate from the interval in which the Premium Rate falls. 
-
-\begin{equation}
-F = \max{0.025\%, P} + \min{-0.025\%, P}
-\end{equation}
-
-The actual funding payment results $f$ from the product of the Funding Rate, Position Size and Holding Time. It is continuously added to the PnL account and settled daily at 8:00 UTC.
-
-
-@Todo: Summarize!
-Mark Price
-It is essential to understand how the mark price is calculated. We start by determining the "Fair Price". The fair price is calculated as the average of the fair impact bid and the fair impact ask.
-Fair Impact Bid Price is an average price at which 100,000 USDC worth of contracts can be bought.=
-Fair Impact Ask Price is an average price at which 100,000 USDC worth of contracts can be sold.
-Fair Price can never be higher than 0.1\% of best ask or lower than best bid
-Fair Price = (Fair Impact Bid + Fair Impact Ask) / 2
-The mark price is derived using both the Deribit Index and the fair price, by adding to the Deribit Index the 30 second exponential moving average (EMA) of the Fair Price - Deribit Index.
-
-Mark Price = Deribit Index + 30 second EMA (Fair Price - Deribit Index)
-We implement a safety setting on our mark price to not deviate by more than a certain percentage of Index. This is to prevent manipulation or to curb the impact of panic trading. When a deviation from index is genuine, then we would increase the possible deviation.
-
-Solve for interest rates from Futures price $F$ Spot price $S$ at time $t$ and time-to-maturity $\tau$.
-
-\begin{equation}
-F_t = e^{r \tau} S_t
-\end{equation}
-
-
-The actual annualized returns of such a carry trade are summarized in the table below.
-
-Table:
-
-Year, Currency, Exchange, Annual Return
-
-funding_btc_vs_eth_annualized_zoom.png
-funding_btc_vs_eth_zoom.png
-funding_btc_vs_eth_annualized.png
-funding_btc_vs_eth.png
 
 
 
