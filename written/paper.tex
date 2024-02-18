@@ -86,6 +86,7 @@
   \href{mailto:haerdle@hu-berlin.de}{\nolinkurl{haerdle@hu-berlin.de}}}}
 \date{18 February 2024}
 
+\bibliography{research.bib}
 \begin{document}
 \maketitle
 
@@ -117,14 +118,15 @@ abstract
 \newpage
 
 \section{Introduction}
-Despite the ongoing integration into established markets (whereas the last example would be the SEC's approval of a range of Bitcoin Spot ETFs), fundamental questions about crypto asset markets remain unclear:
+On 10 January 2024, the United States Securities and Exchange Commission approved the listing and trading of a range of spot bitcoin exchange-traded product (ETP) shares (Gensler, 2024). In other markets, structured products in Bitcoin (and other crypto assets) have been available for years and retailers have been able to mine or buy it since its inception following Nakamoto, 2009. 
+Yet, despite the ongoing integration into established markets, fundamental questions about crypto asset markets remain unclear:
 How efficient are crypto asset markets relative to established, traditional markets such as equities? 
 Does a risk-free rate exist and if yes, how does it relate to the risk-free rate in established markets? Are derivatives, written on crypto assets, fairly priced or at least fairly priced relative to other derivatives? 
 We assess these fundamental questions and find that the methods required to conduct our analysis have been readily available; in fact we are employing similar methods to those, under which the efficiency of equity option markets had been assessed in their "youth" in the early 2000s. 
-The common key behind the employed methods is the precise and bespoke tailoring of risk-return characteristics through the use of options, as proposed by Shumway and Bakshi et al in (@quote). 
+The common key behind the employed methods is the precise and bespoke tailoring of risk-return characteristics through the use of options, as proposed by Shumway et al. (2000) and Kapadia et al. (2001).
 
 We discuss the existence of a risk-free rate in crypto asset markets and derive a proxy. The proxy serves as a benchmark that beta-neutral portfolios should yield. 
-Subsequently, we construct and evaluate the performance of beta-neutral option portfolios using a unique data set of executed transactions from Derbit, the largest Crypto Options Exchange.  We find that the beta-neutral option portfolios, written on Bitcoin and Ether, are fairly priced for most levels of moneyness. However, the portfolios do not generate the appropriate theoretical returns for at-the-money instruments. We compare the risk-return characteristics to the late 90s equity markets and find, in a similar fashion as the results reported by Bakshi et al and Shumway et al., the existence of high premia.for at-the-money options. The effect holds after compensating for tail risk (market crash insurance) and transaction cost. 
+Subsequently, we construct and evaluate the performance of beta-neutral option portfolios using a unique data set of executed transactions from Derbit, the largest Crypto Options Exchange.  We find that the beta-neutral option portfolios, written on Bitcoin and Ether, are fairly priced for most levels of moneyness. However, the portfolios do not generate the appropriate theoretical returns for at-the-money instruments. We compare the risk-return characteristics to the late 90s equity markets and find, in a similar fashion as the results reported by Kapadia et al. (2001) and Shumway et al. (2000), the existence of high premia.for at-the-money options. The effect holds after compensating for tail risk (market crash insurance) and transaction cost. 
 
 %
 %We construct and evaluate the empirical performance of option portfolios, written on crypto assets such as Bitcoin and Ether, to allow model-free insights into the existence and degree of a leverage effect, the existence and size of risk premia, resulting market inefficiencies (measurable in economic loss / money lost) and to explore the option (pun intended)/possibility of curing named inefficiencies under transaction cost and liquidity constraints. 
@@ -428,7 +430,7 @@ The null hypothesis is rejected on a high significance level for ATM and slightl
 In the BTC (ETH) case, the hypotheses tests are rejected for the levels of moneyness in the interval $[0.98, 1.15]$ ($[0.99, 1.17]$) on a 95\% significance level.
 The results hold across model variations, vanilla and crash resistant, with or without fees. 
 
-Consequently, we find a similar result to Shumway and Bakshi, namely is the existence of a premium for ATM contracts. Additionally, we find a similar premium for slightly ITM contracts.
+Consequently, we find a similar result to Shumway et al. (2000) and Bakshi et al. (2001), namely is the existence of a premium for ATM contracts. Additionally, we find a similar premium for slightly ITM contracts.
 Shumway et. al reported an average return of around -3.15 percent per week, whereas XYZ \% is attributable to the volatility premium.
 
 We report an average daily return of the zero-beta straddles of -1.0302\% for the vanilla Bitcoin model and -1.0322\% for the crash resistant model. 
@@ -588,243 +590,268 @@ Make bridge to interest rates
 \section{References}
 
 % New
+\leavevmode\hypertarget{ref-deribit_fees}{}%
+Deribit margin requirements (2022).
+\url{https://www.deribit.com/kb/fees}. Accessed 28 February 2024.
+
+\leavevmode\hypertarget{sec-approval}{}%
+Gary Gensler, Chair of the United States Securities and Exchange Commission. Statement on the Approval of Spot Bitcoin Exchange-Traded Products (10 January 2024).
+Available at \url{https://www.sec.gov/news/statement/gensler-statement-spot-bitcoin-011023}. Accessed 18 February 2023.
+
 \leavevmode\hypertarget{ref-washtrading}{}%
-Intercontinental Exchange, Inc. Wash Trade FAQ
-\url{https://www.ice.com/publicdocs/futures_us/Wash_Sale_FAQ.pdf}. Accessed
-18 February 2023.
-
-
-% Old
+Intercontinental Exchange, Inc. Wash Trade FAQ.
+\url{https://www.ice.com/publicdocs/futures_us/Wash_Sale_FAQ.pdf}. Accessed 18 February 2023.
 
 \hypertarget{refs}{}
-\leavevmode\hypertarget{ref-aitsahalia01optionprice}{}%
-Aı̈t-Sahalia, Y., Wang, Y., \& Yared, F. (2001). Do option markets
-correctly price the probabilities of movement of the underlying asset?
-\emph{Journal of Econometrics}, \emph{102}(1), 67--110.
-\url{https://doi.org/https://doi.org/10.1016/S0304-4076(00)00091-9}
-
-\leavevmode\hypertarget{ref-ait_sahalia_wang1998}{}%
-Aït-Sahalia, Y., \& Lo, A. W. (1998). Nonparametric estimation of
-state-price densities implicit in financial asset prices. \emph{The
-Journal of Finance}, \emph{53}(2), 499--547.
-\url{https://doi.org/https://doi.org/10.1111/0022-1082.215228}
-
-\leavevmode\hypertarget{ref-alexander2022net}{}%
-Alexander, C., Deng, J., Feng, J., \& Wan, H. (2022). Net buying
-pressure and the information in bitcoin option trades. \emph{Journal of
-Financial Markets}, 100764.
-
-\leavevmode\hypertarget{ref-inverse_options}{}%
-Alexander, C., \& Imeraj, A. (2021, July). Inverse options in a
-black-scholes world.
-\url{https://doi.org/https://doi.org/10.48550/arXiv.2107.12041}
-
-\leavevmode\hypertarget{ref-aloosh}{}%
-Aloosh, A., \& Li, J. (2019). Direct evidence of bitcoin wash trading.
-\emph{Theory of Probability \& Its Applications, 5, 285-301}.
-\url{https://doi.org/http://dx.doi.org/10.2139/ssrn.3362153}
-
-\leavevmode\hypertarget{ref-bitmex}{}%
-Bitmex. (2019). Presentation to the u.s. Securities and exchange
-commission on wash trading.
-\url{https://www.sec.gov/comments/sr-nysearca-2019-01/srnysearca201901-5164833-183434.pdf}.
-Accessed 18 January 2022
-
-\leavevmode\hypertarget{ref-blase}{}%
-Blaskowitz, O., Härdle, W. K., \& Schmidt, P. (2004). Skewness and
-kurtosis trades. In (pp. 1--14).
-\url{https://doi.org/10.1007/978-0-8176-8180-7_1}
-
-\leavevmode\hypertarget{ref-speculation}{}%
-Blau, B. M. (2017). Price dynamics and speculative trading in bitcoin.
-\emph{Research in International Business and Finance}, \emph{41},
-493--499.
-\url{https://doi.org/https://doi.org/10.1016/j.ribaf.2017.05.010}
-
-\leavevmode\hypertarget{ref-bloomberg-retail-share}{}%
-Bloomberg. (2021, November 17). Retail traders slide back below 20\% of
-market's total volume.
-\url{https://www.bloomberg.com/news/articles/2021-11-17/retail-traders-retreat-as-choppy-markets-challenge-easy-profits}.
-Accessed 24 August 2021
-
-\leavevmode\hypertarget{ref-breeden_litzenberger78}{}%
-Breeden, D. T., \& Litzenberger, R. H. (1978). Prices of
-state-contingent claims implicit in option prices. \emph{The Journal of
-Business}, \emph{51}(4), 621--651.
-\url{http://www.jstor.org/stable/2352653}
-
-\leavevmode\hypertarget{ref-coins_with_benefits}{}%
-Chen, C. Y., \& Vinogradov, D. (2021). Coins with benefits: On
-existence, pricing kernel and risk premium of cryptocurrencies.
-\emph{Available at SSRN 3959984}.
-\url{https://doi.org/http://dx.doi.org/10.2139/ssrn.3864578}
-
-\leavevmode\hypertarget{ref-choi}{}%
-Choi, S., \& Shin, J. (2022). Bitcoin: An inflation hedge but not a safe
-haven. \emph{Finance Research Letters}, \emph{46}, 102379.
-\url{https://doi.org/https://doi.org/10.1016/j.frl.2021.102379}
-
-\leavevmode\hypertarget{ref-oil_spd}{}%
-Christoffersen, P., Jacobs, K., \& Pan, X. (. (2021). The State Price
-Density Implied by Crude Oil Futures and Option Prices. \emph{The Review
-of Financial Studies}, \emph{35}(2), 1064--1103.
-\url{https://doi.org/10.1093/rfs/hhab011}
-
-\leavevmode\hypertarget{ref-cryptonews_bitcoin_retail_share}{}%
-Coinbase, S., Cryptonews. (2022). Institutions \& retail compete for
-bitcoin - whose hands are stronger?
-\url{https://cryptonews.com/exclusives/institutions-retail-compete-for-bitcoin-which-is-the-biggest-9695.htm}.
-Accessed 22 March 2022
-
-\leavevmode\hypertarget{ref-decentralized_wash_trading}{}%
-Cong, L., Li, X., Tang, K., \& Yang, Y. (2019). Crypto wash trading.
-\emph{SSRN Electronic Journal}.
-\url{https://doi.org/10.2139/ssrn.3530220}
-
-\leavevmode\hypertarget{ref-jackwerth_pk}{}%
-Cuesdeanu, H., \& Jackwerth, J. C. (2018). The pricing kernel puzzle:
-survey and outlook. \emph{Annals of Finance}, \emph{14}(3), 289--329.
-\url{https://doi.org/10.1007/s10436-017-0317-9}
-
-\leavevmode\hypertarget{ref-cross_border_payments}{}%
-Deng, Q. (2020). Application analysis on blockchain technology in
-cross-border payment. In.
-\url{https://doi.org/10.2991/aebmr.k.200306.050}
-
-\leavevmode\hypertarget{ref-deribit-insurance-fund}{}%
-Deribit. (2020a). Deribit insurance fund.
-\url{https://www.deribit.com/main\#/insurance}. Accessed 4 January 2021
-
-\leavevmode\hypertarget{ref-synthetic-btc-index}{}%
-Deribit. (2020b). Deribit btc-usd index.
-\url{https://www.deribit.com/main\#/indexes}. Accessed 2 January 2021
-
-\leavevmode\hypertarget{ref-market-maker-obligations}{}%
-Deribit. (2020c). Deribit market maker obligations.
-\url{https://www.deribit.com/pages/docs/options}. Accessed 2 January
-2021
-
-\leavevmode\hypertarget{ref-deribit_retail_piechart}{}%
-Deribit. (2022a). Deribit volume share.
-\url{https://www.deribit.com/statistics/BTC/market-data}. Accessed 25
-July 2022
-
-\leavevmode\hypertarget{ref-deribit_margin}{}%
-Deribit. (2022b). Deribit margin requirements.
-\url{https://legacy.deribit.com/pages/docs/options}. Accessed 2 May 2022
-
-\leavevmode\hypertarget{ref-deribit_fees}{}%
-Deribit. (2022c). Deribit margin requirements.
-\url{https://www.deribit.com/kb/fees}. Accessed 2 May 2022
-
-\leavevmode\hypertarget{ref-deribit-rate-limit}{}%
-Deribit. (2023). Deribit rate limits.
-\url{https://www.deribit.com/kb/deribit-rate-limits}. Accessed 16 April
-2021
-
-\leavevmode\hypertarget{ref-vola_premium}{}%
-Eraker, B. (2021). The volatility premium. \emph{Quarterly Journal of
-Finance (QJF)}, \emph{11}(03), 1--35.
-\url{https://EconPapers.repec.org/RePEc:wsi:qjfxxx:v:11:y:2021:i:03:n:s2010139221500142}
-
-\leavevmode\hypertarget{ref-networkeffect}{}%
-Gandal, N., \& Halaburda, H. (2016). Can we predict the winner in a
-market with network effects? Competition in cryptocurrency market.
-\emph{Games}, \emph{7}(3). \url{https://doi.org/10.3390/g7030016}
-
-\leavevmode\hypertarget{ref-Grith09sim}{}%
-Grith, M., Härdle, W. K., \& Park, J. (2009). Shape invariant modelling
-pricing kernels and risk aversion.
-\url{https://doi.org/10.2139/ssrn.2894289}
-
-\leavevmode\hypertarget{ref-hall_1991}{}%
-Hall, P. (1991). Edgeworth expansions for nonparametric density
-estimators, with applications. \emph{Statistics}, \emph{22}(2),
-215--232. \url{https://doi.org/10.1080/02331889108802305}
-
-\leavevmode\hypertarget{ref-hayes}{}%
-Hayes, A. S. (2019). Bitcoin price and its marginal cost of production:
-Support for a fundamental value. \emph{Applied Economics Letters},
-\emph{26}(7), 554--560.
-\url{https://doi.org/10.1080/13504851.2018.1488040}
-
-\leavevmode\hypertarget{ref-w2yo}{}%
-Härdle, W. K., Okhrin, Y., \& Wang, W. (2014). Uniform Confidence Bands
-for Pricing Kernels. \emph{Journal of Financial Econometrics},
-\emph{13}(2), 376--413. \url{https://doi.org/10.1093/jjfinec/nbu002}
-
-\leavevmode\hypertarget{ref-pricing_cryptocurrency_options}{}%
-Hou, A. J., Wang, W., Chen, C. Y. H., \& Härdle, W. K. (2020). Pricing
-Cryptocurrency Options*. \emph{Journal of Financial Econometrics},
-\emph{18}(2), 250--279. \url{https://doi.org/10.1093/jjfinec/nbaa006}
-
-\leavevmode\hypertarget{ref-xfg_spd}{}%
-Huynh, K., Kervella, P., \& Zheng, J. (2002). \emph{Estimating
-state-price densities with nonparametric regression} (SFB 373 Discussion
-Papers No. 2002,40). Humboldt University of Berlin, Interdisciplinary
-Research Project 373: Quantification; Simulation of Economic Processes.
-\url{https://EconPapers.repec.org/RePEc:zbw:sfb373:200240}
-
-\leavevmode\hypertarget{ref-pumpndump}{}%
-La Morgia, M., Mei, A., Sassi, F., \& Stefa, J. (2020). Pump and dumps
-in the bitcoin era: Real time detection of cryptocurrency market
-manipulations. In \emph{2020 29th international conference on computer
-communications and networks (icccn)} (pp. 1--9).
-\url{https://doi.org/10.1109/ICCCN49398.2020.9209660}
-
-\leavevmode\hypertarget{ref-vola_stylized_facts}{}%
-Masset, P. (2011). Volatility stylized facts. \emph{SSRN Electronic
-Journal}. \url{https://doi.org/10.2139/ssrn.1804070}
+\leavevmode\hypertarget{bakshi}{}%
+Kapadia, Nikunj and Bakshi, Gurdip S. and Bakshi, Gurdip S., Delta-Hedged Gains and the Negative Market Volatility Risk Premium (April 9, 2001). Available at SSRN: \url{https://ssrn.com/abstract=267106} or \url{http://dx.doi.org/10.2139/ssrn.267106}.
 
 \leavevmode\hypertarget{ref-satoshi2009}{}%
 Nakamoto, S. (2009). Bitcoin: A peer-to-peer electronic cash system.
 \url{http://www.bitcoin.org/bitcoin.pdf}
 
-\leavevmode\hypertarget{ref-fundamental-theorem-of-asset-pricing}{}%
-Pascucci, A., \& Agliardi, R. (2011). PDE and martingale methods in
-option pricing. In (pp. 429--495).
+\hypertarget{refs}{}
+\leavevmode\hypertarget{shumway}{}%
+Shumway, Tyler and Coval, Joshua D., Expected Option Returns (June 2000). Available at SSRN: \url{https://ssrn.com/abstract=189840} or \url{http://dx.doi.org/10.2139/ssrn.189840}.
 
-\leavevmode\hypertarget{ref-rodgers2019}{}%
-Rodgers, T. (2019, April 4). 95 percent of volume could be wash trading
-as bitcoin price surges.
-\url{https://www.forbes.com/sites/tomrodgers1/2019/04/04/99-of-volume-could-be-wash-trading-as-bitcoin-takes-back-5000/?sh=4640bcbc23d5}.
-Accessed 15 April 2023
 
-\leavevmode\hypertarget{ref-Rookley97}{}%
-Rookley, C. (1997). Fully exploiting the information content of intra
-day option quotes: Applications in option pricing and risk management.
+\hypertarget{refs}{}
+\leavevmode\hypertarget{winkel}{}%
+Winkel, J and Härdle, WK, Pricing Kernels and Risk Premia implied in Bitcoin Options (November 21, 2022).Available at SSRN: \url{https://ssrn.com/abstract=4282905} or \url{http://dx.doi.org/10.2139/ssrn.4282905}.
 
-\leavevmode\hypertarget{ref-sar2017}{}%
-Sar, M. (2017). Dodd-frank and the spoofing prohibition in commodities
-markets.
 
-\leavevmode\hypertarget{ref-deriv_volume}{}%
-Skew.com. (2022). Open interest for bitcoin options over time. Skew is a
-leading crypto data analytics platform for institutional clients.
-\url{https://analytics.skew.com/dashboard/bitcoin-options}. Accessed 25
-July 2022
+%
+%
+%% Old
+%
+%\hypertarget{refs}{}
+%\leavevmode\hypertarget{ref-aitsahalia01optionprice}{}%
+%Aı̈t-Sahalia, Y., Wang, Y., \& Yared, F. (2001). Do option markets
+%correctly price the probabilities of movement of the underlying asset?
+%\emph{Journal of Econometrics}, \emph{102}(1), 67--110.
+%\url{https://doi.org/https://doi.org/10.1016/S0304-4076(00)00091-9}
+%
+%\leavevmode\hypertarget{ref-ait_sahalia_wang1998}{}%
+%Aït-Sahalia, Y., \& Lo, A. W. (1998). Nonparametric estimation of
+%state-price densities implicit in financial asset prices. \emph{The
+%Journal of Finance}, \emph{53}(2), 499--547.
+%\url{https://doi.org/https://doi.org/10.1111/0022-1082.215228}
+%
+%\leavevmode\hypertarget{ref-alexander2022net}{}%
+%Alexander, C., Deng, J., Feng, J., \& Wan, H. (2022). Net buying
+%pressure and the information in bitcoin option trades. \emph{Journal of
+%Financial Markets}, 100764.
+%
+%\leavevmode\hypertarget{ref-inverse_options}{}%
+%Alexander, C., \& Imeraj, A. (2021, July). Inverse options in a
+%black-scholes world.
+%\url{https://doi.org/https://doi.org/10.48550/arXiv.2107.12041}
+%
+%\leavevmode\hypertarget{ref-aloosh}{}%
+%Aloosh, A., \& Li, J. (2019). Direct evidence of bitcoin wash trading.
+%\emph{Theory of Probability \& Its Applications, 5, 285-301}.
+%\url{https://doi.org/http://dx.doi.org/10.2139/ssrn.3362153}
+%
+%\leavevmode\hypertarget{ref-bitmex}{}%
+%Bitmex. (2019). Presentation to the u.s. Securities and exchange
+%commission on wash trading.
+%\url{https://www.sec.gov/comments/sr-nysearca-2019-01/srnysearca201901-5164833-183434.pdf}.
+%Accessed 18 January 2022
+%
+%\leavevmode\hypertarget{ref-blase}{}%
+%Blaskowitz, O., Härdle, W. K., \& Schmidt, P. (2004). Skewness and
+%kurtosis trades. In (pp. 1--14).
+%\url{https://doi.org/10.1007/978-0-8176-8180-7_1}
+%
+%\leavevmode\hypertarget{ref-speculation}{}%
+%Blau, B. M. (2017). Price dynamics and speculative trading in bitcoin.
+%\emph{Research in International Business and Finance}, \emph{41},
+%493--499.
+%\url{https://doi.org/https://doi.org/10.1016/j.ribaf.2017.05.010}
+%
+%\leavevmode\hypertarget{ref-bloomberg-retail-share}{}%
+%Bloomberg. (2021, November 17). Retail traders slide back below 20\% of
+%market's total volume.
+%\url{https://www.bloomberg.com/news/articles/2021-11-17/retail-traders-retreat-as-choppy-markets-challenge-easy-profits}.
+%Accessed 24 August 2021
+%
+%\leavevmode\hypertarget{ref-breeden_litzenberger78}{}%
+%Breeden, D. T., \& Litzenberger, R. H. (1978). Prices of
+%state-contingent claims implicit in option prices. \emph{The Journal of
+%Business}, \emph{51}(4), 621--651.
+%\url{http://www.jstor.org/stable/2352653}
+%
+%\leavevmode\hypertarget{ref-coins_with_benefits}{}%
+%Chen, C. Y., \& Vinogradov, D. (2021). Coins with benefits: On
+%existence, pricing kernel and risk premium of cryptocurrencies.
+%\emph{Available at SSRN 3959984}.
+%\url{https://doi.org/http://dx.doi.org/10.2139/ssrn.3864578}
+%
+%\leavevmode\hypertarget{ref-choi}{}%
+%Choi, S., \& Shin, J. (2022). Bitcoin: An inflation hedge but not a safe
+%haven. \emph{Finance Research Letters}, \emph{46}, 102379.
+%\url{https://doi.org/https://doi.org/10.1016/j.frl.2021.102379}
+%
+%\leavevmode\hypertarget{ref-oil_spd}{}%
+%Christoffersen, P., Jacobs, K., \& Pan, X. (. (2021). The State Price
+%Density Implied by Crude Oil Futures and Option Prices. \emph{The Review
+%of Financial Studies}, \emph{35}(2), 1064--1103.
+%\url{https://doi.org/10.1093/rfs/hhab011}
+%
+%\leavevmode\hypertarget{ref-cryptonews_bitcoin_retail_share}{}%
+%Coinbase, S., Cryptonews. (2022). Institutions \& retail compete for
+%bitcoin - whose hands are stronger?
+%\url{https://cryptonews.com/exclusives/institutions-retail-compete-for-bitcoin-which-is-the-biggest-9695.htm}.
+%Accessed 22 March 2022
+%
+%\leavevmode\hypertarget{ref-decentralized_wash_trading}{}%
+%Cong, L., Li, X., Tang, K., \& Yang, Y. (2019). Crypto wash trading.
+%\emph{SSRN Electronic Journal}.
+%\url{https://doi.org/10.2139/ssrn.3530220}
+%
+%\leavevmode\hypertarget{ref-jackwerth_pk}{}%
+%Cuesdeanu, H., \& Jackwerth, J. C. (2018). The pricing kernel puzzle:
+%survey and outlook. \emph{Annals of Finance}, \emph{14}(3), 289--329.
+%\url{https://doi.org/10.1007/s10436-017-0317-9}
+%
+%\leavevmode\hypertarget{ref-cross_border_payments}{}%
+%Deng, Q. (2020). Application analysis on blockchain technology in
+%cross-border payment. In.
+%\url{https://doi.org/10.2991/aebmr.k.200306.050}
+%
+%\leavevmode\hypertarget{ref-deribit-insurance-fund}{}%
+%Deribit. (2020a). Deribit insurance fund.
+%\url{https://www.deribit.com/main\#/insurance}. Accessed 4 January 2021
+%
+%\leavevmode\hypertarget{ref-synthetic-btc-index}{}%
+%Deribit. (2020b). Deribit btc-usd index.
+%\url{https://www.deribit.com/main\#/indexes}. Accessed 2 January 2021
+%
+%\leavevmode\hypertarget{ref-market-maker-obligations}{}%
+%Deribit. (2020c). Deribit market maker obligations.
+%\url{https://www.deribit.com/pages/docs/options}. Accessed 2 January
+%2021
+%
+%\leavevmode\hypertarget{ref-deribit_retail_piechart}{}%
+%Deribit. (2022a). Deribit volume share.
+%\url{https://www.deribit.com/statistics/BTC/market-data}. Accessed 25
+%July 2022
+%
+%\leavevmode\hypertarget{ref-deribit_margin}{}%
+%Deribit. (2022b). Deribit margin requirements.
+%\url{https://legacy.deribit.com/pages/docs/options}. Accessed 2 May 2022
+%
+%\leavevmode\hypertarget{ref-deribit_fees}{}%
+%Deribit. (2022c). Deribit margin requirements.
+%\url{https://www.deribit.com/kb/fees}. Accessed 2 May 2022
+%
+%\leavevmode\hypertarget{ref-deribit-rate-limit}{}%
+%Deribit. (2023). Deribit rate limits.
+%\url{https://www.deribit.com/kb/deribit-rate-limits}. Accessed 16 April
+%2021
+%
+%\leavevmode\hypertarget{ref-vola_premium}{}%
+%Eraker, B. (2021). The volatility premium. \emph{Quarterly Journal of
+%Finance (QJF)}, \emph{11}(03), 1--35.
+%\url{https://EconPapers.repec.org/RePEc:wsi:qjfxxx:v:11:y:2021:i:03:n:s2010139221500142}
+%
+%\leavevmode\hypertarget{ref-networkeffect}{}%
+%Gandal, N., \& Halaburda, H. (2016). Can we predict the winner in a
+%market with network effects? Competition in cryptocurrency market.
+%\emph{Games}, \emph{7}(3). \url{https://doi.org/10.3390/g7030016}
+%
+%\leavevmode\hypertarget{ref-Grith09sim}{}%
+%Grith, M., Härdle, W. K., \& Park, J. (2009). Shape invariant modelling
+%pricing kernels and risk aversion.
+%\url{https://doi.org/10.2139/ssrn.2894289}
+%
+%\leavevmode\hypertarget{ref-hall_1991}{}%
+%Hall, P. (1991). Edgeworth expansions for nonparametric density
+%estimators, with applications. \emph{Statistics}, \emph{22}(2),
+%215--232. \url{https://doi.org/10.1080/02331889108802305}
+%
+%\leavevmode\hypertarget{ref-hayes}{}%
+%Hayes, A. S. (2019). Bitcoin price and its marginal cost of production:
+%Support for a fundamental value. \emph{Applied Economics Letters},
+%\emph{26}(7), 554--560.
+%\url{https://doi.org/10.1080/13504851.2018.1488040}
+%
+%\leavevmode\hypertarget{ref-w2yo}{}%
+%Härdle, W. K., Okhrin, Y., \& Wang, W. (2014). Uniform Confidence Bands
+%for Pricing Kernels. \emph{Journal of Financial Econometrics},
+%\emph{13}(2), 376--413. \url{https://doi.org/10.1093/jjfinec/nbu002}
+%
+%\leavevmode\hypertarget{ref-pricing_cryptocurrency_options}{}%
+%Hou, A. J., Wang, W., Chen, C. Y. H., \& Härdle, W. K. (2020). Pricing
+%Cryptocurrency Options*. \emph{Journal of Financial Econometrics},
+%\emph{18}(2), 250--279. \url{https://doi.org/10.1093/jjfinec/nbaa006}
+%
+%\leavevmode\hypertarget{ref-xfg_spd}{}%
+%Huynh, K., Kervella, P., \& Zheng, J. (2002). \emph{Estimating
+%state-price densities with nonparametric regression} (SFB 373 Discussion
+%Papers No. 2002,40). Humboldt University of Berlin, Interdisciplinary
+%Research Project 373: Quantification; Simulation of Economic Processes.
+%\url{https://EconPapers.repec.org/RePEc:zbw:sfb373:200240}
+%
+%\leavevmode\hypertarget{ref-pumpndump}{}%
+%La Morgia, M., Mei, A., Sassi, F., \& Stefa, J. (2020). Pump and dumps
+%in the bitcoin era: Real time detection of cryptocurrency market
+%manipulations. In \emph{2020 29th international conference on computer
+%communications and networks (icccn)} (pp. 1--9).
+%\url{https://doi.org/10.1109/ICCCN49398.2020.9209660}
+%
+%\leavevmode\hypertarget{ref-vola_stylized_facts}{}%
+%Masset, P. (2011). Volatility stylized facts. \emph{SSRN Electronic
+%Journal}. \url{https://doi.org/10.2139/ssrn.1804070}
+%
+%
+%
+%\leavevmode\hypertarget{ref-fundamental-theorem-of-asset-pricing}{}%
+%Pascucci, A., \& Agliardi, R. (2011). PDE and martingale methods in
+%option pricing. In (pp. 429--495).
+%
+%\leavevmode\hypertarget{ref-rodgers2019}{}%
+%Rodgers, T. (2019, April 4). 95 percent of volume could be wash trading
+%as bitcoin price surges.
+%\url{https://www.forbes.com/sites/tomrodgers1/2019/04/04/99-of-volume-could-be-wash-trading-as-bitcoin-takes-back-5000/?sh=4640bcbc23d5}.
+%Accessed 15 April 2023
+%
+%\leavevmode\hypertarget{ref-Rookley97}{}%
+%Rookley, C. (1997). Fully exploiting the information content of intra
+%day option quotes: Applications in option pricing and risk management.
+%
+%\leavevmode\hypertarget{ref-sar2017}{}%
+%Sar, M. (2017). Dodd-frank and the spoofing prohibition in commodities
+%markets.
+%
+%\leavevmode\hypertarget{ref-deriv_volume}{}%
+%Skew.com. (2022). Open interest for bitcoin options over time. Skew is a
+%leading crypto data analytics platform for institutional clients.
+%\url{https://analytics.skew.com/dashboard/bitcoin-options}. Accessed 25
+%July 2022
+%
+%\leavevmode\hypertarget{ref-brazilian_speculation}{}%
+%Smaniotto, E. N., \& Neto, G. B. (2022). Speculative trading in bitcoin:
+%A brazilian market evidence. \emph{The Quarterly Review of Economics and
+%Finance}, \emph{85}, 47--54.
+%\url{https://doi.org/https://doi.org/10.1016/j.qref.2020.10.024}
+%
+%\leavevmode\hypertarget{ref-cross_border_stellar}{}%
+%Stellar Development Foundation. (2022). 2022 research reveals high
+%awareness and growing cross-border use of cryptocurrency in four key
+%markets.
+%\url{https://www.prnewswire.com/news-releases/2022-research-reveals-high-awareness-and-growing-cross-border-use-of-cryptocurrency-in-four-key-markets-301512401.html}.
+%Accessed 22 July 2022
+%
+%\leavevmode\hypertarget{ref-nickszabo}{}%
+%Szabo, N. (2008). Bit gold.
+%\url{https://unenumerated.blogspot.com/2005/12/bit-gold.html}. Accessed
+%28 July 2022
+%
+%\leavevmode\hypertarget{ref-tuccella2021}{}%
+%Tuccella, J.-N., Nadler, P., \& Șerban, O. (2021). Protecting retail
+%investors from order book spoofing using a gru-based detection model.
 
-\leavevmode\hypertarget{ref-brazilian_speculation}{}%
-Smaniotto, E. N., \& Neto, G. B. (2022). Speculative trading in bitcoin:
-A brazilian market evidence. \emph{The Quarterly Review of Economics and
-Finance}, \emph{85}, 47--54.
-\url{https://doi.org/https://doi.org/10.1016/j.qref.2020.10.024}
-
-\leavevmode\hypertarget{ref-cross_border_stellar}{}%
-Stellar Development Foundation. (2022). 2022 research reveals high
-awareness and growing cross-border use of cryptocurrency in four key
-markets.
-\url{https://www.prnewswire.com/news-releases/2022-research-reveals-high-awareness-and-growing-cross-border-use-of-cryptocurrency-in-four-key-markets-301512401.html}.
-Accessed 22 July 2022
-
-\leavevmode\hypertarget{ref-nickszabo}{}%
-Szabo, N. (2008). Bit gold.
-\url{https://unenumerated.blogspot.com/2005/12/bit-gold.html}. Accessed
-28 July 2022
-
-\leavevmode\hypertarget{ref-tuccella2021}{}%
-Tuccella, J.-N., Nadler, P., \& Șerban, O. (2021). Protecting retail
-investors from order book spoofing using a gru-based detection model.
 
 \clearpage
 
