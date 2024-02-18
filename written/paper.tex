@@ -170,9 +170,9 @@ An interesting candidate for a low-risk bond in the crypto asset space would be 
 Another approach to develop a risk-free rate would be lending in the DeFi space. Yet, this space may be vulnerable to similar risks as staking through hacks or software bugs in smart contracts.
 
 In the absence of riskless bond, we construct as a proxy for the risk free rate via the replication of the market-implied yield through a position in futures contracts, whose risks mainly arise due to liquidity risk and counterparty risk.
-A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments. While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. 
+A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments. As depicted in Table \ref{table:stats}, measured by the aggregate open interest and aggregate trading volume the market share of Perpetual Futures dwarfs the market share of (classic) Futures for both, Bitcoin and Ether. While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. 
 
-Solve for interest rates from Futures price $F$ Spot price $S$ at time $t$ and time-to-maturity $\tau$:
+Solve for interest rates from (classic) Futures price $F$ Spot price $S$ at time $t$ and time-to-maturity $\tau$:
 
 \begin{equation}
 F_t = e^{r \tau} S_t
@@ -215,42 +215,81 @@ The actual funding payment results $f$ from the product of the Funding Rate, Pos
 %We implement a safety setting on our mark price to not deviate by more than a certain percentage of Index. This is to prevent manipulation or to curb the impact of panic trading. When a deviation from index is genuine, then we would increase the possible deviation.
 
 
-
-
-
 The actual annualized returns of such a carry trade are summarized in the table below.
-
-Table:
-
-Year, Currency, Exchange, Annual Return
-
-funding_btc_vs_eth_annualized_zoom.png
-funding_btc_vs_eth_zoom.png
-funding_btc_vs_eth_annualized.png
-funding_btc_vs_eth.png
+2019 returns are annualized due to the start on 1st of May 2019 of perpetual futures on Deribit.
 
 
-
-
-
-
-As of 2024-01-07, the total Open Interest for Bitcoin Perpetual Futures contracts is \$19,343,021,437 with a total 24h Trade Volume of \$50,339,886,015.
-Open Interest for Ether Perpetual Futures contracts is Total Open Interest \$14,945,055,482 and total 24h Trade Volume is \$18,097,004,167.
-
-BTC Futures
-
-Total Open Interest $1,405,918,350
-Total 24h Trade Volume $324,820,482
-
-ETH Futures
-Total Open Interest $466,932,584
-Total 24h Trade Volume $98,238,298
+%Table: btc/out/funding_rate_per_year.csv
+\begin{table}[ht]
+\centering
+{\begin{tabular}{lll}
+\hline
+\textbf{Year} & \textbf{BTC} & \textbf{ETH} \\
+\hline
+\hline
+2019 &  0.337660 &  0.211480                    \\
+2020 &  0.092658 &  0.060110                    \\
+2022 & -0.022659 & -0.059537                   \\
+2023 &  0.057251 &  0.065914            
+\end{tabular}}
+\caption{Annual Interest Rate as implied through the Funding Rate of Perpetual Futures}
+\label{table:annual_interest_rates}
+\end{table}
 
 
 
-Source for liquidity: 
-https://www.coingecko.com/en/derivatives
-https://www.coingecko.com/en/derivatives/futures
+
+
+%
+%As of 2024-01-07, the total Open Interest for Bitcoin Perpetual Futures contracts is \$19,343,021,437 with a total 24h Trade Volume of \$50,339,886,015.
+%Open Interest for Ether Perpetual Futures contracts is Total Open Interest \$14,945,055,482 and total 24h Trade Volume is \$18,097,004,167.
+%
+%BTC Futures
+%
+%Total Open Interest $1,405,918,350
+%Total 24h Trade Volume $324,820,482
+%
+%ETH Futures
+%Total Open Interest $466,932,584
+%Total 24h Trade Volume $98,238,298
+%
+%As of 2024-01-07
+%
+%Bitcoin Perpetuals with 
+%Total Open Interest \$19,343,021,437
+%Total 24h Trade Volume \$50,339,886,015
+%
+%
+%
+%Ether Perpetuals 
+%
+%Total Open Interest \$14,945,055,482
+%Total 24h Trade Volume \$18,097,004,167
+%
+%
+%
+%BTC Futures
+%
+%with 
+%
+%Total Open Interest $1,405,918,350
+%Total 24h Trade Volume $324,820,482
+%
+%
+%
+%ETH Futures
+%
+%with 
+%Total Open Interest $466,932,584
+%Total 24h Trade Volume $98,238,298
+%
+%
+%
+%
+%Source for liquidity: 
+%https://www.coingecko.com/en/derivatives
+%https://www.coingecko.com/en/derivatives/futures
+
 
 % Source: https://www.tablesgenerator.com/#
 % Please add the following required packages to your document preamble:
@@ -264,18 +303,7 @@ https://www.coingecko.com/en/derivatives/futures
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 
-As of 2024-01-07
 
-Bitcoin Perpetuals with 
-Total Open Interest \$19,343,021,437
-Total 24h Trade Volume \$50,339,886,015
-
-
-
-Ether Perpetuals 
-
-Total Open Interest \$14,945,055,482
-Total 24h Trade Volume \$18,097,004,167
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
@@ -291,22 +319,6 @@ Total 24h Trade Volume \$18,097,004,167
 % \usepackage{booktabs}
 
 
-
-
-BTC Futures
-
-with 
-
-Total Open Interest $1,405,918,350
-Total 24h Trade Volume $324,820,482
-
-
-
-ETH Futures
-
-with 
-Total Open Interest $466,932,584
-Total 24h Trade Volume $98,238,298
 
 
 
@@ -806,15 +818,19 @@ investors from order book spoofing using a gru-based detection model.
 \section{Appendix}
 
 
-\begin{table}[]
+\begin{table}[ht]
+\centering
 \begin{tabular}{lll}
+\hline
 \textbf{Instrument}            & \textbf{Aggregate Open Interest (USD)} & \textbf{24 Hour Aggregate Trade Volume (USD)} \\
+\hline
+\hline
 BTC Perpetual Futures & 19,343,021,437                & 50,339,886,015                       \\
 ETH Perpetual Futures & 14,945,055,482                & 18,097,004,167                       \\
 BTC Futures           & 1,405,918,350                 & 324,820,482                          \\
 ETH Futures           & 466,932,584                   & 98,238,298                          
 \end{tabular}
-\caption{Relevance of Perpetual Futures to Futures as measured by Open Interest and Trading Volume}
+\caption{Relevance of Perpetual Futures to Futures as measured by Open Interest and Trading Volume as of 2024-01-07. Source: Coingecko.}
 \label{table:stats}
 \end{table}
 
@@ -837,7 +853,7 @@ ETH Futures           & 466,932,584                   & 98,238,298
 \# OKX (Futures)     & BTC-USDT-SWAP   & \$44,014.07                        & 43989.3 USDT                             & -0.006\%                           & 0.01\%                              & -0.009\%                                  & \$984,130,801                              & \$2,648,725,568.71                      \\
 \# Prime XBT         & BTC/USD         & \$43,981.30                        & -                                        & -                                  & 0.02\%                              & -                                         & \$920,322,200                              & \$60,224,491.31                        
 \end{tabular}}
-\caption{Bitcoin Perpetual Futures}
+\caption{Bitcoin Perpetual Futures. Source: Coingecko.}
 \label{table:btc_perpetuals}
 \end{table}
 
@@ -858,7 +874,7 @@ ETH Futures           & 466,932,584                   & 98,238,298
 \# Binance (Futures)      & ETHUSD\_PERP    & \$2,227.69                         & 2228.74 USD                              & +0.047\%                           & 0.01\%                              & 0.010\%                                   & \$366,493,140                              & \$257,267,395.24                        \\
 \# XT.COM (Derivatives)   & ETH\_USDT       & \$2,228.19                         & 2225.55 USDT                             & +0.031\%                           & 0.01\%                              & -0.010\%                                  & \$325,480,371                              & \$1,137,587,629.30                     
 \end{tabular}}
-\caption{Ether Perpetual Futures}
+\caption{Ether Perpetual Futures. Source: Coingecko.}
 \label{eth_perpetual_futures}
 \end{table}
 
@@ -930,7 +946,7 @@ ETH Futures           & 466,932,584                   & 98,238,298
 \# XT.COM (Derivatives)          & BTC\_USD\_240628   & \$46,797.20                        & -                                        & -                                  & 0.01\%                              & 6 months                                & -                                          & \$31,000,200.00                         \\
 \# XT.COM (Derivatives)          & BTC\_USDT\_240329  & \$45,369.50                        & -                                        & -                                  & 0.06\%                              & 3 months                                & -                                          & \$20,870,477.00                        
 \end{tabular}}
-\caption{BTC Futures}
+\caption{BTC Futures. Source: Coingecko.}
 \label{table:btc_futures}
 \end{table}
 
@@ -1006,7 +1022,7 @@ ETH Futures           & 466,932,584                   & 98,238,298
 \# XT.COM (Derivatives)          & BTC\_USD\_240628   & \$46,797.20                        & -                                        & 0.01\%                             & 6 months                            & -                                       & \$31,000,200.00                            & \multicolumn{1}{l}{}                    \\
 \# XT.COM (Derivatives)          & BTC\_USDT\_240329  & \$45,369.50                        & -                                        & 0.06\%                             & 3 months                            & -                                       & \$20,870,477.00                            & \multicolumn{1}{l}{}                   
 \end{tabular}}
-\caption{ETH Futures}
+\caption{ETH Futures. Source: Coingecko.}
 \label{table:eth_futures}
 \end{table}
 
@@ -1079,7 +1095,7 @@ ETH Futures           & 466,932,584                   & 98,238,298
 1.29 & 0.9939         & 0.9932          & 0.9919                 & 0.9927                  \\
 1.3  & 0.9436         & 0.9403          & 0.9334                 & 0.937                  
 \end{tabular}}
-\caption{t-Statistics of beta-neutral BTC Option portfolios}
+\caption{t-Statistics of beta-neutral BTC Option portfolios. }
 \label{table:btc_t_stats}
 \end{table}
 
