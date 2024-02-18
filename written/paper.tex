@@ -84,7 +84,7 @@
   and the Czech Science Foundation's grant no. 19-28231X / CAS XDA
   23020303 gratefully acknowledged,
   \href{mailto:haerdle@hu-berlin.de}{\nolinkurl{haerdle@hu-berlin.de}}}}
-\date{12 February 2024}
+\date{18 February 2024}
 
 \begin{document}
 \maketitle
@@ -238,6 +238,34 @@ The actual annualized returns of such a carry trade are summarized in the table 
 
 
 
+% Futures Plot
+\begin{minipage}{\textwidth}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_annualized.png}
+    \captionof{figure}{Annualized Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_annualized_zoom.png}
+    
+     \captionof{figure}{(Zoomed) Annualized Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
+
+\end{minipage}
+\begin{minipage}{\textwidth}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth.png}
+    \captionof{figure}{Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
+    \centering
+    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_zoom.png}
+    \captionof{figure}{(Zoomed) Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
+
+\end{minipage}
+   % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
+
+\label{ATM Term Structure}
+\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+
+\pagebreak
+\newpage
+
 
 
 %
@@ -331,10 +359,10 @@ The actual annualized returns of such a carry trade are summarized in the table 
 \section{Methodology}
 
 We follow the argument that any beta-neutral portfolio should yield the risk-free rate. We construct zero-beta portfolios by pairing a call option and a put option to a straddle and adjusting the weights so that the sum of option betas yields zero. The straddle's payoff $r_v$ is depicted in Equation 1, consisting of the payoff of the call $r_c$ and the payoff of the put $r_p$. The weight $\theta$ is found by solving Equation 2 through Equation 3. The (market) beta of a call (put) can be calculated through knowledge of the spot price $s$, the option delta $\delta$, the Black-Scholes option price $C$ and the market beta $\beta_m (=1)$ as depicted in Equation 4. 
-The underlying data are executed transactions. All option greeks remain constant except time-to-maturity. Any transaction has a time-to-maturity (tau) "reset"/synced to settlement time. All options are bought and held until settlement at 10am UTC. 
+The underlying data are executed transactions. All option greeks remain constant except time-to-maturity. Any transaction has a time-to-maturity $\tau$ adjusted so that it would coincide with settlement time. All options are bought and held until settlement at 10am UTC. 
 We match our universe of straddles as follows:
 Per definition, a straddle exists of a call and a put with similar strike and maturity. We construct the set of empirical straddles by iterating over our list of executed calls and puts. For each call (put), we use Put-Call-Parity to complete the straddle. 
-The empirical performance of the resulting zero-beta straddles is assessed on a daily base. We inspect the densities (via Kernel Density Estimation) of the daily returns and argue that they are t-distributed. For each level of moneyness m, we construct an interval $[m, m + 0.05]$. We condition daily returns on over levels of the interval and we conduct a left-sided t-test on the null hypothesis of a population mean greater or equal to zero. We define a structural (or significant?) non-zero return of the zero-beta straddle returns as (volatility risk) premium. 
+The empirical performance of the resulting zero-beta straddles is assessed on a daily base. We inspect the densities (via Kernel Density Estimation) of the daily returns and argue that they are t-distributed. For each level of moneyness $m$, we construct an interval $[m, m + 0.05]$. We condition daily returns on levels of the interval and we conduct a left-sided t-test on the null hypothesis of a population mean greater or equal to zero. We define a structural (or significant?) non-zero return of the zero-beta straddle returns as (volatility risk) premium. 
 
 Straddle Return $r_v$￼, Share of Straddle’s value in Call Options ￼$\theta$, Call and Put market Beta ￼$\beta_c$, $\beta_p$.
 
@@ -356,11 +384,11 @@ r_v = \theta r_c + (1-\theta)r_p
 
 We consider the possibility that if a volatility premium is found in the vanilla Zero-Beta-Straddles, then it may attributed to the risk of Black Swan events. Therefore we repeat the analysis for a set of "crash-resistant" zero-beta straddles. 
 Hedge Straddle with FOTM Option in order to exclude influence of Fat Tail Events
-Close Call (Put) leg 20\% away from Strike. We suppose that a such a leg would come at a 30\% premium compared to the ATM volatility (which is more than empirically justified.)
-Maybe make a summary of the relationship between ATM and 20\% OTM premium.
+Close Call (Put) leg 20\% away from Strike. We suppose that a such a leg would come at a 30\% premium compared to the ATM volatility. This premium more than empirically justified, but we choose the size due to the possibility of illiquidity for OTM contracts and the intention to enter both legs of the straddle simultaneously.
+%Maybe make a summary of the relationship between ATM and 20\% OTM premium.
 
 The performance of the vanilla and crash-resistant straddles is evaluated with and without fees. Clearly, application of the fees constitutes simply a linear shift, which is well-visible in the graphs. 
-The return of the straddles until settlement is re-scaled on a daily level. It is plotted as a boxplot of daily returns for each level of moneyness in the interval [0.7, 1.3]. 
+The return of the straddles until settlement is re-scaled on a daily level. It is plotted as a boxplot of daily returns for each level of moneyness in the interval $[0.7, 1.3]$. 
 Fees are standard option fees on Deribit. We assume using an option combo fee, which makes the a spread's cheaper leg free of charge. 
 Consequently, the trading fee for one option spread would be the lesser of 0.0003 Bitcoin or 12.5\% of the more expensive option price. All fees are converted into USD based on the BTC/USDT exchange rate around settlement time.
 
@@ -368,90 +396,70 @@ Consequently, the trading fee for one option spread would be the lesser of 0.000
 \section{Data}
 
 We use the \href{blockchain-research-center.de}{Blockchain Research Center} to retrieve a complete set of all transactions conducted on Deribit's options written on Bitcoin and Ether. 
-The exchange started operations in July 2017. 
-Furthermore, we use Deribits API V2 to retrieve a complete set of funding rates for the perpetual future of Bitcoin and Ether since (approx.) July 2019. 
+In addition to the option data set, we are provided with a complete set of funding rates for the perpetual future of Bitcoin and Ether since 1 June 2019. 
 
-Two conditions are imposed on the option data:
-1) The maximum IV is 2.5 and the minimum IV is 0.1.
-2) In case of multiple occurrences of an instrument per day, we exclusively use the first one. 
-3) Furthermore, we restrict our analysis to the interval of Moneyness in [0.7, 1.3]
-4) We use data exlusively past 2019-05-01, the date of first observations for the Bitcoin Perpetual Future
+We impose the following restrictions on the option data:
+\begin{itemize}
+\item In case of multiple occurrences of an instrument per day, we exclusively use the first one. 
+\item The maximum IV is 2.5 and the minimum IV is 0.1.
+\item Furthermore, we restrict our analysis to the interval of Moneyness in [0.7, 1.3]
+\item We use data exlusively past 2019-05-01, the date of first observations for the Bitcoin Perpetual Future
+\end{itemize}
 
-The purpose of the first restriction is to impose a fair bound to the options that is independent of liquidity levels. For illiquid options, occurrences of bid prices at 0\% IV and ask prices of 500\% may occur.  
-The purpose the second restriction of unique usage is to prevent a bias due to the possible more frequent trading of certain options. Generally, we observe that instruments with short maturity are traded more frequently. Yet, this could also be understood as cheaper instruments trading more frequently since (Black-Scholes) option prices increase with time-to-maturity.
+The purpose of the first restriction on uniqueness of observations, is to prevent a bias due to the possible more frequent trading of certain options. Generally, we observe that instruments with short maturity are traded more frequently. Yet, this could also be understood as cheaper instruments trading more frequently due to the montonous relationship between (Black-Scholes) option prices and time-to-maturity.
+The purpose the second restriction and third restriction is to impose a fair bound to the options that is independent of liquidity levels. For illiquid options, occurrences of bid prices at 0\% IV and ask prices of 500\% may occur. Therefore, we exclude these "unfair" prices.
 
-Bitcoin only:
-We drop 0.9\% of observations due to restriction 1)
-We drop 17\% of observations due to restriction 3)
-Overall, we have 5,028,945 observations. Post filtering, 4,150,778 observations remain in the set.
+Regarding the Bitcoin (Ether) data, we drop 0.9\% (1.7\%) of observations due to the IV restriction
+We drop 17\% (20.1\%) of observations due to the moneyness restriction
+Overall, we have 5,028,945 (2,283,869) observations. Post filtering, 4,150,778 (1,809,762) observations remain in the set.
 
-Ethereum: 
-Amount of Observations outside of allowed IV range:  0.017042133327261764
-Amount of Observations outside of allowed Tau range:  0.20172172747210984
-Overall Observations: 2283869
-Amount of Observations in our set post filtering:  1809762
+Considering data authenticity, we refer to our previous paper Risk Premia and Pricing Kernels for Bitcoin. 
+The most likely negative factor that could affect our data quality is wash trading. 
+We follow the definition of XPYZ on wash trading (from: ):
+"A wash trade occurs when there is an act of entering into, or purporting to enter into, transactions with no intent to obtain a bona fide market position or activity that gives the false appearance of an executed transaction(s), but does not subject the Principal to any market risk or change in position or aid in price discovery." ()
 
-Regarding data authenticity, we refer to our previous paper Risk Premia and Pricing Kernels for Bitcoin. 
-Indeed, using actual transaction data instead of orderbook data removes the threat of wash trading (etc) to our data. The most likely negative factor that could affect our data quality is wash trading. 
-We assess the risk of wash trading as follows: 
-
-"A wash trade occurs when there is an act of entering into, or purporting to enter into, transactions with no intent to obtain a bona fide market position or activity that gives the false appearance of an executed transaction(s), but does not subject the Principal to any market risk or change in position or aid in price discovery." (from: https://www.ice.com/publicdocs/futures_us/Wash_Sale_FAQ.pdf)
-
-We asses the risk of wash trading contaminating our data set as low. The reasoning behind the low risk assessment is that we are solely dealing with actual transactions associated with transaction cost. At the time of the writing, the transaction cost is 0.0003 BTC which is per current spot 12 USD. Such fees, even without consideration of spreads, make wash trading from a trader's perspective entirely infeasible. 
-
-
-
-- table of amount of transactions per group
-- plot: amount of transactions over time per group (crypto)
-
-
+We asses the overall risk of wash trading contaminating our data set as low. The reasoning behind the low risk assessment is that we are solely dealing with actual transactions associated with transaction cost. At the time of the writing, the transaction cost is 0.0003 BTC which is per current spot of 51,765 USD results in a fee of 15.5 USD. Such fees, even without consideration of spreads, make wash trading from a trader's perspective prohibitively expensive. 
 
 
 \section{Results}
 
 We find the returns of the zero-beta-straddles to be t-distributed and conduct a left-sided t-test under the null hypothesis of a population mean greater or equal to zero. 
-The null hypothesis is not rejected for all models, vanilla and crash-resistant, for ITM and OTM options. Conversely, the null hypothesis is firmly rejected on a high significance level for ATM options. 
-Therefore, we accept the alternative hypothesis of an underperformance for ATM options. Consequently, we find a similar result to Shumway and Bakshi - that is the existence of a premium for ATM contracts. 
-We figure the premium to be a volatility premium since a straddle's payoff depends on the relationship of Implied Volatility to Realized Volatility. 
-Unsurprisingly, the size of the premium in crypto markets is higher than the counterpart in equity markets - we figure that the reason is the higher risk in crypto markets, particularly via volatility and counterparty risk. 
-Furthermore, there are mostly retailers present in the crypto option market. Some professional liquidity providers exist, but they remain few and therefore another reason for the premium's size could be illiquidity. 
+The null hypothesis is rejected on a high significance level for ATM and slightly ITM options. 
+In the BTC (ETH) case, the hypotheses tests are rejected for the levels of moneyness in the interval $[0.98, 1.15]$ ($[0.99, 1.17]$) on a 95\% significance level.
+The results hold across model variations, vanilla and crash resistant, with or without fees. 
 
-- the premium is larger when tau is small. 
+Consequently, we find a similar result to Shumway and Bakshi, namely is the existence of a premium for ATM contracts. Additionally, we find a similar premium for slightly ITM contracts.
+Shumway et. al reported an average return of around -3.15 percent per week, whereas XYZ \% is attributable to the volatility premium.
 
-- report average returns for options grouped per strike (and overall)
+We report an average daily return of the zero-beta straddles of -1.0302\% for the vanilla Bitcoin model and -1.0322\% for the crash resistant model. 
+The vanilla Ether model has a daily return of -0.5078\% and the crash resistant model delivers -0.5098\%. 
+All results consider transaction cost as described.
 
+We define at-the-money options as those options whose moneyness falls into the interval $[0.95, 1.05]$.
+For the ATM options, we report an average daily return of the zero-beta straddles of -2.3576\% for the vanilla Bitcoin model and -2.3584\% for the crash resistant model. 
+The vanilla Ether model has a daily return of -0.9554\% and the crash resistant model delivers -0.9610\%. 
 
+%We figure the premium to be a volatility premium since a straddle's payoff depends on the relationship of Implied Volatility to Realized Volatility. 
+Unsurprisingly, the size of the premium in crypto markets is higher than the counterpart in equity markets. We figure that the reason is the higher risk in crypto markets, particularly via volatility and counterparty risk. 
+We suspect liquidity and risk averseness of liquidity providers to play a key role. 
+%Furthermore, there are mostly retailers present in the crypto option market. Some professional liquidity providers exist, but they remain few and therefore another reason for the premium's size could be illiquidity. 
+% - mention KDE and conclusion that we have a t-distribution.
 
-\begin{minipage}{\textwidth}
-    \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_annualized.png}
-    \captionof{figure}{Annualized Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
-    \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_annualized_zoom.png}
-    
-     \captionof{figure}{(Zoomed) Annualized Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
+%Fee & ETH:
+%Crash Resistant:  -0.005098
+%Vanilla: -0.005078
+%
+%Fee & BTC:
+%Crash Resistant: -0.010322
+%Vanilla: -0.010302
 
-\end{minipage}
-\begin{minipage}{\textwidth}
-    \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth.png}
-    \captionof{figure}{Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
-    \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/funding_btc_vs_eth_zoom.png}
-    \captionof{figure}{(Zoomed) Funding Rate \color{blue}{BTC} vs. \color{orange}{ETH}}
-
-\end{minipage}
-   % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
-
-\label{ATM Term Structure}
-\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
-
-\pagebreak
-\newpage
-
-
-
-
+%NOW DO ATM-Straddles!
+%Bitcoin Vanilla: -0.023576
+%Crash Resistant;  -0.023584
+%
+%ETH: 
+%vanilla: -0.009554
+%crash resistant: -0.009610
 
 
 
@@ -507,16 +515,12 @@ Furthermore, there are mostly retailers present in the crypto option market. Som
 
 
 
-We conduct a left-sided t-test to test for a population mean of zero. Values are rounded to 4 digits.
-
-Compare to weekly 0.5\% loss observed in equity options.
-
-
-
 \section{Conclusion}
 
 Further research: 
 - Evidence for leverage effect
+
+Make bridge to interest rates
 
 
 
@@ -582,6 +586,15 @@ Further research:
 
 
 \section{References}
+
+% New
+\leavevmode\hypertarget{ref-washtrading}{}%
+Intercontinental Exchange, Inc. Wash Trade FAQ
+\url{https://www.ice.com/publicdocs/futures_us/Wash_Sale_FAQ.pdf}. Accessed
+18 February 2023.
+
+
+% Old
 
 \hypertarget{refs}{}
 \leavevmode\hypertarget{ref-aitsahalia01optionprice}{}%
@@ -1154,7 +1167,7 @@ ETH Futures           & 466,932,584                   & 98,238,298
 1.15 & 0.0006         & 0.0003          & 0.0003                 & 0.0005                  \\
 1.16 & 0.0025         & 0.0013          & 0.0013                 & 0.0025                  \\
 1.17 & 0.0304         & 0.0203          & 0.0201                 & 0.0302                  \\
-1.18 & 276            & 0.2243          & 0.2231                 & 0.2746                  \\
+1.18 & 0.276            & 0.2243          & 0.2231                 & 0.2746                  \\
 1.19 & 0.0465         & 0.0345          & 0.0341                 & 0.0459                  \\
 1.2  & 0.0662         & 52              & 0.0513                 & 0.0653                  \\
 1.21 & 0.1876         & 0.1587          & 156                    & 0.1845                  \\
