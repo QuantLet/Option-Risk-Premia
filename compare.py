@@ -54,11 +54,17 @@ def ttest(dat, out_path, min_moneyness = 0.7, max_moneyness = 1.3):
     Path(out_path).mkdir(parents=True, exist_ok=True)
     pdct = {}
     df = dat.copy(deep = True)
+    
+    
+    vec = df['combined_ret_daily'].loc[(df['moneyness'] >= min_moneyness) & (df['moneyness'] <= max_moneyness)]
+    wins = stats.mstats.winsorize((1+vec)**2 - 1, limits=[0.01, 0.01]) # 0.025 is pretty good
+    sm.qqplot(wins, stats.t, distargs=(len(wins),), loc = wins.mean(), scale = wins.std())
+    plt.ylim(-1,1)
+    plt.xlim(-1,1)
+    plt.savefig(out_path + '/qq.png', transparent = True)
+    #stats.probplot(wins, dist="norm", plot=pylab)
 
-    # Make up some dummy data and test
-    #xx = np.random.normal(loc=5.0, scale=0.5, size=1000)
-    #QQ_plot(xx)
-
+    pdb.set_trace()
     for mn in df['moneyness'].sort_values().unique():
         if mn >= min_moneyness and mn <= max_moneyness:
 
@@ -110,7 +116,11 @@ def ttest(dat, out_path, min_moneyness = 0.7, max_moneyness = 1.3):
     pylab.show()
     
     # Working test for T-distribution
-    #sm.qqplot(vec_standardized, stats.t, distargs=(vec.shape[0],), loc = vec.mean(), scale = vec.std())
+    vec = df['combined_ret_daily']
+    wins = stats.mstats.winsorize(vec, limits=[0.05, 0.05])
+    sm.qqplot(wins, stats.t, distargs=(vec.shape[0],), loc = wins.mean(), scale = wins.std())
+
+    stats.probplot(wins, dist="norm", plot=pylab)
     """
 
 
@@ -123,7 +133,7 @@ def ttest(dat, out_path, min_moneyness = 0.7, max_moneyness = 1.3):
 
 # Config
 # Choose BTC or ETH
-base = 'eth/'
+base = 'btc/'#'eth/'
 
 
 pf = 'performance_overview.csv'
@@ -155,7 +165,6 @@ for df in [vanilla_fee, vanilla_no_fee, crash_resistant_fee, crash_resistant_no_
 print(vanilla_fee.loc[(vanilla_fee['moneyness'] >= 0.95) & (vanilla_fee['moneyness'] <= 1.05)][['combined_ret_daily']].describe())
 print(crash_resistant_fee.loc[(crash_resistant_fee['moneyness'] >= 0.95) & (crash_resistant_fee['moneyness'] <= 1.05)][['combined_ret_daily']].describe())
 
-pdb.set_trace()
 # Test significance
 p1_values = ttest(vanilla_no_fee, out_path = base + 'out/vanilla/no_fees/density')
 p2_values = ttest(vanilla_fee, out_path = base + 'out/vanilla/fees/density')
