@@ -103,11 +103,13 @@
 \begin{abstract}
 
 \singlespacing 
-abstract
-
+We provide insight into fundamental components of the crypto asset markets via derivatives written on Bitcoin and Ether.
+We use perpetual swap contracts to derive a proxy for the risk free rate in crypto asset markets. The interest rate serves as a benchmark for the performance of a range of beta-neutral option portfolios. 
+The empirical option performance confirms the existence of large (volatility) risk premia for at-the-money and in-the-money options. We cannot confirm similar risk premia for other levels of moneyness. 
+We compare the observed risk premia to those of equity options and find our results to be related but larger in size.
 
  \medskip
- \textbf{Keywords:} Bitcoin, Ether, Deribit, risk, risk premium, volatility premium, option, hedging  \\
+ \textbf{Keywords:} Bitcoin, Ether, Deribit, risk, risk premium, volatility premium, option  \\
  \indent \textbf{JEL Classification:} C14, C50, G10  \\
  \bigskip
 
@@ -172,16 +174,17 @@ An interesting candidate for a low-risk bond in the crypto asset space would be 
 Another approach to develop a risk-free rate would be lending in the DeFi space. Yet, this space may be vulnerable to similar risks as staking through hacks or software bugs in smart contracts.
 
 In the absence of riskless bond, we construct as a proxy for the risk free rate via the replication of the market-implied yield through a position in futures contracts, whose risks mainly arise due to liquidity risk and counterparty risk.
-A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments. As depicted in Table \ref{table:stats}, measured by the aggregate open interest and aggregate trading volume the market share of Perpetual Futures dwarfs the market share of (classic) Futures for both, Bitcoin and Ether. While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. 
+A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments. As depicted in Table~\ref{table:stats}, measured by the aggregate open interest and aggregate trading volume the market share of Perpetual Futures dwarfs the market share of (classic) Futures for both, Bitcoin and Ether. While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. 
 Solve for interest rates under observale Futures price $F$ Spot price $S$ at time $t$ and time-to-maturity $\tau$:
 
 \begin{equation}
 F_t = e^{r \tau} S_t
 \end{equation}
 
-Crypto exchanges often provide a so-called perpetual future, which is a synthetic (typically cash-settled instrument) whose return is tied to the underlying via a funding rate. Most exchanges (quote here) provide perpetual futures for Bitcoin and Ether. 
+Crypto exchanges often provide a so-called perpetual future, which is a synthetic (typically cash-settled instrument) whose return is tied to the underlying via a funding rate. Most exchanges provide perpetual futures for Bitcoin and Ether (Table~\ref{table:btc_futures} and~\ref{table:eth_futures}).
 The price of each perpetual future is linked to the underlying by adjusting a variable interest rate, called the funding rate, that fluctuates depending on the deviation between the price of the perpetual future and the underlying. The funding rate increases the cost of holding positions against the deviation, meaning that if the price of the perpetual future is higher than the underlying, the funding rate is positive which causes the market participants who are long to pay the short side in a predefined frequency. Broadly said, the more extreme the deviation, the higher the funding rate and thus the higher the incentive to trade against the deviation and thus converge the price of the perpetual future towards its underlying. 
 The risk-free rate is approximated using the simplest and most liquid way of realising the funding rate, a carry trade. In such a trade, the trader shorts (longs) the perpetual future if the funding rate is positive (negative) and simulateously buys (sells) the underlying such that the market delta of the combined position is zero. 
+In order calculate the proxy interest rate, we hold the short perpetual futures position and the long underlying constant. This also has the advantage of minimizing transaction cost and market impact, since the position can be entered slowly.
 
 The funding rate on \href{https://www.deribit.com/kb/deribit-linear-perpetual}{Deribit} is calculated as follows:
 
@@ -215,7 +218,7 @@ The actual funding payment results $f$ from the product of the Funding Rate, Pos
 %We implement a safety setting on our mark price to not deviate by more than a certain percentage of Index. This is to prevent manipulation or to curb the impact of panic trading. When a deviation from index is genuine, then we would increase the possible deviation.
 
 
-The actual annualized returns of such a carry trade are summarized in the table below.
+The actual annualized returns of such a carry trade are summarized in Table~\ref{table:annual_interest_rates}.
 2019 returns are annualized due to the start on 1st of May 2019 of perpetual futures on Deribit.
 
 
@@ -260,8 +263,8 @@ The actual annualized returns of such a carry trade are summarized in the table 
 \end{minipage}
    % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
 
-\label{ATM Term Structure}
-\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+\label{Interest Rates inferred from Perpetual Futures}
+\href{https://github.com/QuantLet/Option-Risk-Premia/blob/master/plot_funding_rates.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Funding Rates}
 
 \pagebreak
 \newpage
@@ -413,7 +416,7 @@ Regarding the Bitcoin (Ether) data, we drop 0.9\% (1.7\%) of observations due to
 We drop 17\% (20.1\%) of observations due to the moneyness restriction
 Overall, we have 5,028,945 (2,283,869) observations. Post filtering, 4,150,778 (1,809,762) observations remain in the set.
 
-Regarding matters of data authenticity, we refer to our previous paper regarding the study of Bitcoin option data (Winkel and Härdle, 2023).
+Regarding matters of data authenticity, we refer to our previous paper regarding the study of option data (Winkel and Härdle, 2023).
 The most likely negative factor that could affect our data quality is wash trading. 
 We follow the definition of Intercontinental Exchange, Inc. (2001): "A wash trade occurs when there is an act of entering into, or purporting to enter into, transactions with no intent to obtain a bona fide market position or activity that gives the false appearance of an executed transaction(s), but does not subject the Principal to any market risk or change in position or aid in price discovery."
 We asses the overall risk of wash trading contaminating our data set as low. The reasoning behind the low risk assessment is that we are solely dealing with actual transactions associated with transaction cost. At the time of the writing, the transaction cost is 0.0003 BTC which is per current spot of 51,765 USD results in a fee of 15.5 USD. Such fees, even without consideration of spreads, make wash trading from a trader's perspective prohibitively expensive. 
@@ -421,13 +424,13 @@ We asses the overall risk of wash trading contaminating our data set as low. The
 
 \section{Results}
 
-We find the returns of the zero-beta-straddles to be t-distributed and conduct a left-sided t-test under the null hypothesis of a population mean greater or equal to zero. 
+We refer to the QQ plots of the daily returns of the zero-beta portfolios versus the t-distribution to conclude that the returns are in fact t-distributed (Figure 5 and Figure 6). We conduct a left-sided t-test under the null hypothesis of a population mean greater or equal to zero. 
 The null hypothesis is rejected on a high significance level for ATM and slightly ITM options. 
-In the BTC (ETH) case, the hypotheses tests are rejected for the levels of moneyness in the interval $[0.98, 1.15]$ ($[0.99, 1.17]$) on a 95\% significance level.
-The results hold across model variations, vanilla and crash resistant, with or without fees. 
+In the BTC (ETH) case, the hypotheses tests are rejected for the levels of moneyness in the interval $[0.98, 1.15]$ ($[0.99, 1.17]$) on a 95\% significance level (Table 7 and Table 8).
+The results hold across model variations, vanilla and crash resistant, with or without fees (Figure 7-14). 
 
 Consequently, we find a similar result to Shumway et al. (2000) and Bakshi et al. (2001), namely is the existence of a premium for ATM contracts. Additionally, we find a similar premium for slightly ITM contracts.
-Shumway et. al reported an average return of around -3.15\% per week.% whereas XYZ \% is attributable to the volatility premium.
+Shumway et. al reported an average return of around -3.15 percent per week.
 
 We report an average daily return of the zero-beta straddles of -1.0302\% for the vanilla Bitcoin model and -1.0322\% for the crash resistant model. 
 The vanilla Ether model has a daily return of -0.5078\% and the crash resistant model delivers -0.5098\%. 
@@ -462,6 +465,21 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 %crash resistant: -0.009610
 
 
+\begin{minipage}{\textwidth}
+    \centering
+    \includegraphics[width=3.5in]{/Users/julian/src/bitcoin-vola-premium/btc/out/qq.png}
+    \captionof{figure}{BTC Portfolio}
+    \centering
+    \includegraphics[width=3.5in]{/Users/julian/src/bitcoin-vola-premium/eth/out/qq.png}
+     \captionof{figure}{ETH Portfolio}
+
+\end{minipage}
+
+\label{QQ Plot of beta-neutral daily Returns vs. t-Distribution}
+\href{https://github.com/QuantLet/Option-Risk-Premia/blob/master/compare.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,QQ}
+
+
+
 
 \begin{minipage}{\textwidth}
     \centering
@@ -483,8 +501,8 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 \end{minipage}
    % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
 
-\label{ATM Term Structure}
-\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+\label{Boxplots of Daily Returns (BTC)}
+\href{https://github.com/QuantLet/Option-Risk-Premia/blob/master/analyzeZeroBetaStraddles.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,analyzeZeroBetaStraddles}
 
 
 
@@ -509,8 +527,8 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 \end{minipage}
    % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
 
-\label{ATM Term Structure}
-\href{https://github.com/QuantLet/BitcoinOptions/blob/master/main.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,Main}
+\label{Boxplots of Daily Returns (ETH)}
+\href{https://github.com/QuantLet/Option-Risk-Premia/blob/master/analyzeZeroBetaStraddles.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,analyzeZeroBetaStraddles}
 
 
 
@@ -518,7 +536,7 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 \section{Conclusion}
 
 Further research: 
-- Evidence for leverage effect
+- We could use a similar procedure to search for evidence for leverage effect
 
 
 
