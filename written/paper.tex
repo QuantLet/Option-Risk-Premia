@@ -78,9 +78,9 @@
   Humboldt-Universität zu Berlin, Berlin, Germany; Sim Kee Boon
   Institute, Singapore Management University, Singapore; WISE Wang Yanan
   Institute for Studies in Economics, Xiamen University, Xiamen, China;
-  Dept. Information Management and Finance, National Chiao Tung
+  Dept. Information Management and Finance, National Yang Ming Chiao Tung
   University, Hsinchu, Taiwan, ROC; Dept. Mathematics and Physics,
-  Charles University, Prague, Czech Republic, Grants -- DFG IRTG 1792
+  Charles University, Prague, Czech Republic; Institute for Digital Assets, Romania; Grants -- DFG IRTG 1792
   and the Czech Science Foundation's grant no. 19-28231X / CAS XDA
   23020303 gratefully acknowledged,
   \href{mailto:haerdle@hu-berlin.de}{\nolinkurl{haerdle@hu-berlin.de}}}}
@@ -164,14 +164,14 @@ Subsequently, we construct and evaluate the performance of beta-neutral option p
 
 \section{A Proxy for the risk-free Rate of Bitcoin and Ether}
 
-One of the most fundamental concepts in mathematical finance is the existence of a risk-free rate and a risky asset. 
+One of the most fundamental assumptions in asset pricing and indeed a conceptional pillar of mathematical finance is the existence of a risk-free rate and a risky underlying. 
 While crypto assets are well-known for their riskiness, the existence of a risk-free rate has not been established in this new market. 
 The risk-free rate in established markets derives from the practice of lending out money to low-risk, typically government institutions which owe an interest rate on top of the principal to the lender. Despite the naming convention, government issued bonds are not entirely risk-free due to the possibility of default.
 Although default risk is commonly mitigated by a government's possibility to create money, the chance of a sovereign debt default is non-zero and hence not entirely risk-free. 
 
-In order to apply concepts of mathematical finance onto crypto assets, it is paramount to develop a risk-free rate - or at least a low-risk rate whose residual risk may converge to zero in time. 
-An interesting candidate for a low-risk bond in the crypto asset space would be staking, which is the validation of transactions under the risk of losing a principal (the stake). Evidently, only crypto assets which follow a Proof-of-Stake (PoS) consensus mechanism instead of a Proof-of-Work (PoW) consensus mechanism can be used for staking. At the time, this is still a minor share of the crypto asset universe. We include one of those, Ether, in our experiment. However, we figure that a multitude of risks is still present in staking, such as the risk of hacks, software bugs, slashing or blockchain congestions and subsequent reduction of stakes.
-Another approach to develop a risk-free rate would be lending in the DeFi space. Yet, this space may be vulnerable to similar risks as staking through hacks or software bugs in smart contracts.
+In order to apply pricing concepts of theoretical finance onto crypto assets, it is paramount to develop a risk-free rate - or at least a low-risk rate whose residual risk may converge to zero in time. 
+An interesting candidate for a low-risk bond in the crypto asset space would be staking, which is the validation of transactions under the risk of losing a principal (the stake). Evidently, only crypto assets which follow a Proof-of-Stake (PoS) consensus mechanism instead of a Proof-of-Work (PoW) consensus mechanism can be used for staking. At the time, PoS-based assets represent a minor share of the crypto asset universe. We include one of those, Ether, in our experiment. However, we figure that a multitude of risks is still present in staking, such as the risk of hacks, software bugs, slashing or blockchain congestions and subsequent reduction of stakes.
+Another approach to develop a risk-free rate would be lending in the DeFi space (Liu et al., 2024). Yet, this space may be vulnerable to similar risks as staking through hacks or software bugs in smart contracts.
 
 In the absence of riskless bond, we construct as a proxy for the risk free rate via the replication of the market-implied yield through a position in futures contracts, whose risks mainly arise due to liquidity risk and counterparty risk.
 A large share of the trading volume in digital asset markets falls on the futures market. Among the futures trading, perpetual instruments have historically been and currently are the most liquid instruments. As depicted in Table~\ref{table:stats}, measured by the aggregate open interest and aggregate trading volume the market share of Perpetual Futures dwarfs the market share of (classic) Futures for both, Bitcoin and Ether. While it would be possible to use a yield from a long-short futures position (e.g. short a short-tenor future and long a longer-tenor future), we argue that in order to minimize liquidity risk, the most liquid instruments should be taken into consideration. 
@@ -415,70 +415,90 @@ Regarding the Bitcoin (Ether) data, we drop 0.9\% (1.7\%) of observations due to
 We drop 17\% (20.1\%) of observations due to the moneyness restriction.
 Overall, we have 5,028,945 (2,283,869) observations. Post filtering, 4,150,778 (1,809,762) observations remain in the set. 
 
-BTC Distribution pre filtering:
-\begin{tabular}{lr}
-\toprule
-{} &          iv \\
-\midrule
-count &  5028945.00 \\
-mean  &        0.90 \\
-std   &        0.35 \\
-min   &        0.00 \\
-25\%   &        0.69 \\
-50\%   &        0.83 \\
-75\%   &        1.03 \\
-max   &        5.00 \\
-\bottomrule
-\end{tabular}
+\begin{table}[ht]
+\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrr}
+\hline
+\textbf{}         & \multicolumn{1}{l}{\textbf{BTC Pre-Filtering}} & \multicolumn{1}{l}{\textbf{BTC Post-Filtering}} & \multicolumn{1}{l}{\textbf{ETH Pre-Filtering}} & \multicolumn{1}{l}{\textbf{ETH Post-Filtering}} \\
+\hline
+\hline
+% Count             	  & 5028945    	& 4150778                         & 2275011                      & 1802556                       \\
+ Mean               	& 0.90                  & 0.86                            & 1.12                           & 1.06                                              \\
+ Std                   & 0.35                         & 0.29                           & 0.42                           & 0.34                                  \\
+ Min                  & 0                            & 0.10                             & 0                           & 0.11                                    \\
+ 25\%               & 0.69                         & 0.67                            & 0.87                           & 0.84                                                 \\
+ 50\%                & 0.83                         & 0.80                             & 1.02                           & 0.98                                          \\
+ 75\%               & 1.03                         & 0.98                            & 1.27                         & 1.18                                             \\
+ Max                 & 5.00                              & 2.50                             & 5.00                           & 2.50                               
+\end{tabular}}
+\caption{IV Summary Statistics Pre and Post Filtering}
+\label{btc_eth_iv_summary}
+\end{table}
 
-BTC Distribution post filtering:
-\begin{tabular}{lr}
-\toprule
-{} &          iv \\
-\midrule
-count &  4150778.00 \\
-mean  &        0.86 \\
-std   &        0.29 \\
-min   &        0.10 \\
-25\%   &        0.67 \\
-50\%   &        0.80 \\
-75\%   &        0.98 \\
-max   &        2.50 \\
-\bottomrule
-\end{tabular}
-
-
-ETH Distribution pre filtering:
-\begin{tabular}{lr}
-\toprule
-{} &          iv \\
-\midrule
-count &  2275011.00 \\
-mean  &        1.12 \\
-std   &        0.42 \\
-min   &        0.00 \\
-25\%   &        0.87 \\
-50\%   &        1.02 \\
-75\%   &        1.27 \\
-max   &        5.00 \\
-\bottomrule
-\end{tabular}
-
-ETH post filtering:
-\begin{tabular}{lr}
-\toprule
-{} &          iv \\
-\midrule
-count &  1802556.00 \\
-mean  &        1.06 \\
-std   &        0.34 \\
-min   &        0.11 \\
-25\%   &        0.84 \\
-50\%   &        0.98 \\
-75\%   &        1.18 \\
-max   &        2.50 \\
-\bottomrule
-\end{tabular}
+%
+%
+%ETH Distribution pre filtering:
+%\begin{tabular}{lr}
+%\toprule
+%{} &          iv \\
+%\midrule
+%count &  2275011.00 \\
+%mean  &        1.12 \\
+%std   &        0.42 \\
+%min   &        0.00 \\
+%25\%   &        0.87 \\
+%50\%   &        1.02 \\
+%75\%   &        1.27 \\
+%max   &        5.00 \\
+%\bottomrule
+%\end{tabular}
+%
+%ETH post filtering:
+%\begin{tabular}{lr}
+%\toprule
+%{} &          iv \\
+%\midrule
+%count &  1802556.00 \\
+%mean  &        1.06 \\
+%std   &        0.34 \\
+%min   &        0.11 \\
+%25\%   &        0.84 \\
+%50\%   &        0.98 \\
+%75\%   &        1.18 \\
+%max   &        2.50 \\
+%\bottomrule
+%\end{tabular}
+%
+%BTC Distribution pre filtering:
+%\begin{tabular}{lr}
+%\toprule
+%{} &          iv \\
+%\midrule
+%count &  5028945.00 \\
+%mean  &        0.90 \\
+%std   &        0.35 \\
+%min   &        0.00 \\
+%25\%   &        0.69 \\
+%50\%   &        0.83 \\
+%75\%   &        1.03 \\
+%max   &        5.00 \\
+%\bottomrule
+%\end{tabular}
+%
+%BTC Distribution post filtering:
+%\begin{tabular}{lr}
+%\toprule
+%{} &          iv \\
+%\midrule
+%count &  4150778.00 \\
+%mean  &        0.86 \\
+%std   &        0.29 \\
+%min   &        0.10 \\
+%25\%   &        0.67 \\
+%50\%   &        0.80 \\
+%75\%   &        0.98 \\
+%max   &        2.50 \\
+%\bottomrule
+%\end{tabular}
 
 
 
@@ -535,10 +555,10 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 \begin{minipage}{\textwidth}
     \centering
     \includegraphics[width=3.5in]{/Users/julian/src/bitcoin-vola-premium/btc/out/qq.png}
-    \captionof{figure}{BTC Portfolio}
+    \captionof{figure}{QQ Plot of beta-neutral daily \textbf{BTC} Returns vs. $t$-Distribution}
     \centering
     \includegraphics[width=3.5in]{/Users/julian/src/bitcoin-vola-premium/eth/out/qq.png}
-     \captionof{figure}{ETH Portfolio}
+     \captionof{figure}{QQ Plot of beta-neutral daily \textbf{ETH} Returns vs. $t$-Distribution}
 
 \end{minipage}
 
@@ -548,15 +568,14 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=3.5in]{/Users/julian/src/bitcoin-vola-premium/btc/out/vanilla/no_fees/density/moneyness>=1.05&moneyness<=1.1.png}
-    \captionof{figure}{BTC KDE. 2908 Observations fall in the Interval.}
+    \includegraphics[width=5in]{/Users/julian/src/bitcoin-vola-premium/btc/out/vanilla/no_fees/density/moneyness>=1.05&moneyness<=1.1.png}
+    \captionof{figure}{Kernel Density Estimation over 2908 BTC Portfolio Returns for Moneyness in $[1.05, 1.1]$. }
     \centering
-    \includegraphics[width=3.5in]{/Users/julian/src/bitcoin-vola-premium/eth/out/vanilla/no_fees/density/moneyness>=1.05&moneyness<=1.1.png}
-     \captionof{figure}{ETH KDE. 2545 Observations fall in the Interval.}
+    \includegraphics[width=5in]{/Users/julian/src/bitcoin-vola-premium/eth/out/vanilla/no_fees/density/moneyness>=1.05&moneyness<=1.1.png}
+     \captionof{figure}{Kernel Density Estimation over 2545 ETH Portfolio Returns for Moneyness in $[1.05, 1.1]$}
 
 \end{minipage}
 
-\label{Kernel Density Estimator of the Batch in 1.05 and 1.1}
 \href{https://github.com/QuantLet/Option-Risk-Premia/blob/master/compare.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,KDE}
 
 
@@ -707,6 +726,10 @@ Intercontinental Exchange, Inc. Wash Trade FAQ.
 \hypertarget{refs}{}
 \leavevmode\hypertarget{bakshi}{}%
 Kapadia, Nikunj and Bakshi, Gurdip S. and Bakshi, Gurdip S., Delta-Hedged Gains and the Negative Market Volatility Risk Premium (April 9, 2001). Available at SSRN: \url{https://ssrn.com/abstract=267106} or \url{http://dx.doi.org/10.2139/ssrn.267106}.
+
+\hypertarget{refs}{}
+\leavevmode\hypertarget{liu}{}%
+Liu, F., Packham, N., Sepp, A. and Härdle WK (2024). Jump risk premia in the presence of clustered jumps. Available at SSRN 4735365.
 
 \leavevmode\hypertarget{ref-satoshi2009}{}%
 Nakamoto, S. (2009). Bitcoin: A peer-to-peer electronic cash system.
