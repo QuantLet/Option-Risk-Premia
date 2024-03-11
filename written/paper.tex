@@ -71,7 +71,7 @@
 \usepackage{eucal}
 \floatplacement{figure}{H}
 
-\title{Empirical Option Returns and the risk-free Rate in Crypto Asset Markets}
+\title{Option Returns and the risk-free Rate in Crypto Asset Markets}
 \author{Julian Winkel\footnote{International Research Training Group 1792;
   Humboldt-Universität zu Berlin,
   \href{mailto:julian.winkel@hu-berlin.de}{\nolinkurl{julian.winkel@hu-berlin.de}}} \and Wolfgang K. Härdle\footnote{BRC Blockchain Research Center,
@@ -103,8 +103,8 @@
 \begin{abstract}
 
 \singlespacing 
-We provide insight into fundamental components of the crypto asset markets via derivatives written on Bitcoin and Ether.
-We use perpetual swap contracts to derive a proxy for the risk free rate in crypto asset markets. The interest rate serves as a benchmark for the performance of a range of beta-neutral option portfolios. 
+We examine the empirical returns of options written on Bitcoin and Ether in the light of fundamental asset pricing mechanics. In principle, beta-neutral portfolios should yield the risk-free rate.
+We use perpetual swap contracts to derive a proxy for the risk free rate in crypto asset markets. The risk free rate serves as a benchmark for the performance of a range of beta-neutral option portfolios. 
 The empirical option performance confirms the existence of large (volatility) risk premia for at-the-money and in-the-money options. We cannot confirm similar risk premia for other levels of moneyness. 
 We compare the observed risk premia to those of equity options and find our results to be related but larger in size.
 
@@ -120,7 +120,7 @@ We compare the observed risk premia to those of equity options and find our resu
 \newpage
 
 \section{Introduction}
-On 10 January 2024, the United States Securities and Exchange Commission approved the listing and trading of a range of spot bitcoin exchange-traded product (ETP) shares (Gensler, 2024). In other markets, structured Bitcoin (BTC) products have been available for years and retailers have been able to mine or buy Bitcoin since its inception following Nakamoto, 2009. 
+On 10 January 2024, the United States Securities and Exchange Commission approved the listing and trading of a range of spot bitcoin exchange-traded product (ETP) shares (Gensler, 2024). In other markets, structured Bitcoin (BTC) products have been available for years and retailers have been able to mine or buy Bitcoin since its inception following Nakamoto (2009). 
 Yet, despite the ongoing integration into established markets, fundamental questions about crypto asset markets remain unclear:
 How efficient are crypto asset markets relative to established, traditional markets such as equities? 
 Does a risk-free rate exist and if yes, how does it relate to the risk-free rate in established markets? Are derivatives, written on crypto assets, fairly priced or at least fairly priced relative to other derivatives? 
@@ -181,16 +181,15 @@ Solve for interest rates under observale Futures price $F$ Spot price $S$ at tim
 F_t = e^{r \tau} S_t
 \end{equation}
 
-Crypto exchanges often provide a so-called perpetual future, which is a synthetic (typically cash-settled instrument) whose return is tied to the underlying via a funding rate. Most exchanges provide perpetual futures for Bitcoin and Ether (Table~\ref{table:btc_futures} and~\ref{table:eth_futures}).
+Almost all large crypto exchanges provide a so-called perpetual future, which is a synthetic instrument whose return is tied to the underlying via a funding rate. An overview of perpetual futures for Bitcoin and Ether on relevant exchanges is provided in Table~\ref{table:btc_futures} and~\ref{table:eth_futures}.
 The price of each perpetual future is linked to the underlying by adjusting a variable interest rate, called the funding rate, that fluctuates depending on the deviation between the price of the perpetual future and the underlying. The funding rate increases the cost of holding positions against the deviation, meaning that if the price of the perpetual future is higher than the underlying, the funding rate is positive which causes the market participants who are long to pay the short side in a predefined frequency. Broadly said, the more extreme the deviation, the higher the funding rate and thus the higher the incentive to trade against the deviation and thus converge the price of the perpetual future towards its underlying. 
 The risk-free rate is approximated using the simplest and most liquid way of realising the funding rate, a carry trade. In such a trade, the trader shorts (longs) the perpetual future if the funding rate is positive (negative) and simulateously buys (sells) the underlying such that the market delta of the combined position is zero. 
 In order calculate the proxy interest rate, we hold the short perpetual futures position and the long underlying constant. This also has the advantage of minimizing transaction cost and market impact, since the position can be entered slowly.
 
-The funding rate on \href{https://www.deribit.com/kb/deribit-linear-perpetual}{Deribit} is calculated as follows:
+Deribit refers to their perpetual futures written on BTC and ETH as inverse perpetual futures, because they are settled in terms of the underlying. The funding rate on \href{https://www.deribit.com/kb/deribit-inverse-perpetual}{Deribit} is calculated as follows (Deribit Inverse Perpetual, 2024):
 
-Instruments, such as inverse options, futures and perpetual futures, have a Mark Price $M$. The Mark Price at a time is defined as the average of the highest bid and lowest ask price within an unspecified bandwidth (quote: 
-Mark price of an options contract is the current value of the option as calculated by the Deribit risk management system. Usually, this is the average of the best bid and best ask price. However, for risk management purposes, there is price bandwidth in place.
-). The Deribit Index $D$, which is an equally weighted Index of BTC/USD pairs across different exchanges, is used in conjunction with the Mark Price to calculate the Premium Rate $P$ of the Perpetual Future $F$ over the Deribit Index. 
+%(quote Deribit: Mark price of an options contract is the current value of the option as calculated by the Deribit risk management system. Usually, this is the average of the best bid and best ask price. However, for risk management purposes, there is price bandwidth in place.).
+Instruments, such as (inverse) options, futures and (inverse) perpetual futures, have a Mark Price $M$. The Mark Price at a time is defined as the average of the highest bid and lowest ask price within an unspecified bandwidth. The Deribit Index $D$, which is an equally weighted Index of BTC/USD pairs across different exchanges, is used in conjunction with the Mark Price to calculate the Premium Rate $P$ of the Perpetual Future $F$ over the Deribit Index. 
 
 \begin{equation}
 P = \frac{M - D}{D}
@@ -225,7 +224,7 @@ The actual annualized returns of such a carry trade are summarized in Table~\ref
 %Table: btc/out/funding_rate_per_year.csv
 \begin{table}[ht]
 \centering
-{\begin{tabular}{lll}
+{\begin{tabular}{rrr}
 \hline
 \textbf{Year} & \textbf{BTC} & \textbf{ETH} \\
 \hline
@@ -361,11 +360,11 @@ The actual annualized returns of such a carry trade are summarized in Table~\ref
 
 \section{Methodology}
 
-We follow the argument that any beta-neutral portfolio should yield the risk-free rate. We construct zero-beta portfolios by pairing a call option and a put option to a straddle and adjusting the weights so that the sum of option betas yields zero. The straddle's payoff $r_v$ is depicted in Equation 4, consisting of the payoff of the call $r_c$ and the payoff of the put $r_p$. The weight $\theta$ is found by solving Equation 5 through Equation 6. The (market) beta of a call (put) can be calculated through knowledge of the spot price $s$, the option delta $\Delta$, the Black-Scholes option price $C$ as depicted in Equation 7. % and the market beta $\beta_m (=1)$
-The underlying data are executed transactions. All option greeks remain constant except time-to-maturity. Any transaction has a time-to-maturity $\tau$ adjusted so that it would coincide with settlement time. All options are bought and held until settlement at 10am UTC. 
+We follow the argument that any beta-neutral portfolio should yield the risk-free rate. We construct zero-beta portfolios by pairing a call option and a put option to a straddle and adjusting the weights so that the sum of option betas yields zero. The straddle's payoff $r_v$ is depicted in (4), consisting of the payoff of the call $r_c$ and the payoff of the put $r_p$. The weight $\theta$ is found by solving (5) through (6). The (market) beta of a call (put) can be calculated through knowledge of the spot price $s$, the option delta $\Delta$, the Black-Scholes option price $C$ as depicted in (7). % and the market beta $\beta_m (=1)$
+The underlying data are executed transactions. All option greeks remain constant except time-to-maturity $\tau$. Any transaction has $\tau$ adjusted so that it would coincide with settlement time. All options are bought and held until settlement at 10am UTC. 
 We match our universe of straddles as follows:
 Per definition, a straddle exists of a call and a put with similar strike and maturity. We construct the set of empirical straddles by iterating over our list of executed calls and puts. For each call (put), we use Put-Call-Parity to complete the straddle. 
-The empirical performance of the resulting zero-beta straddles is assessed on a daily base. We inspect the densities (via Kernel Density Estimation) of the daily returns and argue that they are t-distributed. For each level of moneyness $m$, we construct an interval $[m, m + 0.05]$. We condition daily returns on levels of the interval and we conduct a left-sided t-test on the null hypothesis of a population mean greater or equal to zero. We define a measurable non-zero return on a 95\% significance level of the zero-beta straddle returns as (volatility) risk premium. 
+The empirical performance of the resulting zero-beta straddles is assessed on a daily base. We inspect the densities (via Kernel Density Estimation) of the daily returns and argue that they are t-distributed. Alternatively, \href{https://quantinar.com/course/144/tukeys-g-and-h-transformations}{Tukey's g- and h-transformations} could be used. For each level of moneyness $m$, we construct an interval $[m, m + 0.05]$. We condition daily returns on levels of the interval and we conduct a left-sided t-test on the null hypothesis of a population mean greater or equal to zero. We define a measurable non-zero return on a 95\% significance level of the zero-beta straddle returns as (volatility) risk premium. 
 
 Straddle Return $r_v$￼, Share of Straddle’s value in Call Options ￼$\theta$, Call and Put market Beta ￼$\beta_c$, $\beta_p$.
 
@@ -385,7 +384,7 @@ r_v = \theta r_c + (1-\theta)r_p
 \beta_c = \frac{s}{C} \Delta \beta_s\\
 \end{equation}
 
-We consider the possibility that if a volatility premium is found in the vanilla Zero-Beta-Straddles, then it may attributed to the risk of Black Swan events. Therefore we repeat the analysis for a set of "crash-resistant" zero-beta straddles. 
+We consider the possibility that if a volatility premium is found in the vanilla Zero-Beta-Straddles, then it may attributed to the risk of Black Swan events (Taleb, 2007). Therefore we repeat the analysis for a set of "crash-resistant" zero-beta straddles. 
 In order to exclude influence of Fat Tail Events, we hedge the straddle with far-out-the-money (FOTM) options. This results in a so-called "Reverse Iron Butterfly Spread", whose risk is limited to the sum of option premia.
 We close the Call (Put) leg 20\% away from Strike. We suppose that a such a leg would come at a 30\% premium compared to the ATM volatility. This premium more than empirically justified, but we choose the size due to the possibility of illiquidity for OTM contracts and the intention to enter both legs of the straddle simultaneously.
 %Maybe make a summary of the relationship between ATM and 20\% OTM premium.
@@ -398,7 +397,7 @@ Consequently, the trading fee for one option spread would be the lesser of 0.000
 
 \section{Data}
 
-We use the \href{blockchain-research-center.de}{Blockchain Research Center} to retrieve a complete set of all transactions conducted on Deribit's options written on Bitcoin and Ether. 
+We collect data from the \href{blockchain-research-center.de}{Blockchain Research Center} to retrieve a complete set of all transactions conducted on Deribit's options written on Bitcoin and Ether. 
 In addition to the option data set, we are provided with a complete set of funding rates for the perpetual future of Bitcoin and Ether since 1 June 2019. 
 
 We impose the following restrictions on the option data:
@@ -413,24 +412,92 @@ The purpose of the first restriction on uniqueness of observations, is to preven
 The purpose the second restriction and third restriction is to impose a fair bound to the options that is independent of liquidity levels. For illiquid options, occurrences of bid prices at 0\% IV and ask prices of 500\% may occur. Therefore, we exclude these "unfair" prices.
 
 Regarding the Bitcoin (Ether) data, we drop 0.9\% (1.7\%) of observations due to the IV restriction
-We drop 17\% (20.1\%) of observations due to the moneyness restriction
-Overall, we have 5,028,945 (2,283,869) observations. Post filtering, 4,150,778 (1,809,762) observations remain in the set.
+We drop 17\% (20.1\%) of observations due to the moneyness restriction.
+Overall, we have 5,028,945 (2,283,869) observations. Post filtering, 4,150,778 (1,809,762) observations remain in the set. 
+
+BTC Distribution pre filtering:
+\begin{tabular}{lr}
+\toprule
+{} &          iv \\
+\midrule
+count &  5028945.00 \\
+mean  &        0.90 \\
+std   &        0.35 \\
+min   &        0.00 \\
+25\%   &        0.69 \\
+50\%   &        0.83 \\
+75\%   &        1.03 \\
+max   &        5.00 \\
+\bottomrule
+\end{tabular}
+
+BTC Distribution post filtering:
+\begin{tabular}{lr}
+\toprule
+{} &          iv \\
+\midrule
+count &  4150778.00 \\
+mean  &        0.86 \\
+std   &        0.29 \\
+min   &        0.10 \\
+25\%   &        0.67 \\
+50\%   &        0.80 \\
+75\%   &        0.98 \\
+max   &        2.50 \\
+\bottomrule
+\end{tabular}
+
+
+ETH Distribution pre filtering:
+\begin{tabular}{lr}
+\toprule
+{} &          iv \\
+\midrule
+count &  2275011.00 \\
+mean  &        1.12 \\
+std   &        0.42 \\
+min   &        0.00 \\
+25\%   &        0.87 \\
+50\%   &        1.02 \\
+75\%   &        1.27 \\
+max   &        5.00 \\
+\bottomrule
+\end{tabular}
+
+ETH post filtering:
+\begin{tabular}{lr}
+\toprule
+{} &          iv \\
+\midrule
+count &  1802556.00 \\
+mean  &        1.06 \\
+std   &        0.34 \\
+min   &        0.11 \\
+25\%   &        0.84 \\
+50\%   &        0.98 \\
+75\%   &        1.18 \\
+max   &        2.50 \\
+\bottomrule
+\end{tabular}
+
+
+
 
 Regarding matters of data authenticity, we refer to our previous paper regarding the study of option data (Winkel and Härdle, 2023).
 The most likely negative factor that could affect our data quality is wash trading. 
 We follow the definition of Intercontinental Exchange, Inc. (2001): "A wash trade occurs when there is an act of entering into, or purporting to enter into, transactions with no intent to obtain a bona fide market position or activity that gives the false appearance of an executed transaction(s), but does not subject the Principal to any market risk or change in position or aid in price discovery."
-We asses the overall risk of wash trading contaminating our data set as low. The reasoning behind the low risk assessment is that we are solely dealing with actual transactions associated with transaction cost. At the time of the writing, the transaction cost is 0.0003 BTC which is per current spot of 51,765 USD results in a fee of 15.5 USD. Such fees, even without consideration of spreads, make wash trading from a trader's perspective prohibitively expensive. 
+We asses the overall risk of wash trading contaminating our data set as low. The reasoning behind the low risk assessment is that we are solely dealing with actual transactions associated with transaction cost. At 18 February 2024, the transaction cost is 0.0003 BTC which is per current spot of 51,765 USD results in a fee of 15.5 USD. Such fees, even without consideration of spreads, make wash trading from a trader's perspective prohibitively expensive. 
 
 
 \section{Results}
 
-We refer to the QQ plots of the daily returns of the zero-beta portfolios versus the t-distribution to conclude that the returns are in fact t-distributed (Figure 5 and Figure 6). We conduct a left-sided t-test under the null hypothesis of a population mean greater or equal to zero. 
+We refer to the QQ plots of the daily returns of the zero-beta portfolios versus the $t$-distribution to conclude that the returns are in fact $t$-distributed (Figure 5 and Figure 6). We conduct a left-sided $t$-test under the null hypothesis of a population mean greater or equal to zero. 
 The null hypothesis is rejected on a high significance level for ATM and slightly ITM options. 
-In the BTC (ETH) case, the hypotheses tests are rejected for the levels of moneyness in the interval $[0.98, 1.15]$ ($[0.99, 1.17]$) on a 95\% significance level (Table~\ref{table:btc_t_stats} and ~\ref{table:eth_t_stats}).
-The results hold across model variations, vanilla and crash resistant, with or without fees (Figure 7-14). 
+In the BTC (ETH) case, the hypotheses tests are rejected for the levels of moneyness in the interval $[0.98, 1.15]$ ($[0.99, 1.17]$) on a 95\% significance level (Table~\ref{table:btc_t_stats} and~\ref{table:eth_t_stats}).
+The results hold across model variations, vanilla and crash resistant, with or without fees (Figure 7-14). The amount of observations per batch of moneyness range between a minimum of 47 (OTM) and a maximum of 3498 (ATM) in the BTC case and between 205 and 3085 in the ETH case. 
 
-Consequently, we find a similar result to Shumway et al. (2000) and Bakshi et al. (2001), namely is the existence of a premium for ATM contracts. Additionally, we find a similar premium for slightly ITM contracts.
-Shumway et. al reported an average return of around -3.15 percent per week.
+Consequently, we find a similar result to Shumway et al. (2000) and Bakshi et al. (2001), namely the existence of a premium for ATM contracts. Additionally, we find a similar premium for slightly ITM contracts.
+Shumway et. al (2000) reported an average return of around -3.15 percent per week.
 
 We report an average daily return of the zero-beta straddles of -1.0302\% for the vanilla Bitcoin model and -1.0322\% for the crash resistant model. 
 The vanilla Ether model has a daily return of -0.5078\% and the crash resistant model delivers -0.5098\%. 
@@ -479,24 +546,36 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 \href{https://github.com/QuantLet/Option-Risk-Premia/blob/master/compare.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,QQ}
 
 
+\begin{minipage}{\textwidth}
+    \centering
+    \includegraphics[width=3.5in]{/Users/julian/src/bitcoin-vola-premium/btc/out/vanilla/no_fees/density/moneyness>=1.05&moneyness<=1.1.png}
+    \captionof{figure}{BTC KDE. 2908 Observations fall in the Interval.}
+    \centering
+    \includegraphics[width=3.5in]{/Users/julian/src/bitcoin-vola-premium/eth/out/vanilla/no_fees/density/moneyness>=1.05&moneyness<=1.1.png}
+     \captionof{figure}{ETH KDE. 2545 Observations fall in the Interval.}
+
+\end{minipage}
+
+\label{Kernel Density Estimator of the Batch in 1.05 and 1.1}
+\href{https://github.com/QuantLet/Option-Risk-Premia/blob/master/compare.py}{\hspace*{\fill} \raisebox{-1pt}{\includegraphics[scale=0.05]{/Users/julian/src/up/spd/written/logos/qletlogo_tr.png}}\,KDE}
 
 
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/vanilla/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
-    \captionof{figure}{BTC - Performance - Vanilla - No Fees}
+    \includegraphics[width=5in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/vanilla/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{BTC - Daily Returns grouped by Moneyness -  Vanilla - No Fees}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/vanilla/fees/boxplot_combined_ret_daily_over_moneyness_.png}
-     \captionof{figure}{BTC - Performance - Vanilla - Fees}
+    \includegraphics[width=5in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/vanilla/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{BTC - Daily Returns grouped by Moneyness -  Vanilla - Fees}
 
 \end{minipage}
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/crash_resistant/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
-    \captionof{figure}{BTC - Performance - Crash Resistant - No Fees}
+    \includegraphics[width=5.in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/crash_resistant/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{BTC - Daily Returns grouped by Moneyness -  Crash Resistant - No Fees}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/crash_resistant/fees/boxplot_combined_ret_daily_over_moneyness_.png}
-     \captionof{figure}{BTC - Performance - Crash Resistant - Fees}
+    \includegraphics[width=5.in]{/Users/julian/src/bitcoin-vola-premium/btc/plots/crash_resistant/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{BTC - Daily Returns grouped by Moneyness -  Crash Resistant - Fees}
 
 \end{minipage}
    % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
@@ -509,20 +588,20 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/vanilla/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
-    \captionof{figure}{ETH - Performance - Vanilla - No Fees}
+    \includegraphics[width=5in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/vanilla/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{ETH - Daily Returns grouped by Moneyness -  Vanilla - No Fees}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/vanilla/fees/boxplot_combined_ret_daily_over_moneyness_.png}
-     \captionof{figure}{ETH - Performance - Vanilla - Fees}
+    \includegraphics[width=5in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/vanilla/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{ETH - Daily Returns grouped by Moneyness -  Vanilla - Fees}
 
 \end{minipage}
 \begin{minipage}{\textwidth}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/crash_resistant/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
-    \captionof{figure}{ETH - Performance - Crash Resistant - No Fees}
+    \includegraphics[width=5in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/crash_resistant/no_fees/boxplot_combined_ret_daily_over_moneyness_.png}
+    \captionof{figure}{ETH - Daily Returns grouped by Moneyness -  Crash Resistant - No Fees}
     \centering
-    \includegraphics[width=5.6in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/crash_resistant/fees/boxplot_combined_ret_daily_over_moneyness_.png}
-     \captionof{figure}{ETH - Performance - Crash Resistant - Fees}
+    \includegraphics[width=5in]{/Users/julian/src/bitcoin-vola-premium/eth/plots/crash_resistant/fees/boxplot_combined_ret_daily_over_moneyness_.png}
+     \captionof{figure}{ETH - Daily Returns grouped by Moneyness -  Crash Resistant - Fees}
 
 \end{minipage}
    % \captionof{figure}{ATM Term Structure from 2022-01-01 until 2022-01-08. Moneyness $M \in [0.9, 1.1]$}
@@ -535,8 +614,12 @@ We suspect liquidity and risk averseness of liquidity providers to play a key ro
 
 \section{Conclusion}
 
+Difference between ETH and BTC annualized Funding Rate due to Liquidity.
+
 Further research: 
 - We could use a similar procedure to search for evidence for leverage effect
+
+
 
 
 
@@ -609,6 +692,10 @@ Further research:
 Deribit margin requirements (2022).
 \url{https://www.deribit.com/kb/fees}. Accessed 28 February 2024.
 
+\leavevmode\hypertarget{ref-deribit_perpetuals}{}%
+Deribit Inverse Perpetual (2024).
+\url{https://www.deribit.com/kb/deribit-inverse-perpetual}. Accessed 28 February 2024.
+
 \leavevmode\hypertarget{sec-approval}{}%
 Gary Gensler, Chair of the United States Securities and Exchange Commission. Statement on the Approval of Spot Bitcoin Exchange-Traded Products (10 January 2024).
 \url{https://www.sec.gov/news/statement/gensler-statement-spot-bitcoin-011023}. Accessed 18 February 2023.
@@ -629,6 +716,9 @@ Nakamoto, S. (2009). Bitcoin: A peer-to-peer electronic cash system.
 \leavevmode\hypertarget{shumway}{}%
 Shumway, Tyler and Coval, Joshua D., Expected Option Returns (June 2000). Available at SSRN: \url{https://ssrn.com/abstract=189840} or \url{http://dx.doi.org/10.2139/ssrn.189840}.
 
+\hypertarget{refs}{}
+\leavevmode\hypertarget{taleb}{}%
+Taleb, Nassim Nicholas. The Black Swan: the Impact of the Highly Improbable. New York: Random House, 2007.
 
 \hypertarget{refs}{}
 \leavevmode\hypertarget{winkel}{}%
