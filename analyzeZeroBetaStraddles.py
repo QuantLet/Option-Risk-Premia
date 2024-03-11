@@ -141,8 +141,8 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     # (main.py uses dat['index_price'] for moneyness )
     sub['moneyness'] = round(sub['strike'] / sub['spot'], 2)
 
-    # Restrict Moneyness
-    sub = sub.loc[(sub['moneyness'] <= 1.3) & (sub['moneyness'] >= 0.7) & (sub['tau'] <= 0.3)]
+    # Restrict Moneyness / already happening in parent function
+    #sub = sub.loc[(sub['moneyness'] <= 1.3) & (sub['moneyness'] >= 0.7) & (sub['tau'] <= 0.3)]
     
     # Min 4 days to maturity
     existing_options = sub.copy(deep = True)
@@ -178,7 +178,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     
     for i in range(len(exist)): #.loc[options['is_call'] == 1]
         try:
-
+            
             #@Hint: We can also match by index here as each index in existing_options correspoinds to missing_options!
             # Why does call_df have less columns than exist?!
             #print('Why does call_df have less columns than exist?!')
@@ -225,7 +225,6 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
 
             #print('need to adjust straddle weights for FOTM Options too!!')
             call_weight, put_weight = get_straddle_weights(call_df['beta'], put_df['beta'])
-
 
             # Test implementing the adjusted beta calculation for crash-resistant Straddles
             if crash_resistant:
@@ -322,7 +321,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
         except Exception as e:
             print(e)
             print('Error!')
-            pdb.set_trace()
+            #pdb.set_trace()
     print('done')
     return out_dct
 
@@ -371,12 +370,24 @@ if __name__ == '__main__':
             out_dir = out_dir_start + 'no_fees/'
             plot_dir = plot_dir_start + 'no_fees/'
 
+        # config
+        base_currency = 'btc'
+        print("###")
+        print(base_currency)
+        print("###")
+        if base_currency == 'eth':
+            f = 'eth/out/raw_deribit_transactions_eth.csv'
+        elif base_currency == 'btc':
+            f = 'btc/out/raw_deribit_transactions.csv'
+        else: 
+            raise NotImplementedError()
+
+
         # Load Expiration Price History
-        expiration_price_history = load_expiration_price_history()
+        expiration_price_history = load_expiration_price_history(currency = base_currency)
 
         # Load Fitted Data from main.py
-        print('Loading BTC Data')
-        dat = pd.read_csv('out/raw_deribit_transactions.csv') # deribit_transactions_eth for Ethereum
+        dat = pd.read_csv(f) # deribit_transactions_eth for Ethereum
         dat['date'] = pd.to_datetime(dat['day'])
         dat = dat.loc[dat['day'] >= '2019-05-01']
         print('Using data past 2019-05-01 because its the inception point of the perpetual futures.')
@@ -408,24 +419,48 @@ if __name__ == '__main__':
         print(dat['iv'].describe())
 
         # Get average premium on IV if we go to a moneyness of 1.3 (or 0.7)
-        pdb.set_trace()
         print('Summary of 30% OTM IV for Text:')
         print(dat.loc[dat['moneyness'] == 1.3]['iv'].describe())
         print(dat.loc[dat['moneyness'] == 0.7]['iv'].describe())
+        print(dat.loc[dat['moneyness'] == 1.0]['iv'].describe())
 
         max_iv = 2.5
-        min_iv = 0
+        min_iv = 0.1
+        min_moneyness = 0.7
+        max_moneyness = 1.3
         iv_vars = ['iv']
 
-        for iv_var in iv_vars:
-            dat.loc[dat[iv_var] >= max_iv, iv_var] = max_iv 
-            dat.loc[dat[iv_var] <= min_iv, iv_var] = min_iv
+        # Pre Filtering
+        print('Pre-filtering distribution')
+        print(dat['iv'].describe().round(2).to_latex(multicolumn = True))
+
+        # Find share of observations where IV is larger than max_iv
+        # or smaller than min_iv
+        #pdb.set_trace()
+        iv_outlier_sub = dat.loc[(dat['iv'] >= max_iv) | (dat['iv'] <= min_iv)]
+        print(iv_outlier_sub.describe())
+        print('Amount of Observations outside of allowed IV range: ', iv_outlier_sub.shape[0]/dat.shape[0])
+
+        moneyness_outlier_sub = dat.loc[(dat['moneyness'] >= max_moneyness) | (dat['moneyness'] <= min_moneyness)]
+        print(moneyness_outlier_sub.describe())
+        print('Amount of Observations outside of allowed Tau range: ', moneyness_outlier_sub.shape[0]/dat.shape[0])
+
+        dat = dat.loc[(dat['iv'] <= max_iv) & (dat['iv'] >= min_iv) & (dat['moneyness'] <= max_moneyness) & (dat['moneyness'] >= min_moneyness)]
+        print('Amount of Observations in our set post filtering: ', dat.shape[0])
+
+        # Post Filtering
+        print('Post-filtering distribution')
+        print(dat['iv'].describe().round(2).to_latex(multicolumn = True))
+     
+        #for iv_var in iv_vars:
+        #    dat.loc[dat[iv_var] >= max_iv, iv_var] = max_iv 
+        #    dat.loc[dat[iv_var] <= min_iv, iv_var] = min_iv
 
         # Run Analysis for Rookley and Regression
         #rookley_performance_overview = analyze_portfolio(rookley_filtered_dat, 'all', 'rookley_predicted_iv')
         performance_overview_l = analyze_portfolio(dat, week = 'all', iv_var_name = 'iv', center_on_expiration_price = center_on_expiration_price, 
                             first_occurrence_only = True, long = True, crash_resistant = crash_resistance, fees = apply_fees)
-        
+
         collected = []
         for key, val in performance_overview_l.items():
             # First row summarizes results
