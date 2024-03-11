@@ -64,7 +64,7 @@ def ttest(dat, out_path, min_moneyness = 0.7, max_moneyness = 1.3):
     plt.savefig(out_path + '/qq.png', transparent = True)
     #stats.probplot(wins, dist="norm", plot=pylab)
 
-    pdb.set_trace()
+    #pdb.set_trace()
     for mn in df['moneyness'].sort_values().unique():
         if mn >= min_moneyness and mn <= max_moneyness:
 
@@ -72,9 +72,10 @@ def ttest(dat, out_path, min_moneyness = 0.7, max_moneyness = 1.3):
             higher = round(mn + 0.05, 2)
             sub = df.loc[(df['moneyness'] <= higher) & (df['moneyness'] >= mn)]
             sub['combined_ret_daily'].plot.kde()
-            plt.title('n = ' + str(sub.shape[0]))
+            # Title deactivated for paper plots
+            #plt.title('n = ' + str(sub.shape[0]))
             plt.xlim((-1, 1))
-            plt.savefig(out_path + '/moneyness>=' + str(mn) + '&moneyness<=' + str(higher) + '.png')
+            plt.savefig(out_path + '/moneyness>=' + str(mn) + '&moneyness<=' + str(higher) + '.png', transparent = True)
             t_stat, p_value = ttest_1samp(sub['combined_ret_daily'], popmean=0, alternative = 'less', nan_policy = 'omit') #, alternative = 'less'
             print(sub.describe())
             print('Moneyness Level: ', mn)
@@ -99,7 +100,7 @@ def ttest(dat, out_path, min_moneyness = 0.7, max_moneyness = 1.3):
     sub['combined_ret_daily'].plot.kde()
     plt.title('n = ' + str(sub.shape[0]))
     plt.xlim((-1, 1))
-    plt.savefig(out_path + '/moneyness_between_95_and_105' + '.png')
+    plt.savefig(out_path + '/moneyness_between_95_and_105' + '.png', transparent = True)
 
     """
     pdb.set_trace()
@@ -133,7 +134,7 @@ def ttest(dat, out_path, min_moneyness = 0.7, max_moneyness = 1.3):
 
 # Config
 # Choose BTC or ETH
-base = 'btc/'#'eth/'
+base = 'eth/' # 'btc/'
 
 
 pf = 'performance_overview.csv'
@@ -164,6 +165,7 @@ for df in [vanilla_fee, vanilla_no_fee, crash_resistant_fee, crash_resistant_no_
 
 print(vanilla_fee.loc[(vanilla_fee['moneyness'] >= 0.95) & (vanilla_fee['moneyness'] <= 1.05)][['combined_ret_daily']].describe())
 print(crash_resistant_fee.loc[(crash_resistant_fee['moneyness'] >= 0.95) & (crash_resistant_fee['moneyness'] <= 1.05)][['combined_ret_daily']].describe())
+
 
 # Test significance
 p1_values = ttest(vanilla_no_fee, out_path = base + 'out/vanilla/no_fees/density')
