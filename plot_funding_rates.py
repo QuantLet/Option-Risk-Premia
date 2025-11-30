@@ -49,6 +49,8 @@ annualization_factor = 12/4
 df_funding_rate_per_year.loc[df_funding_rate_per_year.index == 2019] = df_funding_rate_per_year.loc[df_funding_rate_per_year.index == 2019].apply(lambda x: (1 + x)**(annualization_factor) - 1)
 df_funding_rate_per_year.to_csv('btc/out/funding_rate_per_year.csv')
 
+df_funding_rate_per_year.to_latex()
+
 pdb.set_trace()
 plot_funding(funding, 'date', 'funding_btc', 'funding_eth', 'BTC', 'ETH', 'plots/funding_btc_vs_eth.png', None)
 plot_funding(funding, 'date', 'btc_annualized', 'eth_annualized', 'BTC', 'ETH', 'plots/funding_btc_vs_eth_annualized.png', None)

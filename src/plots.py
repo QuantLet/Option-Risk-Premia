@@ -51,7 +51,7 @@ def plot_performance(performance_overview, time_var_name, crash_resistant, _dir)
             fname = _dir + 'zero_beta_straddle_' + time_var_name + '=' + tau_label + '.png'
         plt.savefig(fname, transparent = True)
 
-def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None, _dir = '', file_name_addition = '', crash_resistant = False, nth_label = 10, show_gridlines = True):
+def grouped_boxplot(performance_overview, target_var_name, group_var_name, ylim_min = None, ylim_max = None, _dir = '', file_name_addition = '', crash_resistant = False, nth_label = 10, show_gridlines = False):
     """
 
     """

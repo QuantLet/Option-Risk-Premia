@@ -59,7 +59,7 @@ def simple_delta_hedge(daily):
 
     daily['future_position'] = daily['delta'] * daily['index_price']
     daily['future_position'].iloc[-1] = 0
-    daily['index_return'] = daily['index_price'].pct_change().shift(-1)
+    daily['index_return'] = daily['expiration_price'].pct_change().shift(-1)
     daily['index_return'].iloc[-1] = 0
 
     # Hedge Payoff

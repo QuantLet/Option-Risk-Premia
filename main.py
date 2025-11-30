@@ -626,7 +626,7 @@ if __name__ == '__main__':
     for collection in collections:
 
         # Debugging Start, End
-        startdate = datetime.datetime(2022,1,1,0) #datetime.datetime(2018,1,1)
+        startdate = datetime.datetime(2017,1,1,0) #datetime.datetime(2018,1,1)
         enddate = datetime.datetime(2023,12,16,0)
         run_dates = [startdate]
         curr_date = startdate
@@ -649,21 +649,20 @@ if __name__ == '__main__':
         funding['btc_pf'] = np.cumprod(1+funding['funding_btc'])
         print(funding.describe())
         funding.to_csv('funding.csv')
-        pdb.set_trace()
         
-        fig, ax = plt.figure(figsize = (12,8))
+        fig = plt.figure(figsize = (12,8))
         plt.plot(funding['date'], funding['funding_btc'], label = 'BTC')
         plt.plot(funding['date'], funding['funding_eth'], label = 'ETH')
         plt.legend()
         plt.savefig("funding_btc_vs_eth.pdf")
         
-        fig, ax = plt.figure(figsize = (12,8))
+        fig = plt.figure(figsize = (12,8))
         plt.plot(funding['date'], funding['btc_annualized'], label = 'BTC')
         plt.plot(funding['date'], funding['eth_annualized'], label = 'ETH')
         plt.legend()
         plt.savefig('funding_brc_vs_eth_annualized.pdf')
 
-        fig, ax = plt.figure(figsize = (12,8))
+        fig = plt.figure(figsize = (12,8))
         plt.plot(funding['date'], funding['diff'], label = 'ETH - BTC')
         plt.legend()
         plt.savefig('funding_btc_vs_eth_diff.pdf')

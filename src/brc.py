@@ -7,8 +7,8 @@ import websockets
 import asyncio
 import pdb
 import matplotlib.pyplot as plt
-from helpers import decompose_future_name
-from plots import group_plot
+from helpers import decompose_future_name # src.
+from plots import group_plot # src.
 import json
 from bson.json_util import dumps # dump Output
 #from src.vola_plots import trisurf, vola_surface_interpolated
@@ -529,10 +529,14 @@ class BRC:
 
 
 if __name__ == '__main__':
+    #brc = BRC(collection_name='deribit_futures_transactions')
+    #fund = brc.download_historical_funding_rate(datetime.datetime(2023, 11, 25, 0, 0, 0), datetime.datetime(2023, 11, 25, 21, 0, 0), 'DOT_USDC-PERPETUAL')
+    #dot = brc.download_other_funding_rate('DOT_USDC-PERPETUAL')
+    #pdb.set_trace()
     #brc = BRC(collection_name='deribit_transactions')
     #fund = brc.download_other_funding_rate(datetime.datetime(2023, 11, 25, 0, 0, 0), datetime.datetime(2023, 11, 25, 18, 0, 0), 'BTC-PERPETUAL')
     brc = BRC(collection_name='deribit_futures_transactions')
-    out = brc._run(datetime.datetime(2017, 1, 20, 0, 0, 0), datetime.datetime(2023, 11, 25, 0, 0, 0))
+    out = brc._run(datetime.datetime(2023, 12, 16, 9, 0, 0), datetime.datetime(2023, 12, 16, 17, 0, 0))
     df = pd.DataFrame(out).drop_duplicates()
     df['date'] = list(map(lambda x: datetime.datetime.fromtimestamp(x/1000), df['timestamp']))
     dat_params = decompose_future_name(df['instrument_name'], df['date'])
