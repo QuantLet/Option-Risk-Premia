@@ -1,14 +1,9 @@
 """
-Construct Portfolio of a Long Call and a Delta Hedge
-Rebalanced Daily
-Analyze PnL 
+Construct Portfolio of a Long Call and Long Put, resulting in a Straddle
+This Straddle has a zero-Beta exposure to the underlying index
+A zero-beta Straddle is also Delta-Neutral
 
-Then go for Put, Call Spread, Put Spread, Straddle
-
-So for each instrument, observe over time and adjust Portfolio
-
-Use associated Future for risk-free rate
-Get risk-free rate for the time of the instrument!
+Analyze empirical PnL: is it close to the risk-free rate? 
 """
 
 from numpy.core.defchararray import center
@@ -48,10 +43,7 @@ def get_synthetic_options(existing_options, fotm, move_strike_call = 1.2, move_s
     If fotm is active, then create FOTM option that changes strike and IV by a factor
 
     """
-    # For which paired instruments do we not have observations?
     print('Synthetic Matches Only!')
-    #missing_options = existing_options.copy(deep = True)
-    # @Todo: Looks like this doesnt work yet. Didnt change the output!
     missing_options = existing_options.copy(deep = True)
     missing_options = missing_options[['instrument_name', 'pair_name', 'is_call', 'index_change_rel', 'strike', 'spot', 'tau', 'iv', 'expiration_price', 'ndays_ceiling']]
 
@@ -112,8 +104,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     synthetic_matches_only: Always use Put-Call-Parity to find matching Straddle instrument instead of existing instruments (snapped at different times)
     --> now synthetic is always on
     long: long straddle, else short straddle
-    crash_resistant: using FOTM options to protect against crash. For now pretending that the premium is 0 and strike is 1000 further out, meaning
-    that the max loss per short position is 1000
+    crash_resistant: using FOTM options to protect against crash. 
     """
     if long == False:
         print('Try investing the received premium in the index!')
@@ -150,44 +141,26 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     # Construct Pairs - Match Calls and Puts Names so that they have the same strike and maturity
     existing_options['pair_name'] = existing_options.apply(lambda x: x['instrument_name'].replace('-C', '-P') if x['is_call'] == 1 else x['instrument_name'].replace('-P', '-C'), axis = 1)
     
-    #pdb.set_trace()
-    #print("Error here: missing_options doesnt have ndays_ceiling")
-    
     missing_options = get_synthetic_options(existing_options, fotm = False)
 
     # Create FOTM Pairs for existing and missing options each
-    #raise ValueError('LOOK!')
-    print("We dont have a proper separation between calls and puts here!!!")
-    # This should be converted into X * strike for calls and Y * strike for Puts. Then select just as for the "exist" dataframe.
-    # This matching doesnt work yet. 
     fotm_exist = get_synthetic_options(existing_options, True)
     fotm_missing = get_synthetic_options(missing_options, True)
 
-    
     exist = greeks(existing_options, iv_var_name)
     missing = greeks(missing_options, iv_var_name)
     fotm_e = greeks(fotm_exist, iv_var_name)
     fotm_m = greeks(fotm_missing, iv_var_name)
-    #pdb.set_trace()
+    
     counter = 0
     out_dct = {}
-    # Looping over Calls only to match Puts
-    # @Todo: Check how this behaves for all options, not just Calls
-    print('Check behavior for all options, not just Calls! This is not gonna work because we are expecting call_df to exist initially!')
-    print('Check Formula for Weights!!!')
     
     for i in range(len(exist)): #.loc[options['is_call'] == 1]
         try:
-            
-            #@Hint: We can also match by index here as each index in existing_options correspoinds to missing_options!
-            # Why does call_df have less columns than exist?!
-            #print('Why does call_df have less columns than exist?!')
-            # Ahh! Well its either in call_df or in put_df now
 
-            # No Rebalancing implemented so far!
+            # No Rebalancing implemented!
             opt = exist.iloc[i]
             
-            # This should fix the current problem. Now need to adjust the [i]
             if opt['is_call'] == 1:
                 call_df = exist.iloc[i]
                 put_df = missing.iloc[i]
@@ -218,11 +191,6 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             spot = call_df['spot']
             put_price = put_df['instrument_price']
 
-            # Using new method now, applied in "greeks" function
-            #put_beta = get_put_beta(call_price, put_price, spot, call_beta)
-            #put_df['old_beta'] = put_beta
-            #call_df['put_beta'] = np.nan
-
             #print('need to adjust straddle weights for FOTM Options too!!')
             call_weight, put_weight = get_straddle_weights(call_df['beta'], put_df['beta'])
 
@@ -234,15 +202,10 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
                 call_beta_adj = get_combined_beta(call_df['instrument_price'], fotm_call['instrument_price'],call_df['delta'], fotm_call['delta'], spot)
                 put_beta_adj = get_combined_beta(put_df['instrument_price'], fotm_put['instrument_price'],put_df['delta'], fotm_put['delta'], spot)
                 
-                # @Todo: The fotm_c df doesnt ahve a beta here yet!!
-                #call_beta_adj = call_df['beta'] - fotm_call['beta']
-                #put_beta_adj = put_df['beta'] - fotm_put['beta']
                 if call_beta_adj < 0 or put_beta_adj > 0:
                     print('So now the difference in Call Beta is going to be negative!!')
                     # Perhaps unselect these imbalanced trades 
                 crash_resistant_call_weight, crash_resistant_put_weight = get_straddle_weights(call_beta_adj, put_beta_adj)
-                #print(crash_resistant_call_weight, crash_resistant_put_weight)
-                #print(call_weight, put_weight)
                 
                 # Otherwise: Could just be taking a subset when the calculation is done
                 # Check if Zero-Beta-Straddle is feasible, else just continue
@@ -295,13 +258,11 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
             else:
                 profit_on_cash = 0
             
-            # Test
-            #out = call_sub.to_frame().join(put_sub.to_frame(), lsuffix = '_call', rsuffix = '_put', how = 'outer').T
             out['day'] = opt['day']
             out['days_to_maturity'] = opt['days_to_maturity']
             
             out['combined_payoff'] = out['weighted_payoff'].sum() + profit_on_cash - fees_abs
-            out['combined_ret'] = out['combined_payoff'] / (abs(out['cost_base'].sum())) #(out['instrument_price_call'] * call_weight + out['instrument_price_put'] * put_weight)
+            out['combined_ret'] = out['combined_payoff'] / (abs(out['cost_base'].sum())) 
 
             # If we center on expiration price, then we are resetting the time value of a call to the beginning of a day. 
             if center_on_expiration_price:
@@ -433,6 +394,7 @@ if __name__ == '__main__':
         # Pre Filtering
         print('Pre-filtering distribution')
         print(dat['iv'].describe().round(2).to_latex(multicolumn = True))
+        print(dat['tau'].describe().round(2).to_latex(multicolumn = True))
 
         # Find share of observations where IV is larger than max_iv
         # or smaller than min_iv
@@ -451,7 +413,8 @@ if __name__ == '__main__':
         # Post Filtering
         print('Post-filtering distribution')
         print(dat['iv'].describe().round(2).to_latex(multicolumn = True))
-     
+        print((dat['tau']*365).describe().round(2).to_latex(multicolumn = True))
+
         #for iv_var in iv_vars:
         #    dat.loc[dat[iv_var] >= max_iv, iv_var] = max_iv 
         #    dat.loc[dat[iv_var] <= min_iv, iv_var] = min_iv
@@ -468,7 +431,7 @@ if __name__ == '__main__':
         performance_overview = pd.DataFrame(collected)
         performance_overview.to_csv(out_dir + 'performance_overview.csv')
 
-        # We are not just dropping bad performers here. For some instruments, beta-neutral weights are not possible. 
+        # We are not just dropping bad performers here: For some instruments, beta-neutral weights are not possible. 
         # For these, we will have NaN weights, which then translate into NaN payoff and consequently inf or -inf returns.
         # Drop those cases.
         # Ensure range limits.
@@ -502,16 +465,3 @@ if __name__ == '__main__':
         grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_payoff_daily', 'moneyness', -5000, 5000, plot_dir, '', crash_resistance)
         grouped_boxplot(performance_overview.loc[(performance_overview['moneyness'] >= 0.7) & (performance_overview['moneyness'] <= 1.3)], 'combined_ret_daily', 'moneyness', -2, 2, plot_dir, '', crash_resistance)
         
-        # Make Plot for the Variable Interest Rate!
-
-
-        # Make PNL plot over Tau and Moneyness
-        #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_payoff'], 'plots/3d_combined_payoff.png', 'Tau', 'Moneyness', 'Payoff', -5000, 5000)
-        #simple_3d_plot(performance_overview['tau'], performance_overview['moneyness'], performance_overview['combined_ret'], 'plots/3d_combined_return.png', 'Tau', 'Moneyness', 'Return', -2, 2)
-        #
-        #plot_performance(performance_overview, 'tau', crash_resistance, plot_dir)
-
-        # Per Week
-        #plot_performance(performance_overview, 'nweeks', crash_resistance, plot_dir)
-
-        #testsub = performance_overview.loc[(performance_overview['moneyness'] >= 0.95) & (performance_overview['moneyness'] <= 1.05) & (performance_overview['tau'] <= 0.02)][['combined_payoff', 'combined_ret', 'tau','moneyness', 'combined_payoff_daily','combined_ret_daily']].describe()
