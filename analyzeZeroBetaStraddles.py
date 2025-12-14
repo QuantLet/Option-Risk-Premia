@@ -116,11 +116,7 @@ def analyze_portfolio(dat, week, iv_var_name, center_on_expiration_price, first_
     dat['ndays'] = dat['tau'] * 365
     dat['ndays_ceiling'] = dat['ndays'].apply(lambda x: ceil(x)) #ceil(dat['ndays'])
     dat.sort_values('day', inplace=True)
-    #sub = dat.loc[(dat['ndays'] >= 0) & (dat['ndays']<= 30)]
-    #sub = dat
 
-    # Get first mentioning of each option
-    #pdb.set_trace()
     if first_occurrence_only:
         sub = dat.groupby('instrument_name').first().reset_index()
         print('Using first occurrence of an instrument!')
